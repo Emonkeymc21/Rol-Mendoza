@@ -1,0 +1,5 @@
+.account-head { background: radial-gradient(circle at 85% 20%, rgba(216, 173, 87, .2), transparent 17rem), linear-gradient(145deg, rgba(111, 29, 42, .62), rgba(29, 21, 24, .92)); }
+.avatar { @apply grid h-20 w-20 shrink-0 place-items-center rounded-3xl border border-gold/30 bg-ink/60 font-display text-2xl font-bold text-gold; }
+.account-tile { @apply rounded-2xl border border-white/[.08] bg-white/[.03] p-5; }
+.account-tile span { @apply block text-sm text-mist; }
+.account-tile strong { @apply mt-2 block text-parchment; }

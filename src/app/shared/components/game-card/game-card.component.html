@@ -1,0 +1,15 @@
+<article class="group glass-panel flex h-full flex-col overflow-hidden rounded-2xl transition duration-300 hover:-translate-y-1 hover:border-gold/30">
+  <div class="h-1.5 w-full" [class.bg-gold]="game.featured" [class.bg-wine]="!game.featured"></div>
+  <div class="flex h-full flex-col p-5 sm:p-6">
+    <div class="flex items-start justify-between gap-4"><div><p class="text-sm font-bold uppercase tracking-wider text-gold">{{ game.system }}</p><h3 class="mt-2 font-display text-2xl font-bold leading-tight text-parchment">{{ game.title }}</h3></div><span *ngIf="game.featured" class="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold text-gold">Destacada</span></div>
+    <p class="mt-4 line-clamp-3 text-sm leading-6 text-mist">{{ game.summary }}</p>
+    <div class="mt-5 grid gap-3 text-sm text-mist sm:grid-cols-2">
+      <div class="flex items-center gap-2"><app-icon name="map" [size]="17"></app-icon><span>{{ game.location }}</span></div>
+      <div class="flex items-center gap-2"><app-icon name="calendar" [size]="17"></app-icon><span>{{ game.schedule }}</span></div>
+    </div>
+    <div class="mt-5 flex items-center justify-between border-t border-white/[.08] pt-5">
+      <span class="text-sm"><strong class="text-parchment">{{ game.seats }}</strong> <span class="text-mist">lugares libres</span></span>
+      <a [routerLink]="['/partidas', game.id]" class="inline-flex items-center gap-2 font-bold text-parchment transition group-hover:text-gold">Ver partida <app-icon name="arrow" [size]="18"></app-icon></a>
+    </div>
+  </div>
+</article>

@@ -1,0 +1,9 @@
+<div class="glass-panel relative overflow-hidden rounded-3xl p-6 sm:p-8">
+  <div class="dice-grid absolute inset-0 opacity-20"></div>
+  <div class="relative grid items-center gap-7 sm:grid-cols-[auto_1fr]">
+    <button type="button" class="d20" [class.rolling]="rolling" (click)="roll()" [attr.aria-label]="'Tirar dado de veinte caras. Resultado actual: ' + result">
+      <span class="d20-face"><span>{{ result }}</span></span>
+    </button>
+    <div><span class="eyebrow">Probá tu suerte</span><h2 class="mt-2 font-display text-3xl font-bold text-parchment">Tirá el d20</h2><p class="mt-2 text-mist" aria-live="polite">{{ phrase }}</p><button type="button" class="mt-5 inline-flex items-center gap-2 font-bold text-gold hover:text-parchment" (click)="roll()"><app-icon name="dice" [size]="19"></app-icon>{{ rolling ? 'Rodando…' : 'Tirar el dado' }}</button></div>
+  </div>
+</div>

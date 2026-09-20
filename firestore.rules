@@ -1,0 +1,170 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function ownDocument(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function validRole(role) {
+      return role == 'DM' || role == 'PLAYER' || role == 'BOTH';
+    }
+
+    function currentUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function completedViewer() {
+      return signedIn()
+        && currentUserData().active == true
+        && currentUserData().profileCompleted == true;
+    }
+
+    function validPreferences(preferences) {
+      return preferences is map
+        && preferences.keys().hasOnly([
+          'systems', 'experience', 'mode', 'frequency', 'availability', 'atmosphere', 'bio'
+        ])
+        && preferences.systems is list
+        && preferences.systems.size() > 0
+        && preferences.systems.size() <= 12
+        && preferences.experience is string
+        && preferences.mode in ['Presencial', 'Online', 'Mixto']
+        && preferences.frequency is string
+        && preferences.availability is string
+        && preferences.atmosphere is string
+        && preferences.bio is string
+        && preferences.bio.size() >= 20
+        && preferences.bio.size() <= 420;
+    }
+
+    function validPublicProfile(userId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'uid', 'displayName', 'firstName', 'lastName', 'role', 'province',
+          'city', 'photoURL', 'active', 'profileCompleted', 'preferences',
+          'createdAt', 'updatedAt'
+        ])
+        && data.uid == userId
+        && data.displayName is string
+        && data.displayName.size() <= 101
+        && data.firstName is string
+        && data.firstName.size() <= 50
+        && data.lastName is string
+        && data.lastName.size() <= 50
+        && validRole(data.role)
+        && data.province == 'Mendoza'
+        && data.city is string
+        && data.city.size() <= 80
+        && data.photoURL is string
+        && data.photoURL.size() <= 1000
+        && data.active is bool
+        && data.profileCompleted is bool
+        && validPreferences(data.preferences)
+        && data.updatedAt == request.time
+        && (!data.profileCompleted || (
+          data.firstName.size() >= 2
+          && data.lastName.size() >= 2
+          && data.city.size() >= 2
+          && getAfter(/databases/$(database)/documents/userPrivate/$(userId)).data.privacyConsent == true
+          && getAfter(/databases/$(database)/documents/userPrivate/$(userId)).data.whatsappNumber is string
+        ));
+    }
+
+    function validPrivateProfile(userId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'uid', 'whatsappNumber', 'whatsappUrl', 'instagramUsername',
+          'instagramUrl', 'alternatePhone', 'privacyConsent',
+          'privacyConsentAt', 'createdAt', 'updatedAt'
+        ])
+        && data.uid == userId
+        && data.whatsappNumber is string
+        && data.whatsappNumber.matches('^549[0-9]{10}$')
+        && data.whatsappUrl == 'https://wa.me/' + data.whatsappNumber
+        && data.instagramUsername is string
+        && data.instagramUsername.size() <= 30
+        && data.instagramUrl is string
+        && ((data.instagramUsername == '' && data.instagramUrl == '')
+          || data.instagramUrl == 'https://www.instagram.com/' + data.instagramUsername + '/')
+        && data.alternatePhone is string
+        && data.alternatePhone.size() <= 15
+        && data.privacyConsent == true
+        && data.updatedAt == request.time;
+    }
+
+    function viewerCanSeeContact(targetUid) {
+      return signedIn()
+        && request.auth.uid != targetUid
+        && currentUserData().active == true
+        && currentUserData().profileCompleted == true
+        && (currentUserData().role == 'DM' || currentUserData().role == 'BOTH')
+        && get(/databases/$(database)/documents/users/$(targetUid)).data.active == true
+        && get(/databases/$(database)/documents/users/$(targetUid)).data.profileCompleted == true
+        && resource.data.privacyConsent == true
+        && !exists(/databases/$(database)/documents/users/$(targetUid)/blockedUsers/$(request.auth.uid))
+        && !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blockedUsers/$(targetUid));
+    }
+
+    match /users/{userId} {
+      allow get: if ownDocument(userId) || completedViewer();
+      allow list: if completedViewer();
+      allow create: if ownDocument(userId)
+        && validPublicProfile(userId)
+        && request.resource.data.active == true
+        && request.resource.data.createdAt == request.time;
+      allow update: if ownDocument(userId)
+        && validPublicProfile(userId)
+        && (!('uid' in resource.data) || request.resource.data.uid == resource.data.uid)
+        && request.resource.data.active == resource.data.active
+        && ((!('createdAt' in resource.data) && request.resource.data.createdAt == request.time)
+          || request.resource.data.createdAt == resource.data.createdAt);
+      allow delete: if false;
+
+      match /blockedUsers/{blockedUid} {
+        allow get, list: if ownDocument(userId);
+        allow create: if ownDocument(userId)
+          && request.resource.data.keys().hasOnly(['uid', 'displayName', 'createdAt'])
+          && request.resource.data.uid == blockedUid
+          && request.resource.data.displayName is string
+          && request.resource.data.createdAt == request.time;
+        allow update: if false;
+        allow delete: if ownDocument(userId);
+      }
+
+      match /blockedBy/{blockerUid} {
+        allow get, list: if ownDocument(userId);
+        allow create: if signedIn()
+          && request.auth.uid == blockerUid
+          && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+          && request.resource.data.uid == blockerUid
+          && request.resource.data.createdAt == request.time;
+        allow update: if false;
+        allow delete: if signedIn() && request.auth.uid == blockerUid;
+      }
+    }
+
+    match /userPrivate/{userId} {
+      allow get: if ownDocument(userId) || viewerCanSeeContact(userId);
+      allow list: if false;
+      allow create: if ownDocument(userId)
+        && validPrivateProfile(userId)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.privacyConsentAt == request.time;
+      allow update: if ownDocument(userId)
+        && validPrivateProfile(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.privacyConsentAt == resource.data.privacyConsentAt;
+      allow delete: if ownDocument(userId);
+    }
+
+    match /conversations/{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

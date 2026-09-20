@@ -1,0 +1,87 @@
+<section class="chat-page">
+  <div class="page-shell py-5 sm:py-8">
+    <div class="chat-shell" [class.has-active-chat]="activeConversation">
+      <aside class="chat-sidebar" [class.hidden-on-mobile]="activeConversation">
+        <div class="chat-sidebar-head">
+          <div>
+            <span class="eyebrow">Mensajería privada</span>
+            <h1 class="mt-2 font-display text-3xl font-bold">Mensajes</h1>
+          </div>
+          <div class="chat-status" title="Chat conectado"><span></span> En línea</div>
+        </div>
+
+        <label class="relative block px-4 pb-4">
+          <span class="sr-only">Buscar usuarios</span>
+          <span class="absolute left-8 top-1/2 -translate-y-[calc(50%+8px)] text-mist"><app-icon name="search" [size]="18"></app-icon></span>
+          <input class="input-field !pl-11" [formControl]="searchControl" placeholder="Buscar una persona">
+        </label>
+
+        <div class="chat-scroll">
+          <section *ngIf="!searchControl.value">
+            <h2 class="chat-section-title">Conversaciones</h2>
+            <div *ngIf="loadingConversations" class="chat-placeholder">Cargando conversaciones…</div>
+            <button *ngFor="let conversation of conversations; trackBy: trackById" type="button" class="conversation-row" [class.active]="conversation.id === activeConversation?.id" (click)="openConversation(conversation)">
+              <span class="chat-avatar">
+                <img *ngIf="peerPhoto(conversation); else conversationInitials" [src]="peerPhoto(conversation)" alt="">
+                <ng-template #conversationInitials>{{ initials(peerName(conversation)) }}</ng-template>
+              </span>
+              <span class="min-w-0 flex-1 text-left">
+                <span class="flex items-baseline justify-between gap-2"><strong class="truncate">{{ peerName(conversation) }}</strong><time class="shrink-0 text-[11px] text-mist">{{ toDate(conversation.updatedAt) | date:'HH:mm' }}</time></span>
+                <span class="mt-0.5 block truncate text-sm text-mist">{{ conversation.lastMessage || 'Conversación creada' }}</span>
+              </span>
+            </button>
+            <p *ngIf="!loadingConversations && !conversations.length" class="chat-placeholder">Todavía no tenés conversaciones. Elegí una persona para empezar.</p>
+          </section>
+
+          <section>
+            <h2 class="chat-section-title">{{ searchControl.value ? 'Resultados' : 'Personas registradas' }}</h2>
+            <div *ngIf="loadingUsers" class="chat-placeholder">Buscando personas…</div>
+            <button *ngFor="let user of filteredUsers; trackBy: trackById" type="button" class="conversation-row" (click)="startConversation(user)" [disabled]="startingChatId === user.uid">
+              <span class="chat-avatar">
+                <img *ngIf="user.photoURL; else userInitials" [src]="user.photoURL" alt="">
+                <ng-template #userInitials>{{ initials(user.displayName) }}</ng-template>
+              </span>
+              <span class="min-w-0 flex-1 text-left"><strong class="block truncate">{{ user.displayName }}</strong><span class="text-sm text-mist">{{ startingChatId === user.uid ? 'Abriendo…' : 'Iniciar conversación' }}</span></span>
+              <app-icon name="arrow" [size]="17"></app-icon>
+            </button>
+            <p *ngIf="!loadingUsers && !filteredUsers.length" class="chat-placeholder">No encontramos usuarios con ese nombre.</p>
+          </section>
+        </div>
+      </aside>
+
+      <main class="chat-main" [class.hidden-on-mobile]="!activeConversation">
+        <ng-container *ngIf="activeConversation; else selectChat">
+          <header class="chat-main-head">
+            <button type="button" class="chat-back lg:hidden" (click)="backToList()" aria-label="Volver a conversaciones"><span class="rotate-180"><app-icon name="arrow" [size]="20"></app-icon></span></button>
+            <span class="chat-avatar">
+              <img *ngIf="peerPhoto(activeConversation); else activeInitials" [src]="peerPhoto(activeConversation)" alt="">
+              <ng-template #activeInitials>{{ initials(peerName(activeConversation)) }}</ng-template>
+            </span>
+            <div class="min-w-0"><h2 class="truncate font-display text-xl font-bold">{{ peerName(activeConversation) }}</h2><p class="truncate text-xs text-mist">{{ activeConversation.contextGameTitle ? 'Partida: ' + activeConversation.contextGameTitle : 'Conversación privada' }}</p></div>
+          </header>
+
+          <div #messageList class="message-list" aria-live="polite">
+            <div class="privacy-note"><app-icon name="shield" [size]="18"></app-icon><span>Esta conversación es privada entre sus participantes. No compartas domicilios, contraseñas ni información sensible.</span></div>
+            <p *ngIf="loadingMessages" class="chat-placeholder">Cargando mensajes…</p>
+            <div *ngIf="!loadingMessages && !messages.length" class="empty-chat"><app-icon name="message" [size]="30"></app-icon><h3>Empiecen la conversación</h3><p>Saludá, contá qué tipo de mesa buscás y acuerden expectativas antes de jugar.</p></div>
+            <div *ngFor="let message of messages; trackBy: trackById" class="message-line" [class.mine]="message.senderId === currentUserUid">
+              <article class="message-bubble">
+                <p>{{ message.text }}</p>
+                <time>{{ toDate(message.createdAt) | date:'d/M · HH:mm' }}</time>
+              </article>
+            </div>
+          </div>
+
+          <form [formGroup]="messageForm" (ngSubmit)="send()" class="composer">
+            <textarea class="composer-input" formControlName="message" rows="1" maxlength="1000" placeholder="Escribí un mensaje" aria-label="Mensaje" (keydown.enter)="sendOnEnter($event)"></textarea>
+            <button type="submit" class="send-button" [disabled]="messageForm.invalid || sending" aria-label="Enviar mensaje"><app-icon name="send" [size]="21"></app-icon></button>
+            <span class="composer-help">Enter para enviar · Shift + Enter para nueva línea</span>
+          </form>
+        </ng-container>
+
+        <ng-template #selectChat><div class="select-chat"><div class="select-chat-icon"><app-icon name="message" [size]="40"></app-icon></div><h2>Tu comunidad, más cerca</h2><p>Elegí una conversación o buscá una persona registrada para empezar a hablar.</p></div></ng-template>
+      </main>
+    </div>
+    <p *ngIf="errorMessage" class="feedback-error mx-auto mt-4 max-w-4xl" role="alert">{{ errorMessage }}</p>
+  </div>
+</section>

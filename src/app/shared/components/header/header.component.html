@@ -1,0 +1,31 @@
+<header class="sticky top-0 z-50 border-b border-white/[.08] bg-ink/90 backdrop-blur-xl">
+  <div class="page-shell flex h-18 min-h-[72px] items-center justify-between gap-5">
+    <a routerLink="/" class="group flex items-center gap-3" aria-label="Rol Mendoza, inicio">
+      <span class="logo-die"><span>20</span></span>
+      <span><strong class="block font-display text-xl leading-none text-parchment">Rol Mendoza</strong><span class="mt-1 block text-xs tracking-wide text-mist">Comunidad de mesas</span></span>
+    </a>
+    <nav class="hidden items-center gap-1 lg:flex" aria-label="Navegación principal">
+      <a routerLink="/jugadores" routerLinkActive="nav-active" class="nav-link">Jugadores</a>
+      <a routerLink="/partidas" routerLinkActive="nav-active" class="nav-link">Partidas</a>
+      <a routerLink="/como-funciona" routerLinkActive="nav-active" class="nav-link">Cómo funciona</a>
+    </nav>
+    <div class="hidden items-center gap-3 lg:flex">
+      <a routerLink="/partidas/nueva" class="btn-secondary !min-h-[42px] !px-4">Crear partida</a>
+      <ng-container *ngIf="user$ | async as user; else desktopGuest"><a routerLink="/mi-cuenta" class="btn-primary !min-h-[42px] !px-5">{{ user.displayName || 'Mi cuenta' }}</a></ng-container>
+      <ng-template #desktopGuest><a routerLink="/ingresar" class="nav-link">Ingresar</a><a routerLink="/registrarme" class="btn-primary !min-h-[42px] !px-5">Registrarme</a></ng-template>
+    </div>
+    <button type="button" class="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[.04] lg:hidden" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen" aria-label="Abrir menú">
+      <app-icon [name]="menuOpen ? 'close' : 'menu'" [size]="23"></app-icon>
+    </button>
+  </div>
+  <div *ngIf="menuOpen" class="border-t border-white/[.08] bg-ink px-4 pb-5 pt-3 lg:hidden">
+    <nav class="mx-auto flex max-w-7xl flex-col gap-1" aria-label="Navegación móvil">
+      <a routerLink="/jugadores" class="mobile-link">Jugadores</a>
+      <a routerLink="/partidas" class="mobile-link">Partidas</a>
+      <a routerLink="/como-funciona" class="mobile-link">Cómo funciona</a>
+      <a routerLink="/partidas/nueva" class="mobile-link">Crear partida</a>
+      <ng-container *ngIf="user$ | async as user; else mobileGuest"><a routerLink="/mi-cuenta" class="btn-primary mt-3">{{ user.displayName || 'Mi cuenta' }}</a></ng-container>
+      <ng-template #mobileGuest><a routerLink="/ingresar" class="mobile-link">Ingresar</a><a routerLink="/registrarme" class="btn-primary mt-3">Registrarme</a></ng-template>
+    </nav>
+  </div>
+</header>

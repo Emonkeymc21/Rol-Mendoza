@@ -1,0 +1,8 @@
+.hero { background: linear-gradient(125deg, rgba(19,14,16,.65), rgba(19,14,16,.96)), radial-gradient(circle at 70% 30%, rgba(111,29,42,.32), transparent 40%); }
+.hero::after { content:''; position:absolute; inset:0; pointer-events:none; opacity:.16; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E"); }
+.hero-rune { position:absolute; width:420px; height:420px; border:1px solid rgba(216,173,87,.07); border-radius:50%; }
+.hero-rune::before,.hero-rune::after { content:''; position:absolute; inset:48px; border:1px solid rgba(216,173,87,.05); transform:rotate(45deg); }
+.hero-rune-one{right:-130px;top:-130px}.hero-rune-two{left:-240px;bottom:-280px}
+.step-number { display:inline-grid; place-items:center; width:50px; height:50px; border-radius:15px; background:rgba(111,29,42,.52); color:#d8ad57; font-weight:800; }
+.cta-panel { background: radial-gradient(circle at 90% 50%, rgba(216,173,87,.16), transparent 28rem), linear-gradient(135deg,rgba(111,29,42,.42),rgba(29,21,24,.95)); }
+select option { background:#1d1518; }

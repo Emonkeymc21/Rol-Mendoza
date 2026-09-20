@@ -1,0 +1,3 @@
+.step-number { @apply grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-wine font-display text-xl font-bold text-gold; }
+.google-button { @apply flex min-h-[50px] w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/[.06] px-5 font-bold text-parchment transition hover:border-gold/50 hover:bg-white/[.1] disabled:cursor-not-allowed disabled:opacity-50; }
+.google-mark { @apply grid h-7 w-7 place-items-center rounded-full bg-white font-bold text-[#4285f4]; }

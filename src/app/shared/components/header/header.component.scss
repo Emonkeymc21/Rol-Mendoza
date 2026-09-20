@@ -1,0 +1,5 @@
+.nav-link { @apply rounded-full px-4 py-2 text-sm font-semibold text-mist transition hover:bg-white/[.05] hover:text-parchment; }
+.nav-active { @apply bg-white/[.07] text-gold; }
+.mobile-link { @apply rounded-xl px-4 py-3 text-base font-semibold text-parchment hover:bg-white/[.06]; }
+.logo-die { width: 42px; height: 46px; display: grid; place-items: center; background: #6f1d2a; color: #f1e8d5; font-family: Georgia, serif; font-weight: 800; clip-path: polygon(50% 0, 95% 26%, 84% 82%, 50% 100%, 16% 82%, 5% 26%); filter: drop-shadow(0 0 10px rgba(216,173,87,.2)); }
+.logo-die span { transform: translateY(-1px); }

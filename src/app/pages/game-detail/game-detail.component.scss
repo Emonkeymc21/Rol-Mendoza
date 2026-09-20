@@ -1,0 +1,22 @@
+.game-masthead {
+  position: relative;
+  background: radial-gradient(circle at 88% 20%, rgba(216, 173, 87, .14), transparent 20rem), linear-gradient(135deg, rgba(111, 29, 42, .58), rgba(19, 14, 16, .9));
+}
+
+.game-masthead::after {
+  content: '20';
+  position: absolute;
+  right: 7%;
+  bottom: -38px;
+  font: 700 11rem/1 Georgia, serif;
+  color: rgba(255, 255, 255, .025);
+}
+
+.info-tile { @apply rounded-xl border border-white/[.08] bg-black/20 p-4; }
+.info-tile span { @apply block text-sm text-mist; }
+.info-tile strong { @apply mt-1 block text-parchment; }
+.comment-card { @apply rounded-2xl border border-white/[.08] bg-black/20 p-5; }
+.admin-reply { @apply mt-4 rounded-xl border border-gold/20 bg-gold/10 p-3 text-sm text-parchment; }
+.feedback-success { @apply mt-4 rounded-xl border border-gold/20 bg-gold/10 p-3 text-sm text-parchment; }
+.feedback-error { @apply mt-4 rounded-xl border border-red-300/25 bg-red-950/30 p-3 text-sm text-red-100; }
+

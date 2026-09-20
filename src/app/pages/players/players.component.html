@@ -1,0 +1,14 @@
+<section class="border-b border-white/[.06] bg-black/15 py-12 sm:py-16"><div class="page-shell"><span class="eyebrow">La comunidad</span><div class="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"><div><h1 class="section-title">Jugadores y másters</h1><p class="mt-3 max-w-2xl text-mist">Encontrá personas por zona, modalidad y rol. Primero mostramos los perfiles más compatibles con tus preferencias.</p></div><a routerLink="/editar-perfil" class="btn-primary">Actualizar mi perfil <app-icon name="plus" [size]="19"></app-icon></a></div></div></section>
+
+<section class="section-space"><div class="page-shell">
+  <form [formGroup]="filters" class="glass-panel grid gap-4 rounded-2xl p-4 sm:p-5 lg:grid-cols-[1.5fr_1fr_1fr_1fr_auto] lg:items-end">
+    <label><span class="field-label">Buscar</span><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-mist"><app-icon name="search" [size]="18"></app-icon></span><input formControlName="q" class="input-field !pl-11" placeholder="Nombre o sistema"></div></label>
+    <label><span class="field-label">Rol</span><select formControlName="role" class="input-field"><option>Todos</option><option>Jugador/a</option><option>Máster</option><option>Ambos</option></select></label>
+    <label><span class="field-label">Modalidad</span><select formControlName="mode" class="input-field"><option>Todas</option><option>Presencial</option><option>Online</option><option>Mixto</option></select></label>
+    <label><span class="field-label">Zona</span><select formControlName="city" class="input-field"><option *ngFor="let city of cities">{{ city }}</option></select></label>
+    <button type="button" class="btn-secondary !min-h-[48px] !px-4" (click)="reset()">Limpiar</button>
+  </form>
+  <div class="mt-8 flex items-center justify-between"><p class="text-sm text-mist"><strong class="text-parchment">{{ players.length }}</strong> perfiles encontrados</p><span class="inline-flex items-center gap-2 text-sm text-mist"><app-icon name="filter" [size]="17"></app-icon> Filtros activos</span></div>
+  <div *ngIf="players.length; else noResults" class="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3"><app-player-card *ngFor="let player of players" [player]="player"></app-player-card></div>
+  <ng-template #noResults><div class="glass-panel mt-5 rounded-2xl p-10 text-center"><div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white/[.05] text-gold"><app-icon name="search" [size]="26"></app-icon></div><h2 class="mt-5 font-display text-2xl font-bold">No encontramos coincidencias</h2><p class="mt-2 text-mist">Probá con menos filtros o una zona cercana.</p><button type="button" class="btn-secondary mt-5" (click)="reset()">Restablecer filtros</button></div></ng-template>
+</div></section>

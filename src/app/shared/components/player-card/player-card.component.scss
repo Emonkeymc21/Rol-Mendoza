@@ -1,0 +1,2 @@
+.avatar { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; flex: 0 0 auto; color: white; font-weight: 800; box-shadow: inset 0 0 0 2px rgba(255,255,255,.16); }
+.contact-mini { @apply inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-white/[.05] px-3 py-2 text-xs font-bold text-parchment transition hover:border-gold/50 hover:text-gold; }

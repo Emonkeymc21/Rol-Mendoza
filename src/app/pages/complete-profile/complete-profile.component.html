@@ -1,0 +1,70 @@
+<section class="section-space onboarding-page">
+  <div class="page-shell max-w-5xl">
+    <div class="mx-auto max-w-3xl text-center">
+      <span class="eyebrow">{{ editing ? 'Actualizar perfil' : 'Último paso' }}</span>
+      <h1 class="display-title mt-4">{{ editing ? 'Editá tu información' : 'Completá tu perfil' }}</h1>
+      <p class="mt-4 text-mist">Tus preferencias ayudan a encontrar personas compatibles. Tus datos de contacto tienen protección adicional.</p>
+    </div>
+
+    <div *ngIf="loading" class="glass-panel mx-auto mt-8 max-w-3xl rounded-2xl p-8 text-center text-mist">Cargando tu perfil…</div>
+
+    <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()" class="glass-panel mx-auto mt-8 max-w-3xl overflow-hidden rounded-3xl">
+      <ol class="stepper" aria-label="Progreso del perfil">
+        <li *ngFor="let label of steps; let index = index" [class.active]="index === step" [class.done]="index < step">
+          <button type="button" (click)="goToStep(index)" [disabled]="index > step"><span>{{ index + 1 }}</span><small>{{ label }}</small></button>
+        </li>
+      </ol>
+
+      <div class="p-5 sm:p-8">
+        <section *ngIf="step === 0" class="step-content">
+          <div><span class="eyebrow">Paso 1</span><h2 class="mt-2 font-display text-3xl font-bold">Información personal</h2><p class="mt-2 text-sm text-mist">Esta información será visible en tu perfil comunitario.</p></div>
+          <div class="mt-7 grid gap-5 sm:grid-cols-2">
+            <label><span class="field-label">Nombre *</span><input class="input-field" formControlName="firstName" autocomplete="given-name"><span *ngIf="invalid('firstName')" class="error-text">Ingresá un nombre válido.</span></label>
+            <label><span class="field-label">Apellido *</span><input class="input-field" formControlName="lastName" autocomplete="family-name"><span *ngIf="invalid('lastName')" class="error-text">Ingresá un apellido válido.</span></label>
+            <label class="sm:col-span-2"><span class="field-label">Ciudad o localidad de Mendoza *</span><input class="input-field" formControlName="city" list="mendoza-locations" autocomplete="address-level2" placeholder="Escribí para buscar"><datalist id="mendoza-locations"><option *ngFor="let location of locations" [value]="location"></option></datalist><span *ngIf="invalid('city')" class="error-text">Seleccioná una localidad de la lista.</span></label>
+          </div>
+        </section>
+
+        <section *ngIf="step === 1" class="step-content">
+          <div><span class="eyebrow">Paso 2</span><h2 class="mt-2 font-display text-3xl font-bold">¿Cómo participás?</h2><p class="mt-2 text-sm text-mist">Podés cambiar este rol más adelante.</p></div>
+          <div class="mt-7 grid gap-4">
+            <label *ngFor="let role of roles" class="role-option"><input type="radio" formControlName="role" [value]="role.value"><span><strong>{{ role.label }}</strong><small>{{ role.detail }}</small></span></label>
+          </div>
+          <span *ngIf="invalid('role')" class="error-text">Elegí una opción.</span>
+        </section>
+
+        <section *ngIf="step === 2" class="step-content">
+          <div><span class="eyebrow">Paso 3</span><h2 class="mt-2 font-display text-3xl font-bold">Datos de contacto</h2><p class="mt-2 text-sm text-mist">Solo los usuarios DM o Ambos podrán solicitar estos datos.</p></div>
+          <div class="mt-7 grid gap-5">
+            <label><span class="field-label">WhatsApp / celular *</span><input class="input-field" formControlName="whatsapp" inputmode="tel" autocomplete="tel" placeholder="Ej: 261 555 1234"><span *ngIf="invalid('whatsapp')" class="error-text">Usá un número argentino de 10 dígitos con código de área.</span><small *ngIf="whatsappPreview" class="preview-link">Se guardará como {{ whatsappPreview }}</small></label>
+            <label><span class="field-label">Instagram <span class="text-mist">(opcional)</span></span><input class="input-field" formControlName="instagram" autocomplete="off" placeholder="@emma.coll.21"><span *ngIf="invalid('instagram')" class="error-text">Ingresá un usuario o enlace válido de Instagram.</span><small *ngIf="instagramPreview" class="preview-link">Se guardará como {{ instagramPreview }}</small></label>
+            <label><span class="field-label">Teléfono alternativo <span class="text-mist">(opcional)</span></span><input class="input-field" formControlName="alternatePhone" inputmode="tel" autocomplete="tel-national"></label>
+          </div>
+        </section>
+
+        <section *ngIf="step === 3" class="step-content">
+          <div><span class="eyebrow">Paso 4</span><h2 class="mt-2 font-display text-3xl font-bold">Preferencias y privacidad</h2><p class="mt-2 text-sm text-mist">Esto mejora el orden de los resultados y ayuda a encontrar una mesa compatible.</p></div>
+          <div class="mt-7 grid gap-5 sm:grid-cols-2">
+            <label class="sm:col-span-2"><span class="field-label">Sistemas preferidos *</span><input class="input-field" formControlName="systems" placeholder="D&D 5e, Pathfinder, Call of Cthulhu"><small class="mt-1 block text-xs text-mist">Separalos con comas.</small></label>
+            <label><span class="field-label">Experiencia *</span><select class="input-field" formControlName="experience"><option>Estoy empezando</option><option>Principiante</option><option>Intermedia</option><option>Avanzada</option></select></label>
+            <label><span class="field-label">Modalidad *</span><select class="input-field" formControlName="mode"><option>Presencial</option><option>Online</option><option>Mixto</option></select></label>
+            <label><span class="field-label">Frecuencia *</span><select class="input-field" formControlName="frequency"><option>Semanal</option><option>Quincenal</option><option>Mensual</option><option>One-shot</option><option>A coordinar</option></select></label>
+            <label><span class="field-label">Disponibilidad *</span><input class="input-field" formControlName="availability" placeholder="Ej: viernes desde las 20 hs"></label>
+            <label class="sm:col-span-2"><span class="field-label">Ambiente o estilo preferido *</span><select class="input-field" formControlName="atmosphere"><option>Me adapto al grupo</option><option>Fantasía heroica y aventura</option><option>Terror y misterio</option><option>Ciencia ficción</option><option>Narrativa e interpretación</option><option>Combate táctico</option><option>Partidas casuales y sociales</option></select></label>
+            <label class="sm:col-span-2"><span class="field-label">Sobre vos y qué buscás *</span><textarea class="input-field min-h-[120px] resize-y" formControlName="bio" maxlength="420" placeholder="Contá qué tipo de historias, grupos o mesas preferís."></textarea></label>
+          </div>
+
+          <label class="consent-box mt-6"><input type="checkbox" formControlName="privacyConsent"><span><strong>Acepto compartir mis datos de contacto con usuarios autorizados.</strong><small>Acepto que WhatsApp y, si lo proporciono, Instagram o teléfono alternativo puedan ser visualizados por usuarios registrados con rol DM o Ambos para organizar partidas. Instagram nunca es obligatorio. Podré bloquear usuarios y modificar o eliminar estos datos desde mi perfil.</small></span></label>
+          <span *ngIf="invalid('privacyConsent')" class="error-text">Necesitamos tu consentimiento para completar el perfil.</span>
+        </section>
+
+        <p *ngIf="errorMessage" class="feedback-error" role="alert">{{ errorMessage }}</p>
+        <div class="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+          <button *ngIf="step > 0" type="button" class="btn-secondary" (click)="previous()">Volver</button><span *ngIf="step === 0"></span>
+          <button *ngIf="step < steps.length - 1" type="button" class="btn-primary" (click)="next()">Continuar <app-icon name="arrow" [size]="18"></app-icon></button>
+          <button *ngIf="step === steps.length - 1" type="submit" class="btn-primary" [disabled]="saving || form.controls.privacyConsent.invalid">{{ saving ? 'Guardando…' : (editing ? 'Guardar cambios' : 'Completar perfil') }}</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
