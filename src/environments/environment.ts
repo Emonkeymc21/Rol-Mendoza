@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
   appsScript: {
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbwt_I68Su1H0lNCtNAT5o8nuXqkU0eEG8EA19qHfB0ET-PHHWqPdiltjMsDEJJv_OzYvQ/exec'
+    webAppUrl: 'https://script.google.com/macros/s/AKfycbxlil_efKyghmU4FhnDhP_LvvUZtcor_g4L9UOhJsa0qo-i-YZoo9ek1VN69HTcd6zLnQ/exec'
   },
   firebase: {
     apiKey: 'AIzaSyDAUvtcTyEQmbGmmmOGJTsyVg34dt1h_gU',
