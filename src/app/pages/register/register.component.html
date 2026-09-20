@@ -9,7 +9,7 @@
     <div class="mt-10 grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
       <div class="glass-panel rounded-3xl p-6 sm:p-8">
         <div class="flex items-start gap-4"><span class="step-number">1</span><div><h2 class="font-display text-3xl font-bold">Creá tu cuenta</h2><p class="mt-1 text-sm text-mist">Tus credenciales y tu perfil son administrados de forma segura con Firebase.</p></div></div>
-        <button type="button" class="google-button mt-6" (click)="registerWithGoogle()" [disabled]="googleSaving"><span class="google-mark" aria-hidden="true">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
+        <button type="button" class="google-button mt-6" (click)="registerWithGoogle()" [disabled]="googleSaving || saving"><span class="google-mark" aria-hidden="true">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
         <div class="my-6 flex items-center gap-3 text-xs uppercase tracking-widest text-mist"><span class="h-px flex-1 bg-white/10"></span>o con correo<span class="h-px flex-1 bg-white/10"></span></div>
 
         <form [formGroup]="form" (ngSubmit)="register()" class="grid gap-5 sm:grid-cols-2">
@@ -20,7 +20,7 @@
           <label class="sm:col-span-2 flex cursor-pointer items-start gap-3 rounded-xl border border-white/[.08] bg-black/15 p-4 text-sm text-mist"><input type="checkbox" formControlName="terms" class="mt-1 h-4 w-4 accent-[#d8ad57]"><span>Acepto las reglas de convivencia. Entiendo que las partidas se revisan antes de publicarse y que el equipo puede intervenir ante denuncias o quejas.</span></label>
           <p *ngIf="errorMessage" class="sm:col-span-2 feedback-error" role="alert">{{ errorMessage }}</p>
           <p *ngIf="successMessage" class="sm:col-span-2 feedback-success" role="status">{{ successMessage }}</p>
-          <button type="submit" class="btn-primary sm:col-span-2" [disabled]="saving">{{ saving ? 'Creando cuenta…' : 'Crear cuenta y completar perfil' }}</button>
+          <button type="submit" class="btn-primary sm:col-span-2" [disabled]="saving || googleSaving">{{ saving ? 'Creando cuenta…' : 'Crear cuenta y completar perfil' }}</button>
         </form>
         <p class="mt-6 text-center text-sm text-mist">¿Ya tenés una cuenta? <a routerLink="/ingresar" class="font-bold text-gold hover:text-parchment">Ingresá acá</a></p>
       </div>

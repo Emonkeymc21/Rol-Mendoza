@@ -24,13 +24,12 @@ service cloud.firestore {
         && currentUserData().profileCompleted == true;
     }
 
-    function validPreferences(preferences) {
+    function validPreferences(preferences, profileCompleted) {
       return preferences is map
         && preferences.keys().hasOnly([
           'systems', 'experience', 'mode', 'frequency', 'availability', 'atmosphere', 'bio'
         ])
         && preferences.systems is list
-        && preferences.systems.size() > 0
         && preferences.systems.size() <= 12
         && preferences.experience is string
         && preferences.mode in ['Presencial', 'Online', 'Mixto']
@@ -38,8 +37,15 @@ service cloud.firestore {
         && preferences.availability is string
         && preferences.atmosphere is string
         && preferences.bio is string
-        && preferences.bio.size() >= 20
-        && preferences.bio.size() <= 420;
+        && preferences.bio.size() <= 500
+        && (!profileCompleted || (
+          preferences.systems.size() > 0
+          && preferences.experience.size() > 0
+          && preferences.frequency.size() > 0
+          && preferences.availability.size() > 0
+          && preferences.atmosphere.size() > 0
+          && preferences.bio.size() >= 50
+        ));
     }
 
     function validPublicProfile(userId) {
@@ -64,7 +70,7 @@ service cloud.firestore {
         && data.photoURL.size() <= 1000
         && data.active is bool
         && data.profileCompleted is bool
-        && validPreferences(data.preferences)
+        && validPreferences(data.preferences, data.profileCompleted)
         && data.updatedAt == request.time
         && (!data.profileCompleted || (
           data.firstName.size() >= 2
@@ -120,7 +126,8 @@ service cloud.firestore {
       allow update: if ownDocument(userId)
         && validPublicProfile(userId)
         && (!('uid' in resource.data) || request.resource.data.uid == resource.data.uid)
-        && request.resource.data.active == resource.data.active
+        && ((!('active' in resource.data) && request.resource.data.active == true)
+          || request.resource.data.active == resource.data.active)
         && ((!('createdAt' in resource.data) && request.resource.data.createdAt == request.time)
           || request.resource.data.createdAt == resource.data.createdAt);
       allow delete: if false;
@@ -157,9 +164,11 @@ service cloud.firestore {
         && request.resource.data.privacyConsentAt == request.time;
       allow update: if ownDocument(userId)
         && validPrivateProfile(userId)
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.privacyConsentAt == resource.data.privacyConsentAt;
+        && (!('uid' in resource.data) || request.resource.data.uid == resource.data.uid)
+        && ((!('createdAt' in resource.data) && request.resource.data.createdAt == request.time)
+          || request.resource.data.createdAt == resource.data.createdAt)
+        && ((!('privacyConsentAt' in resource.data) && request.resource.data.privacyConsentAt == request.time)
+          || request.resource.data.privacyConsentAt == resource.data.privacyConsentAt);
       allow delete: if ownDocument(userId);
     }
 

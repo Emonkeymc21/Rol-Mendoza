@@ -30,12 +30,36 @@ export class GoogleAppsScriptService {
     return this.get<PublicGameRow[]>('games');
   }
 
+  getGame(gameId: string): Observable<PublicGameRow> {
+    return this.get<PublicGameRow>('game', { gameId });
+  }
+
+  getMyGames(idToken: string): Observable<PublicGameRow[]> {
+    return this.post<PublicGameRow[]>('myGames', {}, idToken);
+  }
+
+  getOwnedGame(gameId: string, idToken: string): Observable<PublicGameRow> {
+    return this.post<PublicGameRow>('ownedGame', { gameId }, idToken);
+  }
+
   getComments(gameId: string): Observable<PublicComment[]> {
     return this.get<PublicComment[]>('comments', { gameId });
   }
 
   createGame(game: Game, idToken: string): Observable<ApiMutationResult> {
     return this.post<ApiMutationResult>('createGame', game, idToken);
+  }
+
+  updateGame(game: Game, idToken: string): Observable<ApiMutationResult> {
+    return this.post<ApiMutationResult>('updateGame', game, idToken);
+  }
+
+  setGameStatus(gameId: string, status: Game['status'], idToken: string): Observable<ApiMutationResult> {
+    return this.post<ApiMutationResult>('setGameStatus', { gameId, status }, idToken);
+  }
+
+  deleteGame(gameId: string, idToken: string): Observable<ApiMutationResult> {
+    return this.post<ApiMutationResult>('deleteGame', { gameId }, idToken);
   }
 
   joinGame(gameId: string, message: string, idToken: string): Observable<ApiMutationResult> {

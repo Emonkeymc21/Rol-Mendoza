@@ -1,55 +1,134 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { CommunityService } from '../../core/services/community.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
 import { Game } from '../../core/models/game.model';
 import { AuthService } from '../../core/services/auth.service';
+import { GameService } from '../../core/services/game.service';
+import { ProfileService } from '../../core/services/profile.service';
 
 @Component({ selector: 'app-create-game', templateUrl: './create-game.component.html', styleUrls: ['./create-game.component.scss'] })
-export class CreateGameComponent {
+export class CreateGameComponent implements OnInit {
+  readonly locations = MENDOZA_LOCATIONS;
   submitted = false;
   saving = false;
-  createdId = '';
-  resultMessage = '';
+  loading = false;
   saveError = '';
-  pendingReview = false;
+  readonly editing: boolean;
+  private readonly gameId: string;
+
   form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.minLength(5)]], system: ['', Validators.required],
-    location: ['', Validators.required], mode: ['Presencial' as Game['mode'], Validators.required], schedule: ['', Validators.required],
-    frequency: ['One-shot', Validators.required], seats: [2, [Validators.required, Validators.min(1), Validators.max(12)]],
-    totalSeats: [5, [Validators.required, Validators.min(2), Validators.max(12)]], level: ['Principiantes bienvenidos', Validators.required],
-    summary: ['', [Validators.required, Validators.minLength(30), Validators.maxLength(420)]], tone: ['', Validators.required],
-    safety: ['Líneas y velos + tarjeta X', Validators.required], tags: ['Narrativa, Aventura']
+    title: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(120)]],
+    system: ['', [Validators.required, Validators.maxLength(100)]],
+    city: ['', Validators.required],
+    location: ['', Validators.required],
+    mode: ['Presencial' as Game['mode'], Validators.required],
+    date: ['', Validators.required],
+    time: ['', Validators.required],
+    schedule: ['', Validators.required],
+    frequency: ['One-shot', Validators.required],
+    seats: [2, [Validators.required, Validators.min(1), Validators.max(12)]],
+    totalSeats: [5, [Validators.required, Validators.min(2), Validators.max(12)]],
+    currentPlayers: [0, [Validators.required, Validators.min(0), Validators.max(12)]],
+    level: ['Principiantes bienvenidos', Validators.required],
+    ageRequirement: ['Sin requisito', Validators.required],
+    contactMethod: ['Perfil del máster', Validators.required],
+    summary: ['', [Validators.required, Validators.minLength(30), Validators.maxLength(420)]],
+    tone: ['', Validators.required],
+    safety: ['Líneas y velos + tarjeta X', Validators.required],
+    tags: ['Narrativa, Aventura']
   });
 
-  constructor(private fb: FormBuilder, private community: CommunityService, readonly auth: AuthService) {}
+  constructor(
+    private fb: FormBuilder,
+    private games: GameService,
+    private profiles: ProfileService,
+    readonly auth: AuthService,
+    route: ActivatedRoute,
+    private router: Router
+  ) {
+    this.gameId = route.snapshot.paramMap.get('id') || '';
+    this.editing = Boolean(this.gameId);
+  }
+
+  async ngOnInit(): Promise<void> {
+    if (this.editing) {
+      this.loading = true;
+      this.games.getOwnedGame(this.gameId).subscribe({
+        next: game => {
+          this.form.patchValue({
+            title: game.title, system: game.system, city: game.city, location: game.location,
+            mode: game.mode, date: game.date, time: game.time, schedule: game.schedule,
+            frequency: game.frequency, seats: game.seats, totalSeats: game.totalSeats,
+            currentPlayers: game.currentPlayers, level: game.level,
+            ageRequirement: game.ageRequirement, contactMethod: game.contactMethod,
+            summary: game.summary, tone: game.tone, safety: game.safety,
+            tags: game.tags.join(', ')
+          });
+          this.loading = false;
+        },
+        error: error => {
+          console.error('No se pudo cargar la partida para editar.', error);
+          this.saveError = error?.message || 'No pudimos cargar esta partida.';
+          this.loading = false;
+        }
+      });
+      return;
+    }
+
+    try {
+      const profile = await this.profiles.getOwnProfile();
+      if (profile?.city) this.form.patchValue({ city: profile.city });
+    } catch (error) {
+      console.error('No se pudo precargar la ciudad del perfil.', error);
+    }
+  }
 
   save(): void {
+    if (this.saving) return;
     this.submitted = true;
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    const user = this.auth.currentUser;
-    if (!user) { this.saveError = 'Necesitás iniciar sesión para publicar una partida.'; return; }
-    this.saving = true;
     this.saveError = '';
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.saveError = 'Revisá los campos marcados antes de publicar la partida.';
+      return;
+    }
     const value = this.form.getRawValue();
-    const id = `${this.slugify(value.title)}-${Date.now().toString().slice(-5)}`;
-    const gm = user.displayName || user.email?.split('@')[0] || 'Máster de la comunidad';
-    this.community.addGame({ ...value, id, gm, tags: value.tags.split(',').map(tag => tag.trim()).filter(Boolean), featured: false }).subscribe({
-      next: result => {
-        this.createdId = result.id;
-        this.resultMessage = result.message;
-        this.pendingReview = result.status === 'pending';
+    if (value.seats > value.totalSeats || value.currentPlayers > value.totalSeats || value.seats + value.currentPlayers > value.totalSeats) {
+      this.saveError = 'Los lugares libres más los jugadores actuales no pueden superar el tamaño total de la mesa.';
+      return;
+    }
+    const user = this.auth.currentUser;
+    if (!user) {
+      this.saveError = 'Necesitás iniciar sesión para publicar una partida.';
+      return;
+    }
+
+    this.saving = true;
+    const game: Game = {
+      ...value,
+      id: this.gameId,
+      gm: user.displayName || user.email?.split('@')[0] || 'Máster de la comunidad',
+      masterUserId: user.uid,
+      creatorEmail: user.email || '',
+      tags: value.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      status: 'ACTIVE',
+      featured: false
+    };
+    const operation = this.editing ? this.games.updateGame(game) : this.games.createGame(game);
+    operation.subscribe({
+      next: async result => {
         this.saving = false;
-        this.form.reset({
-          title: '', system: '', location: '', mode: 'Presencial', schedule: '', frequency: 'One-shot',
-          seats: 2, totalSeats: 5, level: 'Principiantes bienvenidos', summary: '', tone: '',
-          safety: 'Líneas y velos + tarjeta X', tags: 'Narrativa, Aventura'
+        await this.router.navigate(['/mis-partidas'], {
+          queryParams: { saved: result.id, action: this.editing ? 'updated' : 'published' }
         });
-        this.submitted = false;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       },
       error: error => {
+        console.error(this.editing ? 'No se pudo actualizar la partida.' : 'No se pudo crear la partida.', error);
         this.saving = false;
-        this.saveError = error?.message || 'No pudimos enviar la partida. Probá nuevamente.';
+        this.saveError = error?.message || (this.editing
+          ? 'No pudimos actualizar la partida. Intentá nuevamente.'
+          : 'No pudimos crear la partida. Intentá nuevamente.');
       }
     });
   }
@@ -57,9 +136,5 @@ export class CreateGameComponent {
   invalid(name: keyof typeof this.form.controls): boolean {
     const control = this.form.controls[name];
     return control.invalid && (control.touched || this.submitted);
-  }
-
-  private slugify(value: string): string {
-    return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   }
 }

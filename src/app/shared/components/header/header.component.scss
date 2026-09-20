@@ -3,3 +3,8 @@
 .mobile-link { @apply rounded-xl px-4 py-3 text-base font-semibold text-parchment hover:bg-white/[.06]; }
 .logo-die { width: 42px; height: 46px; display: grid; place-items: center; background: #6f1d2a; color: #f1e8d5; font-family: Georgia, serif; font-weight: 800; clip-path: polygon(50% 0, 95% 26%, 84% 82%, 50% 100%, 16% 82%, 5% 26%); filter: drop-shadow(0 0 10px rgba(216,173,87,.2)); }
 .logo-die span { transform: translateY(-1px); }
+.account-trigger { @apply flex min-h-[44px] items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-2 pr-4 text-sm text-parchment transition hover:border-gold/30; }
+.account-trigger img, .account-trigger > span:first-child { @apply grid h-8 w-8 place-items-center rounded-full bg-wine object-cover text-xs font-bold text-gold; }
+.account-dropdown { @apply absolute right-0 top-[calc(100%+.65rem)] z-50 min-w-[240px] overflow-hidden rounded-2xl border border-white/10 bg-ink p-2 shadow-2xl; }
+.account-dropdown a, .account-dropdown button { @apply block w-full rounded-xl px-4 py-3 text-left text-sm font-semibold text-mist transition hover:bg-white/[.06] hover:text-parchment disabled:opacity-50; }
+.account-dropdown button { @apply mt-1 border-t border-white/[.08] text-red-200; }

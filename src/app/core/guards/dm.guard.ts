@@ -5,25 +5,23 @@ import { AuthService } from '../services/auth.service';
 import { ProfileService } from '../services/profile.service';
 
 @Injectable({ providedIn: 'root' })
-export class GuestGuard implements CanActivate {
+export class DmGuard implements CanActivate {
   constructor(private auth: AuthService, private profiles: ProfileService, private router: Router) {}
 
   canActivate(): Observable<boolean | UrlTree> {
     return this.auth.user$.pipe(
       take(1),
       switchMap(user => user
-        ? from(this.profiles.isOwnProfileComplete()).pipe(
-            map(complete => this.router.createUrlTree([
-              complete ? '/perfil' : '/completar-perfil'
-            ])),
+        ? from(this.profiles.getOwnProfile()).pipe(
+            map(profile => profile?.role === 'DM' || profile?.role === 'BOTH'
+              ? true
+              : this.router.createUrlTree(['/perfil'], { queryParams: { dmRequired: '1' } })),
             catchError(error => {
-              console.error('No se pudo cargar el perfil al entrar a una ruta pública.', error);
-              return of(this.router.createUrlTree(['/completar-perfil'], {
-                queryParams: { profileLoadError: '1' }
-              }));
+              console.error('No se pudo verificar el rol para crear una partida.', error);
+              return of(this.router.createUrlTree(['/perfil'], { queryParams: { dmRequired: '1' } }));
             })
           )
-        : of(true)
+        : of(this.router.createUrlTree(['/ingresar']))
       )
     );
   }

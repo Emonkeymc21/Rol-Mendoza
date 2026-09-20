@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { catchError, combineLatest, from, map, Observable, of, ReplaySubject, switchMap, throwError } from 'rxjs';
+import { catchError, combineLatest, from, map, Observable, of, ReplaySubject, switchMap } from 'rxjs';
 import {
   ApiMutationResult,
-  PublicComment,
-  PublicGameRow
+  PublicComment
 } from '../models/community-api.model';
 import { Game } from '../models/game.model';
 import { Player, PlayerRole } from '../models/player.model';
@@ -11,13 +10,18 @@ import { UserProfile } from '../models/user-profile.model';
 import { GoogleAppsScriptService } from './google-apps-script.service';
 import { AuthService } from './auth.service';
 import { ProfileService } from './profile.service';
+import { GameService } from './game.service';
 
 @Injectable({ providedIn: 'root' })
 export class CommunityService {
   private readonly playersSubject = new ReplaySubject<Player[]>(1);
-  private readonly gamesSubject = new ReplaySubject<Game[]>(1);
 
-  constructor(private api: GoogleAppsScriptService, private auth: AuthService, private profiles: ProfileService) {
+  constructor(
+    private api: GoogleAppsScriptService,
+    private auth: AuthService,
+    private profiles: ProfileService,
+    private games: GameService
+  ) {
     this.auth.user$.pipe(switchMap(user => user
       ? this.profiles.watchOwnProfile().pipe(switchMap(own => this.profiles.isComplete(own)
         ? combineLatest([
@@ -31,7 +35,6 @@ export class CommunityService {
       ))
       : of([])
     ), catchError(() => of([]))).subscribe(players => this.playersSubject.next(players));
-    this.refreshGames();
   }
 
   isConnected(): boolean { return this.api.enabled; }
@@ -44,14 +47,11 @@ export class CommunityService {
     return this.playersSubject.pipe(map(players => players.find(player => player.id === id)));
   }
 
-  getGames(): Observable<Game[]> { return this.gamesSubject.asObservable(); }
-  getGame(id: string): Observable<Game | undefined> {
-    return this.gamesSubject.pipe(map(games => games.find(game => game.id === id)));
-  }
+  getGames(): Observable<Game[]> { return this.games.getGames(); }
+  getGame(id: string): Observable<Game | undefined> { return this.games.getGame(id); }
 
   addGame(game: Game): Observable<ApiMutationResult> {
-    if (!this.api.enabled) return throwError(() => new Error('El servicio no está disponible en este momento.'));
-    return from(this.auth.getIdToken()).pipe(switchMap(token => this.api.createGame(game, token)));
+    return this.games.createGame(game);
   }
 
   getComments(gameId: string): Observable<PublicComment[]> {
@@ -65,13 +65,6 @@ export class CommunityService {
 
   addComment(gameId: string, comment: string): Observable<ApiMutationResult> {
     return from(this.auth.getIdToken()).pipe(switchMap(token => this.api.createComment(gameId, comment, token)));
-  }
-
-  private refreshGames(): void {
-    if (!this.api.enabled) return;
-    this.api.getGames().pipe(catchError(() => of([]))).subscribe(rows => {
-      this.gamesSubject.next(rows.map(row => this.mapGame(row)));
-    });
   }
 
   private mapProfile(profile: UserProfile, own: UserProfile | null): Player {
@@ -96,38 +89,6 @@ export class CommunityService {
       matchScore: this.compatibility(profile, own),
       verified: profile.profileCompleted
     };
-  }
-
-  private mapGame(row: PublicGameRow): Game {
-    const frequency = row.frecuencia || 'A coordinar';
-    return {
-      id: row.partida_id,
-      title: row.titulo,
-      system: row.sistema,
-      gm: row.master_nombre || row.master_usuario_id || 'Máster de la comunidad',
-      masterUserId: row.master_usuario_id || undefined,
-      location: row.zona_plataforma,
-      mode: this.mode(row.modalidad),
-      schedule: row.dia_horario,
-      frequency,
-      seats: Number(row.cupos_libres) || 0,
-      totalSeats: Number(row.cupos_totales) || 0,
-      level: row.nivel || 'Todos los niveles',
-      summary: row.descripcion,
-      tags: [row.sistema, this.mode(row.modalidad), frequency].filter(Boolean).slice(0, 3),
-      tone: row.tono || 'A definir en sesión cero',
-      safety: row.herramientas_cuidado || 'Acuerdos previos de mesa',
-      featured: false
-    };
-  }
-
-  private mode(value: string): Game['mode'] {
-    const normalized = this.normalize(value);
-    const hasOnline = normalized.includes('online') || normalized.includes('virtual') || normalized.includes('discord');
-    const hasInPerson = normalized.includes('presencial');
-    if (hasOnline && hasInPerson) return 'Mixto';
-    if (hasOnline) return 'Online';
-    return hasInPerson ? 'Presencial' : 'Mixto';
   }
 
   private role(value: UserProfile['role']): PlayerRole {

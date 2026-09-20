@@ -16,20 +16,27 @@ import { AuthGuard } from './core/guards/auth.guard';
 import { ProfileCompleteGuard } from './core/guards/profile-complete.guard';
 import { IncompleteProfileGuard } from './core/guards/incomplete-profile.guard';
 import { GuestGuard } from './core/guards/guest.guard';
+import { DmGuard } from './core/guards/dm.guard';
+import { MyGamesComponent } from './pages/my-games/my-games.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent, title: 'Rol Mendoza | Encontrá tu próxima mesa' },
   { path: 'jugadores', component: PlayersComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Jugadores y másters | Rol Mendoza' },
   { path: 'jugadores/:id', component: PlayerDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Perfil | Rol Mendoza' },
   { path: 'partidas', component: GamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Partidas disponibles | Rol Mendoza' },
-  { path: 'partidas/nueva', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Crear una partida | Rol Mendoza' },
+  { path: 'partidas/nueva', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Crear una partida | Rol Mendoza' },
+  { path: 'mis-partidas', component: MyGamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis partidas | Rol Mendoza' },
+  { path: 'mis-partidas/:id/editar', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar partida | Rol Mendoza' },
   { path: 'partidas/:id', component: GameDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Detalle de partida | Rol Mendoza' },
   { path: 'como-funciona', component: HowItWorksComponent, title: 'Cómo funciona | Rol Mendoza' },
   { path: 'registrarme', component: RegisterComponent, canActivate: [GuestGuard], title: 'Sumate | Rol Mendoza' },
+  { path: 'registro', redirectTo: 'registrarme', pathMatch: 'full' },
   { path: 'ingresar', component: LoginComponent, canActivate: [GuestGuard], title: 'Ingresar | Rol Mendoza' },
   { path: 'completar-perfil', component: CompleteProfileComponent, canActivate: [AuthGuard, IncompleteProfileGuard], title: 'Completar perfil | Rol Mendoza' },
-  { path: 'editar-perfil', component: CompleteProfileComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar perfil | Rol Mendoza' },
-  { path: 'mi-cuenta', component: AccountComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mi cuenta | Rol Mendoza' },
+  { path: 'perfil/editar', component: CompleteProfileComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar perfil | Rol Mendoza' },
+  { path: 'editar-perfil', redirectTo: 'perfil/editar', pathMatch: 'full' },
+  { path: 'perfil', component: AccountComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mi perfil | Rol Mendoza' },
+  { path: 'mi-cuenta', redirectTo: 'perfil', pathMatch: 'full' },
   { path: '404', component: NotFoundComponent, title: 'Página no encontrada | Rol Mendoza' },
   { path: '**', redirectTo: '404' }
 ];

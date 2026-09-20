@@ -4,8 +4,9 @@
       <div class="account-head p-6 sm:p-10">
         <span class="eyebrow">Mi cuenta</span>
         <div class="mt-5 flex flex-col gap-5 sm:flex-row sm:items-center">
-          <div class="avatar">{{ (user.displayName || user.email || 'RM').slice(0, 2).toUpperCase() }}</div>
-          <div><h1 class="font-display text-4xl font-bold">{{ user.displayName || 'Aventurero/a' }}</h1><p class="mt-1 text-mist">{{ user.email }}</p></div>
+          <img *ngIf="profile?.photoURL || user.photoURL; else initialsAvatar" class="avatar object-cover" [src]="profile?.photoURL || user.photoURL" alt="Foto de perfil" referrerpolicy="no-referrer">
+          <ng-template #initialsAvatar><div class="avatar">{{ (user.displayName || user.email || 'RM').slice(0, 2).toUpperCase() }}</div></ng-template>
+          <div><h1 class="font-display text-4xl font-bold">{{ profile?.displayName || user.displayName || 'Aventurero/a' }}</h1><p class="mt-1 text-mist">{{ user.email }}</p></div>
         </div>
       </div>
       <div *ngIf="!loading" class="grid gap-6 p-6 sm:p-10 lg:grid-cols-[1fr_300px]">
@@ -13,11 +14,20 @@
           <h2 class="font-display text-2xl font-bold">Tu perfil</h2>
           <div class="mt-5 grid gap-4 sm:grid-cols-2">
             <div class="account-tile"><span>Correo</span><strong>{{ user.emailVerified ? 'Verificado' : 'Pendiente de verificar' }}</strong></div>
-            <div class="account-tile"><span>Proveedor</span><strong>{{ user.providerData.length && user.providerData[0].providerId === 'google.com' ? 'Google' : 'Correo y contraseña' }}</strong></div>
             <div class="account-tile"><span>Ciudad</span><strong>{{ profile?.city }}</strong></div>
             <div class="account-tile"><span>Rol</span><strong>{{ roleText() }}</strong></div>
           </div>
           <div *ngIf="!user.emailVerified" class="mt-5 rounded-2xl border border-gold/25 bg-gold/10 p-4 text-sm text-mist">Revisá tu correo y abrí el enlace de Firebase para verificar la dirección.</div>
+          <section class="mt-7 rounded-2xl border border-white/[.08] bg-black/20 p-5">
+            <h2 class="font-display text-xl font-bold">Preferencias</h2>
+            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+              <div><span class="text-sm text-mist">Sistemas</span><p class="mt-1 font-semibold">{{ profile?.preferences?.systems?.join(', ') || 'Sin especificar' }}</p></div>
+              <div><span class="text-sm text-mist">Modalidad</span><p class="mt-1 font-semibold">{{ profile?.preferences?.mode }}</p></div>
+              <div><span class="text-sm text-mist">Frecuencia</span><p class="mt-1 font-semibold">{{ profile?.preferences?.frequency }}</p></div>
+              <div><span class="text-sm text-mist">Disponibilidad</span><p class="mt-1 font-semibold">{{ profile?.preferences?.availability }}</p></div>
+            </div>
+            <p *ngIf="profile?.preferences?.bio" class="mt-4 whitespace-pre-line text-sm leading-6 text-mist">{{ profile?.preferences?.bio }}</p>
+          </section>
           <section class="mt-7 rounded-2xl border border-white/[.08] bg-black/20 p-5">
             <h2 class="font-display text-xl font-bold">Contacto guardado</h2>
             <dl class="mt-4 space-y-3 text-sm"><div><dt class="text-mist">WhatsApp</dt><dd class="font-semibold">{{ privateProfile?.whatsappNumber || 'Sin cargar' }}</dd></div><div *ngIf="privateProfile?.instagramUsername"><dt class="text-mist">Instagram</dt><dd class="font-semibold">@{{ privateProfile?.instagramUsername }}</dd></div><div *ngIf="privateProfile?.alternatePhone"><dt class="text-mist">Teléfono alternativo</dt><dd class="font-semibold">{{ privateProfile?.alternatePhone }}</dd></div></dl>
@@ -32,9 +42,10 @@
         </div>
         <aside class="rounded-2xl border border-white/[.08] bg-black/20 p-5">
           <h2 class="font-display text-xl font-bold">Acciones rápidas</h2>
-          <a routerLink="/editar-perfil" class="btn-primary mt-5 w-full">Editar mi perfil</a>
+          <a routerLink="/perfil/editar" class="btn-primary mt-5 w-full">Editar mi perfil</a>
           <a *ngIf="profile" [routerLink]="['/jugadores', profile.uid]" class="btn-secondary mt-3 w-full">Ver perfil público</a>
-          <a routerLink="/partidas/nueva" class="btn-secondary mt-3 w-full">Crear partida</a>
+          <a routerLink="/mis-partidas" class="btn-secondary mt-3 w-full">Mis partidas</a>
+          <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-secondary mt-3 w-full">Crear partida</a>
           <a routerLink="/jugadores" class="btn-secondary mt-3 w-full">Buscar jugadores</a>
           <button type="button" class="mt-5 w-full text-sm font-bold text-mist hover:text-parchment" (click)="logout()" [disabled]="loggingOut">{{ loggingOut ? 'Cerrando…' : 'Cerrar sesión' }}</button>
         </aside>

@@ -1,6 +1,6 @@
 # Backend de partidas de Rol Mendoza
 
-Apps Script se utiliza únicamente para partidas, solicitudes, comentarios y moderación en Google Sheets. Los perfiles, permisos, contactos y bloqueos pertenecen a Firestore.
+Apps Script se utiliza como API segura para las partidas almacenadas en Google Sheets. Los perfiles, permisos, contactos y bloqueos pertenecen a Firestore.
 
 ## Base conectada
 
@@ -12,11 +12,17 @@ Lecturas públicas:
 
 - `GET ?action=health`
 - `GET ?action=games`
+- `GET ?action=game&gameId=...`
 - `GET ?action=comments&gameId=...`
 
 Escrituras autenticadas:
 
 - `POST createGame`
+- `POST myGames`
+- `POST ownedGame`
+- `POST updateGame`
+- `POST setGameStatus`
+- `POST deleteGame` (cancelación lógica)
 - `POST joinGame`
 - `POST createComment`
 
@@ -40,22 +46,26 @@ Abrí:
 TU_URL_EXEC?action=health
 ```
 
-La respuesta debe indicar la versión `4.0.0` y `auth: configured`.
+La respuesta debe indicar la versión `5.0.0` y `auth: configured`.
 
-## Moderación
+## Publicación y estados
 
 En la pestaña `PARTIDAS`:
 
-- Las nuevas partidas ingresan como `Borrador` y `publicada = No`.
-- Para mostrarlas, cambiá `estado` a `Abierta` y `publicada` a `Sí`.
-- `Completa` puede seguir visible, pero deja de aceptar solicitudes.
+- Las nuevas partidas se guardan con `estado = ACTIVE` y `publicada = Sí`.
+- Las partidas nuevas quedan disponibles para la comunidad en cuanto se guardan.
+- `PAUSED` y `CANCELLED` dejan de mostrarse públicamente.
+- `FULL` permanece visible, pero deja de aceptar solicitudes.
+- Editar o cambiar el estado exige que el UID autenticado coincida con `creador_uid`.
 
 Las solicitudes se registran en `SOLICITUDES` y los comentarios en `COMENTARIOS`.
 
 ## Seguridad
 
 - Firebase administra las credenciales.
-- Cada escritura valida el ID token.
+- Cada escritura valida el Firebase ID token.
+- Crear una partida comprueba en Firestore que el perfil tenga rol `DM` o `BOTH`.
+- Editar, pausar o cancelar comprueba la propiedad en el servidor.
 - El cliente no elige su propio UID ni nombre de autor.
 - Los textos se sanitizan y se evita la inyección de fórmulas.
 - Se aplica bloqueo de concurrencia y limitación básica por usuario.

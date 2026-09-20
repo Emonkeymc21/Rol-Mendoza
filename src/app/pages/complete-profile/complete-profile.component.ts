@@ -44,7 +44,7 @@ export class CompleteProfileComponent implements OnInit {
     frequency: ['Quincenal', Validators.required],
     availability: ['', [Validators.required, Validators.maxLength(160)]],
     atmosphere: ['Me adapto al grupo', Validators.required],
-    bio: ['', [Validators.required, Validators.minLength(20), Validators.maxLength(420)]],
+    bio: ['', [Validators.required, Validators.minLength(50), Validators.maxLength(500)]],
     privacyConsent: [false, Validators.requiredTrue]
   });
 
@@ -56,9 +56,9 @@ export class CompleteProfileComponent implements OnInit {
     route: ActivatedRoute,
     private router: Router
   ) {
-    this.editing = route.snapshot.routeConfig?.path === 'editar-perfil';
-    const requested = route.snapshot.queryParamMap.get('returnUrl') || '/mi-cuenta';
-    this.returnUrl = requested.startsWith('/') && !requested.startsWith('//') ? requested : '/mi-cuenta';
+    this.editing = route.snapshot.routeConfig?.path === 'perfil/editar';
+    const requested = route.snapshot.queryParamMap.get('returnUrl') || '/';
+    this.returnUrl = requested.startsWith('/') && !requested.startsWith('//') ? requested : '/';
   }
 
   async ngOnInit(): Promise<void> {
@@ -86,6 +86,7 @@ export class CompleteProfileComponent implements OnInit {
         privacyConsent: privateProfile?.privacyConsent === true
       });
     } catch (error) {
+      console.error('No se pudo cargar el perfil para el onboarding.', error);
       this.errorMessage = this.messageFor(error);
     } finally {
       this.loading = false;
@@ -98,6 +99,10 @@ export class CompleteProfileComponent implements OnInit {
 
   get instagramPreview(): string {
     return this.contacts.normalizeInstagram(this.form.controls.instagram.value)?.url || '';
+  }
+
+  get bioLength(): number {
+    return this.form.controls.bio.value.length;
   }
 
   next(): void {
@@ -123,10 +128,13 @@ export class CompleteProfileComponent implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (this.saving) return;
     this.errorMessage = '';
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.step = this.firstInvalidStep();
+      this.errorMessage = this.invalidFormMessage();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     const value = this.form.getRawValue();
@@ -152,8 +160,9 @@ export class CompleteProfileComponent implements OnInit {
     this.saving = true;
     try {
       await this.profiles.saveProfile(input);
-      await this.router.navigateByUrl(this.editing ? '/mi-cuenta' : this.returnUrl);
+      await this.router.navigateByUrl(this.editing ? '/perfil' : this.returnUrl);
     } catch (error) {
+      console.error('No se pudo guardar el perfil.', error);
       this.errorMessage = this.messageFor(error);
     } finally {
       this.saving = false;
@@ -176,6 +185,22 @@ export class CompleteProfileComponent implements OnInit {
     return [0, 1, 2, 3].find(index => this.controlsForStep(index).some(control => control.invalid)) ?? 0;
   }
 
+  private invalidFormMessage(): string {
+    const labels: Partial<Record<keyof typeof this.form.controls, string>> = {
+      firstName: 'el nombre', lastName: 'el apellido', city: 'la localidad', role: 'el rol',
+      whatsapp: 'el WhatsApp', instagram: 'Instagram', systems: 'los sistemas preferidos',
+      availability: 'la disponibilidad', bio: 'la presentación personal',
+      privacyConsent: 'el consentimiento de privacidad'
+    };
+    const invalid = (Object.keys(this.form.controls) as (keyof typeof this.form.controls)[])
+      .filter(name => this.form.controls[name].invalid)
+      .map(name => labels[name])
+      .filter((label): label is string => Boolean(label));
+    return invalid.length
+      ? `Revisá ${invalid.join(', ')} antes de continuar.`
+      : 'Revisá los campos marcados antes de continuar.';
+  }
+
   private whatsappValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null =>
       !control.value || this.contacts.normalizeWhatsapp(String(control.value)) ? null : { whatsapp: true };
@@ -189,6 +214,8 @@ export class CompleteProfileComponent implements OnInit {
   private messageFor(error: unknown): string {
     const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
     if (code.includes('permission-denied')) return 'Firestore rechazó la operación. Publicá las reglas nuevas antes de probar este flujo.';
-    return error instanceof Error ? error.message : 'No pudimos guardar el perfil. Intentá nuevamente.';
+    if (code.includes('unavailable')) return 'Firestore no está disponible en este momento. Revisá tu conexión e intentá nuevamente.';
+    if (code.includes('unauthenticated')) return 'Tu sesión venció. Volvé a ingresar para continuar.';
+    return !code && error instanceof Error ? error.message : 'No pudimos guardar el perfil. Intentá nuevamente.';
   }
 }

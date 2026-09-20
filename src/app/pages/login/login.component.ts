@@ -25,11 +25,12 @@ export class LoginComponent {
     route: ActivatedRoute,
     private router: Router
   ) {
-    const requested = route.snapshot.queryParamMap.get('returnUrl') || '/mi-cuenta';
-    this.returnUrl = requested.startsWith('/') && !requested.startsWith('//') ? requested : '/mi-cuenta';
+    const requested = route.snapshot.queryParamMap.get('returnUrl') || '/perfil';
+    this.returnUrl = requested.startsWith('/') && !requested.startsWith('//') ? requested : '/perfil';
   }
 
   async login(): Promise<void> {
+    if (this.saving || this.googleSaving) return;
     this.errorMessage = '';
     this.notice = '';
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
@@ -39,6 +40,7 @@ export class LoginComponent {
       await this.auth.signInWithEmail(value.email, value.password);
       await this.continueAfterLogin();
     } catch (error) {
+      console.error('No se pudo iniciar sesión con correo.', error);
       this.errorMessage = this.auth.friendlyError(error);
     } finally {
       this.saving = false;
@@ -46,12 +48,14 @@ export class LoginComponent {
   }
 
   async loginWithGoogle(): Promise<void> {
+    if (this.googleSaving || this.saving) return;
     this.errorMessage = '';
     this.googleSaving = true;
     try {
       await this.auth.signInWithGoogle();
       await this.continueAfterLogin();
     } catch (error) {
+      console.error('No se pudo iniciar sesión con Google.', error);
       this.errorMessage = this.auth.friendlyError(error);
     } finally {
       this.googleSaving = false;
@@ -70,6 +74,7 @@ export class LoginComponent {
       await this.auth.resetPassword(email);
       this.notice = 'Te enviamos un enlace para cambiar la contraseña.';
     } catch (error) {
+      console.error('No se pudo enviar el correo para restablecer la contraseña.', error);
       this.errorMessage = this.auth.friendlyError(error);
     } finally {
       this.resetting = false;
@@ -77,11 +82,18 @@ export class LoginComponent {
   }
 
   private async continueAfterLogin(): Promise<void> {
-    const profile = await this.profiles.getOwnProfile();
-    if (!this.profiles.isComplete(profile)) {
-      await this.router.navigate(['/completar-perfil'], { queryParams: { returnUrl: this.returnUrl } });
-      return;
+    try {
+      const complete = await this.profiles.isOwnProfileComplete();
+      if (!complete) {
+        await this.router.navigate(['/completar-perfil'], { queryParams: { returnUrl: this.returnUrl } });
+        return;
+      }
+      await this.router.navigateByUrl(this.returnUrl);
+    } catch (error) {
+      console.error('No se pudo leer el perfil después del login.', error);
+      await this.router.navigate(['/completar-perfil'], {
+        queryParams: { returnUrl: this.returnUrl, profileLoadError: '1' }
+      });
     }
-    await this.router.navigateByUrl(this.returnUrl);
   }
 }

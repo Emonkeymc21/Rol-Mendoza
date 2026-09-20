@@ -4,14 +4,21 @@ export interface PublicGameRow {
   titulo: string;
   sistema: string;
   master_usuario_id?: string;
+  creador_email?: string;
   master_nombre: string;
   modalidad: string;
+  ciudad?: string;
   zona_plataforma: string;
+  fecha?: string;
+  hora?: string;
   dia_horario: string;
   frecuencia: string;
   cupos_totales: number | string;
   cupos_libres: number | string;
+  jugadores_actuales?: number | string;
   nivel: string;
+  edad_requerida?: string;
+  metodo_contacto?: string;
   tono: string;
   descripcion: string;
   herramientas_cuidado: string;
@@ -30,6 +37,6 @@ export interface PublicComment {
 
 export interface ApiMutationResult {
   id: string;
-  status: 'pending' | 'received' | 'published';
+  status: 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'FULL' | 'received' | 'published';
   message: string;
 }

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { DocumentData } from 'firebase/firestore';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, filter, Observable } from 'rxjs';
+import { MENDOZA_LOCATIONS } from '../data/mendoza-locations';
 import { BlockedUser, ProfileInput, UserPrivateProfile, UserProfile } from '../models/user-profile.model';
 import { AuthService } from './auth.service';
 import { ContactNormalizerService } from './contact-normalizer.service';
@@ -8,17 +9,28 @@ import { FirebaseService } from './firebase.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
+  private readonly ownProfileState = new BehaviorSubject<UserProfile | null | undefined>(undefined);
+  readonly ownProfile$ = this.ownProfileState.pipe(
+    filter((profile): profile is UserProfile | null => profile !== undefined)
+  );
+
   constructor(
     private auth: AuthService,
     private firebase: FirebaseService,
     private contacts: ContactNormalizerService
-  ) {}
+  ) {
+    this.auth.user$.subscribe(user => {
+      if (!user) this.ownProfileState.next(null);
+    });
+  }
 
   async getOwnProfile(): Promise<UserProfile | null> {
     const user = this.requireUser();
     const { api, database } = await this.loadFirestore();
     const snapshot = await api.getDoc(api.doc(database, 'users', user.uid));
-    return snapshot.exists() ? this.mapPublic(snapshot.data()) : null;
+    const profile = snapshot.exists() ? this.mapPublic(snapshot.data()) : null;
+    this.ownProfileState.next(profile);
+    return profile;
   }
 
   async getProfile(uid: string): Promise<UserProfile | null> {
@@ -38,6 +50,16 @@ export class ProfileService {
     const { api, database } = await this.loadFirestore();
     const snapshot = await api.getDoc(api.doc(database, 'userPrivate', uid));
     return snapshot.exists() ? this.mapPrivate(snapshot.data()) : null;
+  }
+
+  async isOwnProfileComplete(): Promise<boolean> {
+    const [profile, privateProfile] = await Promise.all([
+      this.getOwnProfile(),
+      this.getOwnPrivateProfile()
+    ]);
+    return this.isComplete(profile)
+      && privateProfile?.privacyConsent === true
+      && Boolean(privateProfile.whatsappNumber);
   }
 
   watchProfiles(): Observable<UserProfile[]> {
@@ -106,6 +128,9 @@ export class ProfileService {
     if (!whatsapp) throw new Error('Ingresá un WhatsApp válido de Argentina con código de área.');
     if (input.instagram && !instagram) throw new Error('Ingresá un usuario de Instagram válido.');
     if (!input.privacyConsent) throw new Error('Debés aceptar las condiciones de privacidad.');
+    const bio = input.preferences.bio.trim();
+    if (bio.length < 50) throw new Error('Contanos un poco más sobre vos. La descripción debe tener al menos 50 caracteres.');
+    if (bio.length > 500) throw new Error('La descripción puede tener como máximo 500 caracteres.');
 
     const publicRef = api.doc(database, 'users', user.uid);
     const privateRef = api.doc(database, 'userPrivate', user.uid);
@@ -133,12 +158,11 @@ export class ProfileService {
         frequency: input.preferences.frequency.trim(),
         availability: input.preferences.availability.trim(),
         atmosphere: input.preferences.atmosphere.trim(),
-        bio: input.preferences.bio.trim()
+        bio
       },
       createdAt: publicSnapshot.exists() ? publicSnapshot.data()['createdAt'] || api.serverTimestamp() : api.serverTimestamp(),
-      updatedAt: api.serverTimestamp(),
-      lastSeen: api.deleteField()
-    }, { merge: true });
+      updatedAt: api.serverTimestamp()
+    });
 
     batch.set(privateRef, {
       uid: user.uid,
@@ -151,10 +175,19 @@ export class ProfileService {
       privacyConsentAt: privateSnapshot.data()?.['privacyConsentAt'] || api.serverTimestamp(),
       createdAt: privateSnapshot.exists() ? privateSnapshot.data()['createdAt'] || api.serverTimestamp() : api.serverTimestamp(),
       updatedAt: api.serverTimestamp()
-    }, { merge: true });
+    });
 
     await batch.commit();
-    if (user.displayName !== displayName) await this.auth.updateDisplayName(displayName);
+    await this.getOwnProfile();
+    if (user.displayName !== displayName) {
+      try {
+        await this.auth.updateDisplayName(displayName);
+      } catch (error) {
+        // Firestore ya confirmó el perfil. La actualización cosmética de Auth
+        // no debe impedir que el usuario finalice el onboarding.
+        console.error('El perfil se guardó, pero no se pudo actualizar displayName en Auth.', error);
+      }
+    }
   }
 
   async blockUser(target: UserProfile): Promise<void> {
@@ -201,10 +234,24 @@ export class ProfileService {
       updatedAt: api.serverTimestamp()
     }, { merge: true });
     await batch.commit();
+    this.ownProfileState.next(null);
   }
 
   isComplete(profile: UserProfile | null): boolean {
-    return Boolean(profile?.profileCompleted && profile.firstName && profile.lastName && profile.city && profile.role);
+    return Boolean(
+      profile?.profileCompleted
+      && profile.firstName
+      && profile.lastName
+      && MENDOZA_LOCATIONS.includes(profile.city)
+      && (profile.role === 'DM' || profile.role === 'PLAYER' || profile.role === 'BOTH')
+      && profile.preferences.systems.length
+      && profile.preferences.experience
+      && profile.preferences.frequency
+      && profile.preferences.availability
+      && profile.preferences.atmosphere
+      && profile.preferences.bio.trim().length >= 50
+      && profile.preferences.bio.length <= 500
+    );
   }
 
   canViewContacts(profile: UserProfile | null): boolean {
@@ -213,6 +260,7 @@ export class ProfileService {
 
   private mapPublic(data: DocumentData): UserProfile {
     const preferences = data['preferences'] || {};
+    const hasValidRole = data['role'] === 'DM' || data['role'] === 'PLAYER' || data['role'] === 'BOTH';
     return {
       uid: String(data['uid'] || ''),
       displayName: String(data['displayName'] || 'Aventurero/a'),
@@ -220,10 +268,10 @@ export class ProfileService {
       lastName: String(data['lastName'] || ''),
       role: data['role'] === 'DM' || data['role'] === 'BOTH' ? data['role'] : 'PLAYER',
       province: 'Mendoza',
-      city: String(data['city'] || 'Mendoza'),
+      city: String(data['city'] || ''),
       photoURL: String(data['photoURL'] || ''),
       active: data['active'] !== false,
-      profileCompleted: data['profileCompleted'] === true,
+      profileCompleted: data['profileCompleted'] === true && hasValidRole,
       preferences: {
         systems: Array.isArray(preferences['systems']) ? preferences['systems'].map((value: unknown) => String(value)) : [],
         experience: String(preferences['experience'] || 'Sin especificar'),

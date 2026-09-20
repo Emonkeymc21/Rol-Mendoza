@@ -1,0 +1,52 @@
+<section class="border-b border-white/[.06] bg-black/15 py-12 sm:py-16">
+  <div class="page-shell">
+    <span class="eyebrow">Administración</span>
+    <div class="mt-3 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 class="section-title">Mis partidas</h1>
+        <p class="mt-3 max-w-2xl text-mist">Editá la información o cambiá el estado de las mesas que publicaste.</p>
+      </div>
+      <a *ngIf="canCreate" routerLink="/partidas/nueva" class="btn-primary">Crear partida <app-icon name="plus" [size]="19"></app-icon></a>
+    </div>
+  </div>
+</section>
+
+<section class="section-space">
+  <div class="page-shell">
+    <p *ngIf="notice" class="feedback-success mb-5" role="status">{{ notice }}</p>
+    <p *ngIf="errorMessage" class="feedback-error mb-5" role="alert">{{ errorMessage }}</p>
+    <div *ngIf="loading" class="glass-panel rounded-2xl p-10 text-center text-mist">Cargando tus partidas…</div>
+
+    <div *ngIf="!loading && games.length" class="grid gap-5 lg:grid-cols-2">
+      <article *ngFor="let game of games" class="glass-panel rounded-2xl p-5 sm:p-6">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-gold">{{ game.system }}</p>
+            <h2 class="mt-2 font-display text-2xl font-bold">{{ game.title }}</h2>
+          </div>
+          <span class="status-pill" [class.status-active]="game.status === 'ACTIVE'" [class.status-full]="game.status === 'FULL'" [class.status-cancelled]="game.status === 'CANCELLED'">{{ statusLabel(game.status) }}</span>
+        </div>
+        <div class="mt-5 grid gap-3 text-sm text-mist sm:grid-cols-2">
+          <span>{{ game.city }} · {{ game.mode }}</span>
+          <span>{{ game.schedule }}</span>
+          <span>{{ game.seats }} de {{ game.totalSeats }} lugares libres</span>
+          <span>Actualizada: {{ game.updatedAt | date:'d/M/yy, HH:mm' }}</span>
+        </div>
+        <div class="mt-6 flex flex-wrap gap-2 border-t border-white/[.08] pt-5">
+          <a [routerLink]="['/mis-partidas', game.id, 'editar']" class="btn-secondary !min-h-[40px] !px-4">Editar</a>
+          <button *ngIf="game.status !== 'ACTIVE'" type="button" class="action-button" (click)="changeStatus(game, 'ACTIVE')" [disabled]="busyGameId === game.id">Activar</button>
+          <button *ngIf="game.status === 'ACTIVE' || game.status === 'FULL'" type="button" class="action-button" (click)="changeStatus(game, 'PAUSED')" [disabled]="busyGameId === game.id">Pausar</button>
+          <button *ngIf="game.status !== 'FULL' && game.status !== 'CANCELLED'" type="button" class="action-button" (click)="changeStatus(game, 'FULL')" [disabled]="busyGameId === game.id">Marcar sin cupos</button>
+          <button *ngIf="game.status !== 'CANCELLED'" type="button" class="action-button text-red-200" (click)="changeStatus(game, 'CANCELLED')" [disabled]="busyGameId === game.id">Cancelar</button>
+          <span *ngIf="busyGameId === game.id" class="self-center text-xs text-mist">Guardando…</span>
+        </div>
+      </article>
+    </div>
+
+    <div *ngIf="!loading && !games.length" class="glass-panel rounded-2xl p-10 text-center">
+      <h2 class="font-display text-2xl font-bold">Todavía no publicaste partidas</h2>
+      <p class="mt-2 text-mist">Cuando publiques una mesa aparecerá acá para que puedas administrarla.</p>
+      <a *ngIf="canCreate" routerLink="/partidas/nueva" class="btn-primary mt-5">Crear mi primera partida</a>
+    </div>
+  </div>
+</section>

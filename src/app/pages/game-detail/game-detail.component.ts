@@ -42,6 +42,10 @@ export class GameDetailComponent {
 
   join(): void {
     this.notice = '';
+    if (this.game?.status === 'FULL') {
+      this.notice = 'Esta partida está completa y no recibe nuevas solicitudes.';
+      return;
+    }
     if (!this.auth.currentUser) {
       void this.router.navigate(['/ingresar'], { queryParams: { returnUrl: `/partidas/${this.gameId}` } });
       return;

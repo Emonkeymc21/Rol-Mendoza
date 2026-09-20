@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BlockedUser, roleLabel, UserPrivateProfile, UserProfile } from '../../core/models/user-profile.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
@@ -15,7 +15,11 @@ export class AccountComponent implements OnInit {
   deletingContact = false;
   notice = '';
 
-  constructor(private auth: AuthService, private profiles: ProfileService, private router: Router) {}
+  constructor(private auth: AuthService, private profiles: ProfileService, private router: Router, route: ActivatedRoute) {
+    if (route.snapshot.queryParamMap.get('dmRequired')) {
+      this.notice = 'Para publicar una partida, cambiá tu rol a Dungeon Master o Ambos desde Editar perfil.';
+    }
+  }
 
   async ngOnInit(): Promise<void> {
     try {
@@ -38,6 +42,10 @@ export class AccountComponent implements OnInit {
     return this.profile ? roleLabel(this.profile.role) : 'Sin completar';
   }
 
+  canCreateGames(): boolean {
+    return this.profile?.role === 'DM' || this.profile?.role === 'BOTH';
+  }
+
   async unblock(user: BlockedUser): Promise<void> {
     await this.profiles.unblockUser(user.uid);
     this.blockedUsers = this.blockedUsers.filter(item => item.uid !== user.uid);
@@ -56,7 +64,12 @@ export class AccountComponent implements OnInit {
 
   async logout(): Promise<void> {
     this.loggingOut = true;
-    try { await this.auth.logout(); }
+    try {
+      await this.auth.logout();
+    } catch (error) {
+      console.error('No se pudo cerrar la sesión.', error);
+      this.notice = 'No pudimos cerrar la sesión. Intentá nuevamente.';
+    }
     finally { this.loggingOut = false; }
   }
 }

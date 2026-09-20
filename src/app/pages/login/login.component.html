@@ -10,7 +10,7 @@
     <div class="glass-panel rounded-3xl p-6 sm:p-9">
       <h2 class="font-display text-3xl font-bold">Ingresar</h2>
       <p class="mt-2 text-sm text-mist">Usá la cuenta con la que te registraste en Rol Mendoza.</p>
-      <button type="button" class="google-button mt-6" (click)="loginWithGoogle()" [disabled]="googleSaving"><span class="google-mark">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
+      <button type="button" class="google-button mt-6" (click)="loginWithGoogle()" [disabled]="googleSaving || saving"><span class="google-mark">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
       <div class="my-6 flex items-center gap-3 text-xs uppercase tracking-widest text-mist"><span class="h-px flex-1 bg-white/10"></span>o con correo<span class="h-px flex-1 bg-white/10"></span></div>
       <form [formGroup]="form" (ngSubmit)="login()" class="space-y-5">
         <label class="block"><span class="field-label">Correo electrónico</span><input type="email" class="input-field" formControlName="email" autocomplete="email"></label>
@@ -18,7 +18,7 @@
         <div class="text-right"><button type="button" class="text-sm font-bold text-gold hover:text-parchment" (click)="resetPassword()" [disabled]="resetting">{{ resetting ? 'Enviando…' : 'Olvidé mi contraseña' }}</button></div>
         <p *ngIf="errorMessage" class="feedback-error" role="alert">{{ errorMessage }}</p>
         <p *ngIf="notice" class="feedback-success" role="status">{{ notice }}</p>
-        <button type="submit" class="btn-primary w-full" [disabled]="saving">{{ saving ? 'Ingresando…' : 'Ingresar' }}</button>
+        <button type="submit" class="btn-primary w-full" [disabled]="saving || googleSaving">{{ saving ? 'Ingresando…' : 'Ingresar' }}</button>
       </form>
       <p class="mt-6 text-center text-sm text-mist">¿Todavía no tenés cuenta? <a routerLink="/registrarme" class="font-bold text-gold hover:text-parchment">Registrate</a></p>
     </div>

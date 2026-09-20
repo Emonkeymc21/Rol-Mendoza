@@ -8,7 +8,7 @@
       <div class="flex items-center gap-2"><app-icon name="calendar" [size]="17"></app-icon><span>{{ game.schedule }}</span></div>
     </div>
     <div class="mt-5 flex items-center justify-between border-t border-white/[.08] pt-5">
-      <span class="text-sm"><strong class="text-parchment">{{ game.seats }}</strong> <span class="text-mist">lugares libres</span></span>
+      <span class="text-sm"><strong class="text-parchment">{{ game.status === 'FULL' ? 0 : game.seats }}</strong> <span class="text-mist">{{ game.status === 'FULL' ? 'sin cupos' : 'lugares libres' }}</span></span>
       <a [routerLink]="['/partidas', game.id]" class="inline-flex items-center gap-2 font-bold text-parchment transition group-hover:text-gold">Ver partida <app-icon name="arrow" [size]="18"></app-icon></a>
     </div>
   </div>

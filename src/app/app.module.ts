@@ -23,6 +23,7 @@ import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { LoginComponent } from './pages/login/login.component';
 import { AccountComponent } from './pages/account/account.component';
 import { CompleteProfileComponent } from './pages/complete-profile/complete-profile.component';
+import { MyGamesComponent } from './pages/my-games/my-games.component';
 
 @NgModule({
   declarations: [
@@ -43,7 +44,8 @@ import { CompleteProfileComponent } from './pages/complete-profile/complete-prof
     NotFoundComponent,
     LoginComponent,
     AccountComponent,
-    CompleteProfileComponent
+    CompleteProfileComponent,
+    MyGamesComponent
   ],
   imports: [
     BrowserModule,

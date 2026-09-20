@@ -22,7 +22,10 @@ No se utiliza Google Forms ni existe chat interno.
 - Bloqueo reversible que oculta mutuamente los perfiles en la aplicación y protege los contactos en Firestore.
 - Matching por ciudad, sistemas, modalidad y frecuencia.
 - Migración progresiva: un usuario anterior sin `profileCompleted` vuelve al onboarding.
-- Partidas moderadas mediante Apps Script y Google Sheets.
+- Partidas publicadas automáticamente mediante una API de Apps Script y Google Sheets.
+- Menú de usuario con perfil, edición, preferencias, partidas propias y cierre de sesión.
+- Creación restringida a roles `DM` y `BOTH`, validada también en el backend.
+- Edición, pausa, activación y cancelación de partidas por su propietario.
 - Diseño mobile-first para PC, Android, iPhone y tablets.
 - Configuración SPA lista para Vercel.
 
@@ -52,10 +55,12 @@ Después desplegá las reglas incluidas:
 
 ```bash
 npm install -g firebase-tools
-firebase login
-firebase use rol-mendoza
-firebase deploy --only firestore
+firebase.cmd login
+firebase.cmd use rol-mendoza
+firebase.cmd deploy --only firestore:rules,firestore:indexes
 ```
+
+En PowerShell se usa `firebase.cmd` para evitar que una política local bloquee el wrapper `firebase.ps1`.
 
 Las reglas aplican seguridad real en el backend. Ocultar botones en Angular no se utiliza como mecanismo de protección.
 
@@ -84,13 +89,24 @@ No hace falta ejecutar una migración masiva. Cuando un usuario existente inicia
 
 Firestore es la fuente principal para autenticación, perfiles, búsquedas, contactos, permisos y bloqueos.
 
-Google Sheets se conserva solamente para partidas, solicitudes, comentarios y moderación. El backend está en `google-apps-script/` y ya no consulta hojas de perfiles o cuentas.
+Google Sheets es la fuente de datos de partidas, solicitudes y comentarios. El backend está en `google-apps-script/` y no consulta hojas de perfiles o cuentas.
+
+Flujo de partidas:
+
+```text
+Angular → Firebase ID Token → Apps Script → Google Sheets
+```
+
+El navegador no contiene credenciales privadas de Google. Apps Script se ejecuta como el propietario de la hoja, valida el token de Firebase, comprueba el rol para crear y verifica `creador_uid` para modificar. Por esta arquitectura no hacen falta Service Accounts ni variables privadas adicionales en Vercel.
 
 Para actualizarlo:
 
 1. Copiá `google-apps-script/Code.gs` y `appsscript.json` al proyecto existente.
 2. Publicá una nueva versión de la aplicación web.
 3. Conservá la misma URL `/exec` configurada en los environments.
+4. Verificá que `?action=health` devuelva `version: 5.0.0`.
+
+La pestaña `PARTIDAS` ya está preparada con los campos adicionales, estados `ACTIVE`, `PAUSED`, `FULL`, `CANCELLED` y publicación inmediata al guardarse.
 
 ## Compilar producción
 
@@ -134,6 +150,7 @@ src/app/
 │   ├── register/
 │   ├── players/
 │   ├── games/
+│   ├── my-games/
 │   └── ...
 └── shared/components/
 ```

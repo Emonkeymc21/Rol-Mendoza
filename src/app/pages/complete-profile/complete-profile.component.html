@@ -37,7 +37,7 @@
           <div><span class="eyebrow">Paso 3</span><h2 class="mt-2 font-display text-3xl font-bold">Datos de contacto</h2><p class="mt-2 text-sm text-mist">Solo los usuarios DM o Ambos podrán solicitar estos datos.</p></div>
           <div class="mt-7 grid gap-5">
             <label><span class="field-label">WhatsApp / celular *</span><input class="input-field" formControlName="whatsapp" inputmode="tel" autocomplete="tel" placeholder="Ej: 261 555 1234"><span *ngIf="invalid('whatsapp')" class="error-text">Usá un número argentino de 10 dígitos con código de área.</span><small *ngIf="whatsappPreview" class="preview-link">Se guardará como {{ whatsappPreview }}</small></label>
-            <label><span class="field-label">Instagram <span class="text-mist">(opcional)</span></span><input class="input-field" formControlName="instagram" autocomplete="off" placeholder="@emma.coll.21"><span *ngIf="invalid('instagram')" class="error-text">Ingresá un usuario o enlace válido de Instagram.</span><small *ngIf="instagramPreview" class="preview-link">Se guardará como {{ instagramPreview }}</small></label>
+            <label><span class="field-label">Instagram <span class="text-mist">(opcional)</span></span><input class="input-field" formControlName="instagram" autocomplete="off" placeholder="Ej: @nombre.usuario"><span *ngIf="invalid('instagram')" class="error-text">Ingresá un usuario o enlace válido de Instagram.</span><small *ngIf="instagramPreview" class="preview-link">Se guardará como {{ instagramPreview }}</small></label>
             <label><span class="field-label">Teléfono alternativo <span class="text-mist">(opcional)</span></span><input class="input-field" formControlName="alternatePhone" inputmode="tel" autocomplete="tel-national"></label>
           </div>
         </section>
@@ -45,13 +45,21 @@
         <section *ngIf="step === 3" class="step-content">
           <div><span class="eyebrow">Paso 4</span><h2 class="mt-2 font-display text-3xl font-bold">Preferencias y privacidad</h2><p class="mt-2 text-sm text-mist">Esto mejora el orden de los resultados y ayuda a encontrar una mesa compatible.</p></div>
           <div class="mt-7 grid gap-5 sm:grid-cols-2">
-            <label class="sm:col-span-2"><span class="field-label">Sistemas preferidos *</span><input class="input-field" formControlName="systems" placeholder="D&D 5e, Pathfinder, Call of Cthulhu"><small class="mt-1 block text-xs text-mist">Separalos con comas.</small></label>
+            <label class="sm:col-span-2"><span class="field-label">Sistemas preferidos *</span><input class="input-field" formControlName="systems" placeholder="D&D 5e, Pathfinder, Call of Cthulhu"><small class="mt-1 block text-xs text-mist">Separalos con comas.</small><span *ngIf="invalid('systems')" class="error-text">Ingresá al menos un sistema.</span></label>
             <label><span class="field-label">Experiencia *</span><select class="input-field" formControlName="experience"><option>Estoy empezando</option><option>Principiante</option><option>Intermedia</option><option>Avanzada</option></select></label>
             <label><span class="field-label">Modalidad *</span><select class="input-field" formControlName="mode"><option>Presencial</option><option>Online</option><option>Mixto</option></select></label>
             <label><span class="field-label">Frecuencia *</span><select class="input-field" formControlName="frequency"><option>Semanal</option><option>Quincenal</option><option>Mensual</option><option>One-shot</option><option>A coordinar</option></select></label>
-            <label><span class="field-label">Disponibilidad *</span><input class="input-field" formControlName="availability" placeholder="Ej: viernes desde las 20 hs"></label>
+            <label><span class="field-label">Disponibilidad *</span><input class="input-field" formControlName="availability" placeholder="Ej: viernes desde las 20 hs"><span *ngIf="invalid('availability')" class="error-text">Indicá cuándo podrías participar.</span></label>
             <label class="sm:col-span-2"><span class="field-label">Ambiente o estilo preferido *</span><select class="input-field" formControlName="atmosphere"><option>Me adapto al grupo</option><option>Fantasía heroica y aventura</option><option>Terror y misterio</option><option>Ciencia ficción</option><option>Narrativa e interpretación</option><option>Combate táctico</option><option>Partidas casuales y sociales</option></select></label>
-            <label class="sm:col-span-2"><span class="field-label">Sobre vos y qué buscás *</span><textarea class="input-field min-h-[120px] resize-y" formControlName="bio" maxlength="420" placeholder="Contá qué tipo de historias, grupos o mesas preferís."></textarea></label>
+            <label class="sm:col-span-2">
+              <span class="field-label">Sobre vos y qué buscás *</span>
+              <textarea class="input-field min-h-[120px] resize-y" formControlName="bio" maxlength="500" placeholder="Contá qué tipo de historias, grupos o mesas preferís."></textarea>
+              <div class="mt-1 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                <span *ngIf="invalid('bio') && (form.controls.bio.errors?.['required'] || form.controls.bio.errors?.['minlength'])" class="error-text !mt-0">Contanos un poco más sobre vos. La descripción debe tener al menos 50 caracteres.</span>
+                <span *ngIf="invalid('bio') && form.controls.bio.errors?.['maxlength']" class="error-text !mt-0">La descripción puede tener como máximo 500 caracteres.</span>
+                <small class="ml-auto whitespace-nowrap text-xs" [class.text-gold]="bioLength < 50" [class.text-mist]="bioLength >= 50">{{ bioLength < 50 ? (bioLength + ' / 50 caracteres mínimos') : (bioLength + ' / 500') }}</small>
+              </div>
+            </label>
           </div>
 
           <label class="consent-box mt-6"><input type="checkbox" formControlName="privacyConsent"><span><strong>Acepto compartir mis datos de contacto con usuarios autorizados.</strong><small>Acepto que WhatsApp y, si lo proporciono, Instagram o teléfono alternativo puedan ser visualizados por usuarios registrados con rol DM o Ambos para organizar partidas. Instagram nunca es obligatorio. Podré bloquear usuarios y modificar o eliminar estos datos desde mi perfil.</small></span></label>
@@ -62,7 +70,7 @@
         <div class="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
           <button *ngIf="step > 0" type="button" class="btn-secondary" (click)="previous()">Volver</button><span *ngIf="step === 0"></span>
           <button *ngIf="step < steps.length - 1" type="button" class="btn-primary" (click)="next()">Continuar <app-icon name="arrow" [size]="18"></app-icon></button>
-          <button *ngIf="step === steps.length - 1" type="submit" class="btn-primary" [disabled]="saving || form.controls.privacyConsent.invalid">{{ saving ? 'Guardando…' : (editing ? 'Guardar cambios' : 'Completar perfil') }}</button>
+          <button *ngIf="step === steps.length - 1" type="submit" class="btn-primary" [disabled]="saving">{{ saving ? 'Guardando…' : (editing ? 'Guardar cambios' : 'Completar perfil') }}</button>
         </div>
       </div>
     </form>
