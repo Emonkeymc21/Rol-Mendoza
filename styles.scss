@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(111, 29, 42, .28), transparent 32rem),
+    radial-gradient(circle at 90% 18%, rgba(216, 173, 87, .08), transparent 26rem),
+    #130e10;
+  color: #f1e8d5;
+  font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+* { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+::selection { background: rgba(216, 173, 87, .35); color: #fff; }
+
+@layer components {
+  .page-shell { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+  .section-space { @apply py-14 sm:py-20; }
+  .eyebrow { @apply inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[.18em] text-gold; }
+  .display-title { @apply font-display text-4xl font-bold leading-[1.04] tracking-tight text-parchment sm:text-5xl lg:text-6xl; }
+  .section-title { @apply font-display text-3xl font-bold leading-tight text-parchment sm:text-4xl; }
+  .glass-panel { @apply border border-white/10 bg-panel/80 shadow-card backdrop-blur-md; }
+  .btn-primary { @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 font-bold text-ink transition hover:-translate-y-0.5 hover:bg-[#edc873] focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-ink active:translate-y-0; }
+  .btn-secondary { @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[.04] px-6 py-3 font-bold text-parchment transition hover:-translate-y-0.5 hover:border-gold/60 hover:bg-white/[.08] focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-ink active:translate-y-0; }
+  .input-field { @apply min-h-[48px] w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-parchment placeholder:text-mist/60 outline-none transition focus:border-gold/70 focus:ring-2 focus:ring-gold/20; }
+  .field-label { @apply mb-2 block text-sm font-semibold text-parchment; }
+  .tag { @apply inline-flex items-center rounded-full border border-white/10 bg-white/[.05] px-3 py-1 text-sm text-mist; }
+  .error-text { @apply mt-1 block text-xs text-red-200; }
+  .feedback-success { @apply mt-4 rounded-xl border border-gold/20 bg-gold/10 p-3 text-sm text-parchment; }
+  .feedback-error { @apply mt-4 rounded-xl border border-red-300/25 bg-red-950/30 p-3 text-sm text-red-100; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
