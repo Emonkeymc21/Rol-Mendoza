@@ -1,15 +1,29 @@
-<article class="group glass-panel flex h-full flex-col overflow-hidden rounded-2xl transition duration-300 hover:-translate-y-1 hover:border-gold/30">
-  <div class="h-1.5 w-full" [class.bg-gold]="game.featured" [class.bg-wine]="!game.featured"></div>
+<article class="game-card group">
+  <div class="game-card-accent"></div>
   <div class="flex h-full flex-col p-5 sm:p-6">
-    <div class="flex items-start justify-between gap-4"><div><p class="text-sm font-bold uppercase tracking-wider text-gold">{{ game.system }}</p><h3 class="mt-2 font-display text-2xl font-bold leading-tight text-parchment">{{ game.title }}</h3></div><span *ngIf="game.featured" class="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold text-gold">Destacada</span></div>
-    <p class="mt-4 line-clamp-3 text-sm leading-6 text-mist">{{ game.summary }}</p>
-    <div class="mt-5 grid gap-3 text-sm text-mist sm:grid-cols-2">
-      <div class="flex items-center gap-2"><app-icon name="map" [size]="17"></app-icon><span>{{ game.location }}</span></div>
-      <div class="flex items-center gap-2"><app-icon name="calendar" [size]="17"></app-icon><span>{{ game.schedule }}</span></div>
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="system-badge">{{ game.system }}</span>
+      <span class="meta-badge">{{ game.mode }}</span>
+      <span class="status-badge ml-auto" [class.status-full]="game.status === 'FULL'" [class.status-active]="game.status === 'ACTIVE'">{{ statusLabel() }}</span>
     </div>
-    <div class="mt-5 flex items-center justify-between border-t border-white/[.08] pt-5">
-      <span class="text-sm"><strong class="text-parchment">{{ game.status === 'FULL' ? 0 : game.seats }}</strong> <span class="text-mist">{{ game.status === 'FULL' ? 'sin cupos' : 'lugares libres' }}</span></span>
-      <a [routerLink]="['/partidas', game.id]" class="inline-flex items-center gap-2 font-bold text-parchment transition group-hover:text-gold">Ver partida <app-icon name="arrow" [size]="18"></app-icon></a>
+
+    <h3 class="mt-5 font-display text-2xl font-bold leading-tight text-parchment">{{ game.title }}</h3>
+    <div class="mt-3 flex items-center gap-2.5 text-sm text-mist">
+      <span class="master-avatar">{{ masterInitials() }}</span>
+      <span>Dirige <strong class="text-parchment">{{ game.gm }}</strong></span>
+    </div>
+
+    <p class="mt-4 line-clamp-3 flex-1 text-sm leading-6 text-mist">{{ game.summary }}</p>
+
+    <div class="game-meta mt-5">
+      <div><app-icon name="map" [size]="18"></app-icon><span><strong>{{ game.city }}</strong><small>{{ game.location }}</small></span></div>
+      <div><app-icon name="calendar" [size]="18"></app-icon><span><strong>{{ game.schedule }}</strong><small>{{ game.frequency }}</small></span></div>
+    </div>
+
+    <div class="mt-5 border-t border-white/[.08] pt-5">
+      <div class="flex items-center justify-between gap-4 text-sm"><span class="inline-flex items-center gap-2 text-mist"><app-icon name="users" [size]="17"></app-icon><strong class="text-parchment">{{ occupiedSeats() }} de {{ game.totalSeats }}</strong> jugadores</span><span class="text-xs font-bold text-gold">{{ game.status === 'FULL' ? 'Mesa completa' : (game.seats + ' lugares') }}</span></div>
+      <div class="capacity-track mt-3"><span [style.width.%]="capacityPercent()"></span></div>
+      <a [routerLink]="['/partidas', game.id]" class="game-card-action">Ver detalles <app-icon name="arrow" [size]="18"></app-icon></a>
     </div>
   </div>
 </article>

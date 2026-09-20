@@ -14,8 +14,12 @@ export class AccountComponent implements OnInit {
   loggingOut = false;
   deletingContact = false;
   notice = '';
+  successMessage = '';
 
   constructor(private auth: AuthService, private profiles: ProfileService, private router: Router, route: ActivatedRoute) {
+    if (route.snapshot.queryParamMap.get('updated')) {
+      this.successMessage = 'Perfil actualizado correctamente.';
+    }
     if (route.snapshot.queryParamMap.get('dmRequired')) {
       this.notice = 'Para publicar una partida, cambiá tu rol a Dungeon Master o Ambos desde Editar perfil.';
     }

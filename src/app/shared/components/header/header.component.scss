@@ -1,10 +1,25 @@
-.nav-link { @apply rounded-full px-4 py-2 text-sm font-semibold text-mist transition hover:bg-white/[.05] hover:text-parchment; }
-.nav-active { @apply bg-white/[.07] text-gold; }
-.mobile-link { @apply rounded-xl px-4 py-3 text-base font-semibold text-parchment hover:bg-white/[.06]; }
-.logo-die { width: 42px; height: 46px; display: grid; place-items: center; background: #6f1d2a; color: #f1e8d5; font-family: Georgia, serif; font-weight: 800; clip-path: polygon(50% 0, 95% 26%, 84% 82%, 50% 100%, 16% 82%, 5% 26%); filter: drop-shadow(0 0 10px rgba(216,173,87,.2)); }
+.site-header { border-bottom: 1px solid rgba(255,255,255,.08); background: rgba(19,14,16,.86); box-shadow: 0 12px 42px rgba(0,0,0,.2); backdrop-filter: blur(18px); }
+.brand { min-width: max-content; }
+.nav-link { @apply relative rounded-xl px-4 py-2.5 text-sm font-semibold text-mist transition hover:bg-white/[.05] hover:text-parchment; }
+.nav-link::after { content:''; position:absolute; right:1rem; bottom:.3rem; left:1rem; height:2px; border-radius:999px; background:#d8ad57; opacity:0; transform:scaleX(.3); transition:.2s ease; }
+.nav-active { @apply bg-white/[.05] text-parchment; }
+.nav-active::after { opacity:1; transform:scaleX(1); }
+.mobile-link { @apply flex min-h-[48px] items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold text-parchment transition hover:bg-white/[.06]; }
+.logo-die { width: 42px; height: 46px; display: grid; place-items: center; background: linear-gradient(145deg,#8b2737,#561520); color: #f1e8d5; font-family: Georgia, serif; font-weight: 800; clip-path: polygon(50% 0, 95% 26%, 84% 82%, 50% 100%, 16% 82%, 5% 26%); filter: drop-shadow(0 7px 14px rgba(0,0,0,.3)); transition:transform .2s ease; }
+.brand:hover .logo-die { transform:rotate(-4deg) translateY(-1px); }
 .logo-die span { transform: translateY(-1px); }
-.account-trigger { @apply flex min-h-[44px] items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-2 pr-4 text-sm text-parchment transition hover:border-gold/30; }
-.account-trigger img, .account-trigger > span:first-child { @apply grid h-8 w-8 place-items-center rounded-full bg-wine object-cover text-xs font-bold text-gold; }
-.account-dropdown { @apply absolute right-0 top-[calc(100%+.65rem)] z-50 min-w-[240px] overflow-hidden rounded-2xl border border-white/10 bg-ink p-2 shadow-2xl; }
-.account-dropdown a, .account-dropdown button { @apply block w-full rounded-xl px-4 py-3 text-left text-sm font-semibold text-mist transition hover:bg-white/[.06] hover:text-parchment disabled:opacity-50; }
+.create-game-link { @apply inline-flex min-h-[42px] items-center gap-2 rounded-xl border border-gold/25 bg-gold/10 px-4 text-sm font-bold text-gold transition hover:-translate-y-0.5 hover:border-gold/50 hover:bg-gold/15; }
+.account-trigger { @apply flex min-h-[46px] items-center gap-2 rounded-xl border border-white/10 bg-white/[.04] p-1.5 pr-3 text-sm text-parchment transition hover:border-gold/30 hover:bg-white/[.07]; }
+.account-trigger img, .account-trigger > span:first-child { @apply grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-wine object-cover text-xs font-bold text-gold; }
+.account-dropdown { @apply absolute right-0 top-[calc(100%+.75rem)] z-50 min-w-[280px] overflow-hidden rounded-2xl border border-white/10 bg-[#181114] p-2 shadow-2xl; box-shadow:0 24px 70px rgba(0,0,0,.5); }
+.account-summary { @apply m-1 flex flex-col rounded-xl border border-white/[.07] bg-white/[.035] px-4 py-3; }
+.account-summary strong { @apply text-sm text-parchment; }
+.account-summary span { @apply mt-0.5 max-w-[220px] truncate text-xs text-mist; }
+.account-summary small { @apply mt-2 w-fit rounded-full bg-gold/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold; }
+.account-links { @apply mt-1; }
+.account-dropdown a, .account-dropdown button { @apply flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-mist transition hover:bg-white/[.06] hover:text-parchment disabled:opacity-50; }
 .account-dropdown button { @apply mt-1 border-t border-white/[.08] text-red-200; }
+.mobile-account-summary { @apply mb-2 flex items-center gap-3 rounded-2xl border border-white/[.08] bg-white/[.04] p-3; }
+.mobile-account-summary img, .mobile-account-summary > span { @apply grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-wine object-cover text-sm font-bold text-gold; }
+.mobile-account-summary strong { @apply block text-sm text-parchment; }
+.mobile-account-summary small { @apply mt-0.5 block text-xs text-mist; }

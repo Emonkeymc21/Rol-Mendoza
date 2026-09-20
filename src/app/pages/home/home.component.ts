@@ -1,9 +1,13 @@
 import { Component } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
+import { take } from 'rxjs';
 import { Game } from '../../core/models/game.model';
 import { Player } from '../../core/models/player.model';
+import { UserProfile } from '../../core/models/user-profile.model';
+import { AuthService } from '../../core/services/auth.service';
 import { CommunityService } from '../../core/services/community.service';
+import { ProfileService } from '../../core/services/profile.service';
 
 @Component({ selector: 'app-home', templateUrl: './home.component.html', styleUrls: ['./home.component.scss'] })
 export class HomeComponent {
@@ -12,11 +16,19 @@ export class HomeComponent {
   playerCount = 0;
   gameCount = 0;
   systemCount = 0;
+  profile: UserProfile | null = null;
+  isAuthenticated = false;
   private allPlayers: Player[] = [];
   private allGames: Game[] = [];
   searchForm = this.fb.nonNullable.group({ type: 'partidas', query: '', mode: 'Cualquier modalidad' });
 
-  constructor(private fb: FormBuilder, private community: CommunityService, private router: Router) {
+  constructor(
+    private fb: FormBuilder,
+    private community: CommunityService,
+    private router: Router,
+    auth: AuthService,
+    profiles: ProfileService
+  ) {
     this.community.getPlayers().subscribe(players => {
       this.allPlayers = players;
       this.playerCount = players.length;
@@ -29,6 +41,16 @@ export class HomeComponent {
       this.games = games.slice(0, 3);
       this.updateSystemCount();
     });
+    auth.user$.pipe(take(1)).subscribe(user => {
+      this.isAuthenticated = Boolean(user);
+      if (user) {
+        void profiles.getOwnProfile().then(profile => this.profile = profile).catch(() => this.profile = null);
+      }
+    });
+  }
+
+  canCreateGames(): boolean {
+    return this.profile?.role === 'DM' || this.profile?.role === 'BOTH';
   }
 
   search(): void {

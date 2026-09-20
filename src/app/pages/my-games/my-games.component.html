@@ -44,8 +44,9 @@
     </div>
 
     <div *ngIf="!loading && !games.length" class="glass-panel rounded-2xl p-10 text-center">
-      <h2 class="font-display text-2xl font-bold">Todavía no publicaste partidas</h2>
-      <p class="mt-2 text-mist">Cuando publiques una mesa aparecerá acá para que puedas administrarla.</p>
+      <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-wine/40 text-gold"><app-icon name="dice" [size]="27"></app-icon></div>
+      <h2 class="mt-5 font-display text-2xl font-bold">Tu próxima aventura empieza acá</h2>
+      <p class="mx-auto mt-2 max-w-xl text-mist">Aún no creaste ninguna partida. Publicá una mesa y empezá a encontrar jugadores en Mendoza.</p>
       <a *ngIf="canCreate" routerLink="/partidas/nueva" class="btn-primary mt-5">Crear mi primera partida</a>
     </div>
   </div>

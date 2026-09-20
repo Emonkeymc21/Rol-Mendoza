@@ -28,6 +28,10 @@ Escrituras autenticadas:
 
 Cada POST incluye un Firebase ID token. Apps Script valida el token antes de escribir y obtiene desde Firebase el UID y el nombre del autor. No necesita una hoja de cuentas.
 
+La API usa un sobre de acciones porque los Web Apps de Apps Script exponen `doGet` y `doPost`. El frontend centraliza este contrato en `GoogleAppsScriptService`; los componentes nunca construyen requests por su cuenta. Antes de cada grupo de operaciones se comprueba que la versión publicada sea `5.0.0`, evitando crear datos contra un backend antiguo y fallar después al intentar listarlos.
+
+La hoja conserva nombres `snake_case` como `partida_id` y `creador_uid`. El adaptador del frontend los convierte al modelo Angular en `camelCase`, por lo que existe una sola traducción y no se mezclan convenciones dentro de los componentes.
+
 ## Publicar
 
 1. Abrí el proyecto actual de Apps Script.

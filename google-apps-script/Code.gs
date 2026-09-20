@@ -64,6 +64,9 @@ function doPost(e) {
     const action = cleanText_(request.action, 40);
     const payload = request.payload || {};
     if (!action) throw new Error('Falta indicar la acción.');
+    if (request.apiVersion && cleanText_(request.apiVersion, 20) !== CONFIG.apiVersion) {
+      throw new Error('La versión de la aplicación no coincide con la versión de la API.');
+    }
 
     const idToken = requiredText_(request.idToken, 'sesión', 5000);
     const user = verifyFirebaseToken_(idToken);

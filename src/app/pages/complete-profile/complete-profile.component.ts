@@ -160,7 +160,11 @@ export class CompleteProfileComponent implements OnInit {
     this.saving = true;
     try {
       await this.profiles.saveProfile(input);
-      await this.router.navigateByUrl(this.editing ? '/perfil' : this.returnUrl);
+      if (this.editing) {
+        await this.router.navigate(['/perfil'], { queryParams: { updated: '1' } });
+      } else {
+        await this.router.navigateByUrl(this.returnUrl);
+      }
     } catch (error) {
       console.error('No se pudo guardar el perfil.', error);
       this.errorMessage = this.messageFor(error);

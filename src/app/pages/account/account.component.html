@@ -1,5 +1,6 @@
 <section class="section-space">
   <div class="page-shell max-w-5xl" *ngIf="user$ | async as user">
+    <p *ngIf="successMessage" class="feedback-success mb-5" role="status">{{ successMessage }}</p>
     <div class="glass-panel overflow-hidden rounded-3xl">
       <div class="account-head p-6 sm:p-10">
         <span class="eyebrow">Mi cuenta</span>

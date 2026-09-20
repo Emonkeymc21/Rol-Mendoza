@@ -1,7 +1,7 @@
 import { Component, HostListener } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { catchError, filter, of, switchMap } from 'rxjs';
-import { UserProfile } from '../../../core/models/user-profile.model';
+import { roleLabel, UserProfile } from '../../../core/models/user-profile.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileService } from '../../../core/services/profile.service';
 
@@ -21,9 +21,13 @@ export class HeaderComponent {
       switchMap(user => user ? this.profiles.watchOwnProfile().pipe(catchError(() => of(null))) : of(null))
     ).subscribe(profile => this.profile = profile);
   }
-  toggleMenu(): void { this.menuOpen = !this.menuOpen; }
-  toggleAccountMenu(): void { this.accountMenuOpen = !this.accountMenuOpen; }
+  toggleMenu(): void { this.menuOpen = !this.menuOpen; this.accountMenuOpen = false; }
+  toggleAccountMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.accountMenuOpen = !this.accountMenuOpen;
+  }
   canCreateGames(): boolean { return this.profile?.role === 'DM' || this.profile?.role === 'BOTH'; }
+  roleText(): string { return this.profile ? roleLabel(this.profile.role) : 'Comunidad'; }
   initials(name: string | null | undefined): string {
     return (name || 'RM').split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]?.toUpperCase()).join('');
   }
@@ -38,4 +42,5 @@ export class HeaderComponent {
     this.menuOpen = false;
     this.accountMenuOpen = false;
   }
+  @HostListener('document:click') closeAccountMenu(): void { this.accountMenuOpen = false; }
 }
