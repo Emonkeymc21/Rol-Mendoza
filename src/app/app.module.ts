@@ -24,6 +24,8 @@ import { LoginComponent } from './pages/login/login.component';
 import { AccountComponent } from './pages/account/account.component';
 import { CompleteProfileComponent } from './pages/complete-profile/complete-profile.component';
 import { MyGamesComponent } from './pages/my-games/my-games.component';
+import { UserAvatarComponent } from './shared/components/user-avatar/user-avatar.component';
+import { AboutComponent } from './pages/about/about.component';
 
 @NgModule({
   declarations: [
@@ -45,7 +47,9 @@ import { MyGamesComponent } from './pages/my-games/my-games.component';
     LoginComponent,
     AccountComponent,
     CompleteProfileComponent,
-    MyGamesComponent
+    MyGamesComponent,
+    UserAvatarComponent,
+    AboutComponent
   ],
   imports: [
     BrowserModule,

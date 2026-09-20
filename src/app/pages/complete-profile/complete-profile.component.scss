@@ -8,6 +8,11 @@
 .stepper .active button, .stepper .done button { color:#f1e8d5; border-bottom-color:#d8ad57; }
 .stepper .active span, .stepper .done span { color:#130e10; background:#d8ad57; border-color:#d8ad57; }
 .step-content { animation:step-in .22s ease-out; }
+.avatar-picker { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; }
+.avatar-picker label { cursor:pointer; }
+.avatar-picker label > span { display:flex; min-height:72px; align-items:center; gap:.6rem; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:.6rem; color:#b9adb0; transition:.2s ease; }
+.avatar-picker input:checked + span { border-color:rgba(216,173,87,.62); background:rgba(216,173,87,.08); color:#f1e8d5; box-shadow:0 0 0 2px rgba(216,173,87,.1); }
+.avatar-picker strong { font-size:.78rem; }
 .role-option { display:flex; align-items:center; gap:1rem; padding:1rem; border:1px solid rgba(255,255,255,.1); border-radius:1rem; background:rgba(0,0,0,.15); cursor:pointer; transition:.2s ease; }
 .role-option:hover, .role-option:has(input:checked) { border-color:rgba(216,173,87,.65); background:rgba(216,173,87,.08); }
 .role-option input { width:1.15rem; height:1.15rem; accent-color:#d8ad57; }
@@ -20,3 +25,4 @@
 .consent-box small { margin-top:.45rem; color:#bfb3b0; line-height:1.55; }
 @keyframes step-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 @media(max-width:639px){.stepper small{display:none}.stepper button{min-height:60px;padding:.5rem}.stepper span{width:1.7rem;height:1.7rem}}
+@media(max-width:520px){.avatar-picker{grid-template-columns:repeat(2,minmax(0,1fr));}}

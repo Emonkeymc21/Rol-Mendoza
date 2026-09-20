@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
+import { matchesLocation, MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
 import { Player } from '../../core/models/player.model';
 import { CommunityService } from '../../core/services/community.service';
 
@@ -29,7 +29,7 @@ export class PlayersComponent {
       (!term || `${player.name} ${player.city} ${player.systems.join(' ')}`.toLowerCase().includes(term)) &&
       (role === 'Todos' || player.role === role || player.role === 'Ambos') &&
       (mode === 'Todas' || player.mode === mode || player.mode === 'Mixto') &&
-      (city === 'Todas' || player.city === city)
+      matchesLocation(player.city, city)
     );
   }
 }

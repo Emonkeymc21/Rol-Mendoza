@@ -65,7 +65,7 @@
               <article *ngFor="let item of comments" class="comment-card">
                 <div class="flex flex-wrap items-center justify-between gap-2"><strong>{{ item.nombre_publico }}</strong><time class="text-xs text-mist">{{ item.fecha | date:'d/M/yy' }}</time></div>
                 <p class="mt-2 whitespace-pre-line leading-7 text-mist">{{ item.comentario }}</p>
-                <p *ngIf="item.respuesta_admin" class="admin-reply"><strong>Equipo de Rol Mendoza:</strong> {{ item.respuesta_admin }}</p>
+                <p *ngIf="item.respuesta_admin" class="admin-reply"><strong>Equipo de Cumbre20:</strong> {{ item.respuesta_admin }}</p>
               </article>
             </div>
             <ng-template #noComments><p class="mt-6 rounded-2xl border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay comentarios publicados.</p></ng-template>

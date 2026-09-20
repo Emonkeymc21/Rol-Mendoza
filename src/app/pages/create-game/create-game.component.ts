@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
+import { MENDOZA_LOCATIONS, OTHER_LOCATION, resolveLocation, splitLocation } from '../../core/data/mendoza-locations';
 import { Game } from '../../core/models/game.model';
 import { AuthService } from '../../core/services/auth.service';
 import { GameService } from '../../core/services/game.service';
@@ -10,6 +10,7 @@ import { ProfileService } from '../../core/services/profile.service';
 @Component({ selector: 'app-create-game', templateUrl: './create-game.component.html', styleUrls: ['./create-game.component.scss'] })
 export class CreateGameComponent implements OnInit {
   readonly locations = MENDOZA_LOCATIONS;
+  readonly otherLocation = OTHER_LOCATION;
   submitted = false;
   saving = false;
   loading = false;
@@ -21,6 +22,7 @@ export class CreateGameComponent implements OnInit {
     title: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(120)]],
     system: ['', [Validators.required, Validators.maxLength(100)]],
     city: ['', Validators.required],
+    otherCity: ['', Validators.maxLength(80)],
     location: ['', Validators.required],
     mode: ['Presencial' as Game['mode'], Validators.required],
     date: ['', Validators.required],
@@ -49,6 +51,7 @@ export class CreateGameComponent implements OnInit {
   ) {
     this.gameId = route.snapshot.paramMap.get('id') || '';
     this.editing = Boolean(this.gameId);
+    this.form.controls.city.valueChanges.subscribe(() => this.updateOtherCityValidation());
   }
 
   async ngOnInit(): Promise<void> {
@@ -56,8 +59,9 @@ export class CreateGameComponent implements OnInit {
       this.loading = true;
       this.games.getOwnedGame(this.gameId).subscribe({
         next: game => {
+          const selectedLocation = splitLocation(game.city);
           this.form.patchValue({
-            title: game.title, system: game.system, city: game.city, location: game.location,
+            title: game.title, system: game.system, city: selectedLocation.city, otherCity: selectedLocation.otherCity, location: game.location,
             mode: game.mode, date: game.date, time: game.time, schedule: game.schedule,
             frequency: game.frequency, seats: game.seats, totalSeats: game.totalSeats,
             currentPlayers: game.currentPlayers, level: game.level,
@@ -65,6 +69,7 @@ export class CreateGameComponent implements OnInit {
             summary: game.summary, tone: game.tone, safety: game.safety,
             tags: game.tags.join(', ')
           });
+          this.updateOtherCityValidation();
           this.loading = false;
         },
         error: error => {
@@ -78,7 +83,8 @@ export class CreateGameComponent implements OnInit {
 
     try {
       const profile = await this.profiles.getOwnProfile();
-      if (profile?.city) this.form.patchValue({ city: profile.city });
+      if (profile?.city) this.form.patchValue(splitLocation(profile.city));
+      this.updateOtherCityValidation();
     } catch (error) {
       console.error('No se pudo precargar la ciudad del perfil.', error);
     }
@@ -105,8 +111,10 @@ export class CreateGameComponent implements OnInit {
     }
 
     this.saving = true;
+    const { otherCity, ...gameValues } = value;
     const game: Game = {
-      ...value,
+      ...gameValues,
+      city: resolveLocation(value.city, otherCity),
       id: this.gameId,
       gm: user.displayName || user.email?.split('@')[0] || 'Máster de la comunidad',
       masterUserId: user.uid,
@@ -136,5 +144,13 @@ export class CreateGameComponent implements OnInit {
   invalid(name: keyof typeof this.form.controls): boolean {
     const control = this.form.controls[name];
     return control.invalid && (control.touched || this.submitted);
+  }
+
+  private updateOtherCityValidation(): void {
+    const control = this.form.controls.otherCity;
+    control.setValidators(this.form.controls.city.value === OTHER_LOCATION
+      ? [Validators.required, Validators.minLength(2), Validators.maxLength(80)]
+      : [Validators.maxLength(80)]);
+    control.updateValueAndValidity({ emitEvent: false });
   }
 }

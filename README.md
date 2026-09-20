@@ -1,6 +1,8 @@
-# Rol Mendoza
+# Cumbre20
 
 Aplicación responsive en Angular 16 para conectar jugadores, Dungeon Masters y partidas de rol en Mendoza.
+
+Identidad pública: **Cumbre20 — Encontrá tu próxima mesa.** Los nombres técnicos del proyecto Firebase, el repositorio y la planilla se mantienen para no interrumpir integraciones existentes.
 
 ## Flujo actual
 
@@ -102,9 +104,12 @@ El navegador no contiene credenciales privadas de Google. Apps Script se ejecuta
 Para actualizarlo:
 
 1. Copiá `google-apps-script/Code.gs` y `appsscript.json` al proyecto existente.
-2. Publicá una nueva versión de la aplicación web.
-3. Conservá la misma URL `/exec` configurada en los environments.
-4. Verificá que `?action=health` devuelva `version: 5.0.0`.
+2. Ejecutá `autorizarServiciosCumbre20` desde el editor y aceptá los permisos solicitados.
+3. Editá el deployment existente y publicá una **Nueva versión**.
+4. Conservá la misma URL `/exec` configurada en los environments.
+5. Verificá que `?action=health` devuelva `version: 5.0.0`.
+
+`UrlFetchApp` es necesario: valida el Firebase ID Token contra Identity Toolkit y consulta el perfil de Firestore para confirmar el rol DM/BOTH. No existe una llamada HTTP del script hacia sí mismo. El manifiesto sólo solicita los scopes de Sheets y `script.external_request`.
 
 La pestaña `PARTIDAS` ya está preparada con los campos adicionales, estados `ACTIVE`, `PAUSED`, `FULL`, `CANCELLED` y publicación inmediata al guardarse.
 

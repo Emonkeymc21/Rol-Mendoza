@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
+import { matchesLocation, MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
 import { Game } from '../../core/models/game.model';
 import { GameService } from '../../core/services/game.service';
 import { ProfileService } from '../../core/services/profile.service';
@@ -33,7 +33,7 @@ export class GamesComponent {
     const term = q.trim().toLowerCase();
     this.games = this.allGames.filter(game =>
       (!term || `${game.title} ${game.system} ${game.location} ${game.tags.join(' ')}`.toLowerCase().includes(term)) &&
-      (city === 'Todas' || game.city === city) &&
+      matchesLocation(game.city, city) &&
       (mode === 'Todas' || game.mode === mode || game.mode === 'Mixto') &&
       (frequency === 'Todas' || game.frequency === frequency) &&
       (level === 'Todos' || game.level.toLowerCase().includes(level.toLowerCase()))

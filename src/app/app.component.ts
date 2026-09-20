@@ -7,7 +7,7 @@ import { AuthService } from './core/services/auth.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'Rol Mendoza';
+  title = 'Cumbre20';
   readonly authLoading$ = this.auth.loading$;
 
   constructor(private auth: AuthService) {}

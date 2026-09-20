@@ -3,9 +3,9 @@
   <div class="hero-orbit hero-orbit-one" aria-hidden="true"></div><div class="hero-orbit hero-orbit-two" aria-hidden="true"></div>
   <div class="page-shell relative grid min-h-[650px] items-center gap-10 py-14 lg:grid-cols-[1.08fr_.92fr] lg:py-20">
     <div class="max-w-3xl">
-      <span class="community-pill"><span></span> Mendoza · Argentina</span>
-      <h1 class="display-title mt-6">Encontrá personas.<br><span class="hero-highlight">Armá la mesa.</span></h1>
-      <p class="mt-6 max-w-2xl text-lg leading-8 text-mist">Una comunidad para descubrir partidas, conocer jugadores y reunir grupos de cualquier sistema de rol en Mendoza.</p>
+      <span class="community-pill"><span></span> Cumbre20 · Mendoza</span>
+      <h1 class="display-title mt-6">Encontrá tu<br><span class="hero-highlight">próxima mesa.</span></h1>
+      <p class="mt-6 max-w-2xl text-lg leading-8 text-mist">Conectá con jugadores y Dungeon Masters de Mendoza, descubrí nuevas partidas y empezá una historia con tu próximo grupo.</p>
       <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <a routerLink="/partidas" class="btn-primary">Buscar partidas <app-icon name="arrow" [size]="19"></app-icon></a>
         <a routerLink="/jugadores" class="btn-secondary"><app-icon name="users" [size]="19"></app-icon> Encontrar jugadores</a>
@@ -41,6 +41,8 @@
   <ng-template #noRecentGames><div class="home-empty mt-8"><div class="empty-icon"><app-icon name="dice" [size]="28"></app-icon></div><div><h3>La próxima historia puede ser la tuya</h3><p>Todavía no hay partidas activas para mostrar. Explorá nuevamente más tarde o publicá una mesa.</p></div><a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-primary">Crear partida</a></div></ng-template>
 </div></section>
 
+<section *ngIf="canCreateGames()" class="pb-14 sm:pb-20"><div class="page-shell"><div class="dm-callout"><div class="dm-mark"><app-icon name="dice" [size]="28"></app-icon></div><div><span class="eyebrow">Para Dungeon Masters</span><h2>Hay una historia esperando mesa.</h2><p>Publicá tu propuesta, indicá los cupos y encontrá jugadores de la comunidad.</p></div><a routerLink="/partidas/nueva" class="btn-primary">Publicar partida <app-icon name="arrow" [size]="18"></app-icon></a></div></div></section>
+
 <section class="community-section"><div class="page-shell">
   <div class="community-intro"><div><span class="eyebrow">Personas antes que personajes</span><h2 class="section-title mt-3">Encontrá un grupo compatible</h2><p class="mt-4 max-w-2xl text-mist">Conocé jugadores y Dungeon Masters por localidad, sistemas favoritos, modalidad y disponibilidad. Sin importar qué juego elijan.</p><a routerLink="/jugadores" class="btn-secondary mt-7"><app-icon name="users" [size]="19"></app-icon> Explorar la comunidad</a></div><app-dice-roller></app-dice-roller></div>
   <div *ngIf="players.length" class="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"><app-player-card *ngFor="let player of players" [player]="player"></app-player-card></div>
@@ -54,5 +56,7 @@
     <article class="journey-card"><span>03</span><div><h3>Coordiná con seguridad</h3><p>Contactá por los medios habilitados y empezá a organizar la partida.</p></div></article>
   </div>
 </div></section>
+
+<section class="about-strip"><div class="page-shell"><div><span class="eyebrow">Sobre Cumbre20</span><h2 class="section-title mt-3">Una comunidad para que ninguna aventura quede sin mesa.</h2><p class="mt-4 max-w-3xl text-mist">Cumbre20 nació para acercar jugadores, másters y personas que quieren empezar a jugar rol en Mendoza. Todos los sistemas y niveles de experiencia tienen lugar.</p></div><a routerLink="/nosotros" class="btn-secondary">Conocé el proyecto <app-icon name="arrow" [size]="18"></app-icon></a></div></section>
 
 <section class="pb-16 sm:pb-24"><div class="page-shell"><div class="cta-panel"><div><span class="eyebrow">Comunidad rolera mendocina</span><h2>Tu próxima mesa está más cerca.</h2><p>Sumate, completá tus preferencias y conectá con personas que también quieren jugar.</p></div><ng-container *ngIf="isAuthenticated; else guestCta"><a routerLink="/partidas" class="btn-primary">Explorar partidas <app-icon name="arrow" [size]="19"></app-icon></a></ng-container><ng-template #guestCta><a routerLink="/registrarme" class="btn-primary">Crear mi perfil <app-icon name="arrow" [size]="19"></app-icon></a></ng-template></div></div></section>

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { DocumentData } from 'firebase/firestore';
 import { BehaviorSubject, filter, Observable } from 'rxjs';
-import { MENDOZA_LOCATIONS } from '../data/mendoza-locations';
+import { avatarForUid, isAvatarType } from '../data/avatar-options';
 import { BlockedUser, ProfileInput, UserPrivateProfile, UserProfile } from '../models/user-profile.model';
 import { AuthService } from './auth.service';
 import { ContactNormalizerService } from './contact-normalizer.service';
@@ -149,6 +149,7 @@ export class ProfileService {
       province: 'Mendoza',
       city: input.city,
       photoURL: user.photoURL || '',
+      avatarType: input.avatarType,
       active: true,
       profileCompleted: true,
       preferences: {
@@ -242,7 +243,7 @@ export class ProfileService {
       profile?.profileCompleted
       && profile.firstName
       && profile.lastName
-      && MENDOZA_LOCATIONS.includes(profile.city)
+      && profile.city.trim().length >= 2
       && (profile.role === 'DM' || profile.role === 'PLAYER' || profile.role === 'BOTH')
       && profile.preferences.systems.length
       && profile.preferences.experience
@@ -270,6 +271,7 @@ export class ProfileService {
       province: 'Mendoza',
       city: String(data['city'] || ''),
       photoURL: String(data['photoURL'] || ''),
+      avatarType: isAvatarType(data['avatarType']) ? data['avatarType'] : avatarForUid(String(data['uid'] || '')),
       active: data['active'] !== false,
       profileCompleted: data['profileCompleted'] === true && hasValidRole,
       preferences: {

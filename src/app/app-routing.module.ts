@@ -18,26 +18,28 @@ import { IncompleteProfileGuard } from './core/guards/incomplete-profile.guard';
 import { GuestGuard } from './core/guards/guest.guard';
 import { DmGuard } from './core/guards/dm.guard';
 import { MyGamesComponent } from './pages/my-games/my-games.component';
+import { AboutComponent } from './pages/about/about.component';
 
 const routes: Routes = [
-  { path: '', component: HomeComponent, title: 'Rol Mendoza | Encontrá tu próxima mesa' },
-  { path: 'jugadores', component: PlayersComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Jugadores y másters | Rol Mendoza' },
-  { path: 'jugadores/:id', component: PlayerDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Perfil | Rol Mendoza' },
-  { path: 'partidas', component: GamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Partidas disponibles | Rol Mendoza' },
-  { path: 'partidas/nueva', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Crear una partida | Rol Mendoza' },
-  { path: 'mis-partidas', component: MyGamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis partidas | Rol Mendoza' },
-  { path: 'mis-partidas/:id/editar', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar partida | Rol Mendoza' },
-  { path: 'partidas/:id', component: GameDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Detalle de partida | Rol Mendoza' },
-  { path: 'como-funciona', component: HowItWorksComponent, title: 'Cómo funciona | Rol Mendoza' },
-  { path: 'registrarme', component: RegisterComponent, canActivate: [GuestGuard], title: 'Sumate | Rol Mendoza' },
+  { path: '', component: HomeComponent, title: 'Cumbre20 | Encontrá tu próxima mesa' },
+  { path: 'jugadores', component: PlayersComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Jugadores y másters | Cumbre20' },
+  { path: 'jugadores/:id', component: PlayerDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Perfil | Cumbre20' },
+  { path: 'partidas', component: GamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Partidas disponibles | Cumbre20' },
+  { path: 'partidas/nueva', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Crear una partida | Cumbre20' },
+  { path: 'mis-partidas', component: MyGamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis partidas | Cumbre20' },
+  { path: 'mis-partidas/:id/editar', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar partida | Cumbre20' },
+  { path: 'partidas/:id', component: GameDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Detalle de partida | Cumbre20' },
+  { path: 'como-funciona', component: HowItWorksComponent, title: 'Cómo funciona | Cumbre20' },
+  { path: 'nosotros', component: AboutComponent, title: 'Nosotros | Cumbre20' },
+  { path: 'registrarme', component: RegisterComponent, canActivate: [GuestGuard], title: 'Sumate | Cumbre20' },
   { path: 'registro', redirectTo: 'registrarme', pathMatch: 'full' },
-  { path: 'ingresar', component: LoginComponent, canActivate: [GuestGuard], title: 'Ingresar | Rol Mendoza' },
-  { path: 'completar-perfil', component: CompleteProfileComponent, canActivate: [AuthGuard, IncompleteProfileGuard], title: 'Completar perfil | Rol Mendoza' },
-  { path: 'perfil/editar', component: CompleteProfileComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar perfil | Rol Mendoza' },
+  { path: 'ingresar', component: LoginComponent, canActivate: [GuestGuard], title: 'Ingresar | Cumbre20' },
+  { path: 'completar-perfil', component: CompleteProfileComponent, canActivate: [AuthGuard, IncompleteProfileGuard], title: 'Completar perfil | Cumbre20' },
+  { path: 'perfil/editar', component: CompleteProfileComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar perfil | Cumbre20' },
   { path: 'editar-perfil', redirectTo: 'perfil/editar', pathMatch: 'full' },
-  { path: 'perfil', component: AccountComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mi perfil | Rol Mendoza' },
+  { path: 'perfil', component: AccountComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mi perfil | Cumbre20' },
   { path: 'mi-cuenta', redirectTo: 'perfil', pathMatch: 'full' },
-  { path: '404', component: NotFoundComponent, title: 'Página no encontrada | Rol Mendoza' },
+  { path: '404', component: NotFoundComponent, title: 'Página no encontrada | Cumbre20' },
   { path: '**', redirectTo: '404' }
 ];
 

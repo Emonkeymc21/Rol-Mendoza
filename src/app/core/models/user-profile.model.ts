@@ -1,3 +1,5 @@
+import type { AvatarType } from '../data/avatar-options';
+
 export type CommunityRole = 'DM' | 'PLAYER' | 'BOTH';
 export type PlayMode = 'Presencial' | 'Online' | 'Mixto';
 
@@ -20,6 +22,7 @@ export interface UserProfile {
   province: 'Mendoza';
   city: string;
   photoURL: string;
+  avatarType: AvatarType;
   active: boolean;
   profileCompleted: boolean;
   preferences: UserPreferences;
@@ -45,6 +48,7 @@ export interface ProfileInput {
   lastName: string;
   city: string;
   role: CommunityRole;
+  avatarType: AvatarType;
   whatsapp: string;
   instagram: string;
   alternatePhone: string;

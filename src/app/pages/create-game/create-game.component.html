@@ -38,6 +38,7 @@
             <p class="mt-1 text-sm text-mist">Dónde, cuándo y cuántos lugares hay.</p>
             <div class="mt-5 grid gap-5 sm:grid-cols-2">
               <label><span class="field-label">Ciudad *</span><select class="input-field" formControlName="city"><option value="">Seleccionar</option><option *ngFor="let location of locations" [value]="location">{{ location }}</option></select><span *ngIf="invalid('city')" class="error-text">Seleccioná una localidad.</span></label>
+              <label *ngIf="form.controls.city.value === otherLocation"><span class="field-label">¿En qué localidad? *</span><input class="input-field" formControlName="otherCity" placeholder="Ej: Las Heras"><span *ngIf="invalid('otherCity')" class="error-text">Ingresá la localidad.</span></label>
               <label><span class="field-label">Zona o plataforma *</span><input class="input-field" formControlName="location" placeholder="Godoy Cruz centro o Discord"><span *ngIf="invalid('location')" class="error-text">Indicá una zona aproximada o plataforma.</span></label>
               <label><span class="field-label">Modalidad *</span><select class="input-field" formControlName="mode"><option>Presencial</option><option>Online</option><option>Mixto</option></select></label>
               <label><span class="field-label">Fecha *</span><input type="date" class="input-field" formControlName="date"><span *ngIf="invalid('date')" class="error-text">Seleccioná una fecha.</span></label>

@@ -1,5 +1,5 @@
 /**
- * API de Rol Mendoza.
+ * API de Cumbre20.
  *
  * Lecturas públicas: partidas activas y comentarios.
  * Escrituras privadas: requieren un Firebase ID token válido.
@@ -25,6 +25,29 @@ const CONFIG = Object.freeze({
   })
 });
 
+/**
+ * Ejecutar una vez desde el editor después de cambiar permisos o publicar una
+ * versión. Fuerza el consentimiento para Sheets y solicitudes externas sin
+ * cambiar el deployment ni su URL pública.
+ */
+function autorizarServiciosCumbre20() {
+  const spreadsheet = SpreadsheetApp.openById(CONFIG.gamesSpreadsheetId);
+  const response = UrlFetchApp.fetch(
+    'https://www.googleapis.com/discovery/v1/apis/identitytoolkit/v3/rest',
+    { method: 'get', muteHttpExceptions: true }
+  );
+  const status = response.getResponseCode();
+  if (status < 200 || status >= 400) {
+    throw new Error('No se pudo comprobar el permiso de solicitudes externas. Código HTTP: ' + status);
+  }
+  return {
+    ok: true,
+    spreadsheet: spreadsheet.getName(),
+    externalRequest: true,
+    apiVersion: CONFIG.apiVersion
+  };
+}
+
 function doGet(e) {
   try {
     const params = (e && e.parameter) || {};
@@ -35,7 +58,7 @@ function doGet(e) {
         return json_({
           ok: true,
           data: {
-            service: 'Rol Mendoza API',
+            service: 'Cumbre20 API',
             version: CONFIG.apiVersion,
             auth: firebaseConfigured_() ? 'configured' : 'pending',
             timestamp: new Date().toISOString()

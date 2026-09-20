@@ -1,4 +1,4 @@
-# Backend de partidas de Rol Mendoza
+# Backend de partidas de Cumbre20
 
 Apps Script se utiliza como API segura para las partidas almacenadas en Google Sheets. Los perfiles, permisos, contactos y bloqueos pertenecen a Firestore.
 
@@ -41,6 +41,18 @@ La hoja conserva nombres `snake_case` como `partida_id` y `creador_uid`. El adap
 5. Editá la implementación web y elegí **Nueva versión**.
 6. Mantené **Ejecutar como: Yo** y **Quién tiene acceso: Cualquier persona**.
 7. Implementá. La URL `/exec` seguirá siendo la misma.
+
+## Autorizar Sheets y solicitudes externas
+
+La API valida el Firebase ID Token y el rol DM mediante servicios de Google. Por eso necesita los scopes de Sheets y `script.external_request` declarados en `appsscript.json`.
+
+1. En Apps Script abrí **Configuración del proyecto** y activá **Mostrar el archivo de manifiesto `appsscript.json` en el editor**.
+2. Confirmá que el manifiesto del editor coincide con el archivo de esta carpeta.
+3. Volvé al editor, elegí `autorizarServiciosCumbre20` en el selector de funciones y presioná **Ejecutar**.
+4. Elegí tu cuenta, revisá los permisos y presioná **Permitir**.
+5. Editá el deployment existente y seleccioná **Nueva versión**. No crees otro deployment: así la URL `/exec` no cambia.
+
+La autorización se realiza con la cuenta propietaria del deployment. No expone tokens ni credenciales en el navegador.
 
 ## Verificación
 

@@ -30,12 +30,15 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .glass-panel { @apply border border-white/10 bg-panel/80 shadow-card backdrop-blur-md; }
   .btn-primary { @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 font-bold text-ink transition hover:-translate-y-0.5 hover:bg-[#edc873] focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-ink active:translate-y-0; }
   .btn-secondary { @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[.04] px-6 py-3 font-bold text-parchment transition hover:-translate-y-0.5 hover:border-gold/60 hover:bg-white/[.08] focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-ink active:translate-y-0; }
+  .btn-ghost { @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 py-2 font-bold text-mist transition hover:bg-white/[.06] hover:text-parchment focus:outline-none focus:ring-2 focus:ring-gold/60; }
+  .btn-danger { @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-red-300/20 bg-red-950/20 px-4 py-2 font-bold text-red-200 transition hover:border-red-300/40 hover:bg-red-950/35; }
   .input-field { @apply min-h-[48px] w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-base text-parchment placeholder:text-mist/60 outline-none transition focus:border-gold/70 focus:ring-2 focus:ring-gold/20; }
   .field-label { @apply mb-2 block text-sm font-semibold text-parchment; }
   .tag { @apply inline-flex items-center rounded-full border border-white/10 bg-white/[.05] px-3 py-1 text-sm text-mist; }
   .error-text { @apply mt-1 block text-xs text-red-200; }
   .feedback-success { @apply mt-4 rounded-xl border border-gold/20 bg-gold/10 p-3 text-sm text-parchment; }
   .feedback-error { @apply mt-4 rounded-xl border border-red-300/25 bg-red-950/30 p-3 text-sm text-red-100; }
+  .loading-panel { @apply rounded-2xl border border-white/[.08] bg-white/[.025] p-8 text-center text-sm text-mist; }
 }
 
 @media (prefers-reduced-motion: reduce) {

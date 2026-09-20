@@ -1,8 +1,8 @@
-<footer class="mt-12 border-t border-white/[.08] bg-black/20">
-  <div class="page-shell grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]">
-    <div><div class="font-display text-xl font-bold text-parchment">Rol Mendoza</div><p class="mt-3 max-w-md text-sm text-mist">Un punto de encuentro para encontrar mesa, dirigir historias y hacer comunidad en Mendoza.</p></div>
-    <div><h2 class="text-sm font-bold uppercase tracking-wider text-gold">Explorar</h2><div class="mt-3 flex flex-col gap-2 text-sm text-mist"><a routerLink="/jugadores">Jugadores y másters</a><a routerLink="/partidas">Partidas abiertas</a><a routerLink="/como-funciona">Cómo funciona</a></div></div>
-    <div><h2 class="text-sm font-bold uppercase tracking-wider text-gold">Participar</h2><div class="mt-3 flex flex-col gap-2 text-sm text-mist"><a routerLink="/registrarme">Crear mi perfil</a><a routerLink="/jugadores">Buscar personas</a><a routerLink="/partidas">Buscar partidas</a></div></div>
+<footer class="site-footer">
+  <div class="page-shell footer-grid">
+    <div class="footer-brand"><a routerLink="/" class="flex items-center gap-3"><img src="assets/cumbre20-logo.svg" alt="" aria-hidden="true"><strong>Cumbre<span>20</span></strong></a><p>Encontrá tu próxima mesa. Una comunidad abierta para compartir historias y juegos de rol en Mendoza.</p></div>
+    <nav aria-label="Enlaces del pie"><h2>Explorar</h2><a routerLink="/">Inicio</a><a routerLink="/partidas">Partidas</a><a routerLink="/jugadores">Jugadores</a><a routerLink="/nosotros">Nosotros</a></nav>
+    <div><h2>Seguinos</h2><span class="social-coming"><app-icon name="instagram" [size]="20"></app-icon><span>Instagram<small>Próximamente</small></span></span></div>
   </div>
-  <div class="border-t border-white/[.06]"><div class="page-shell flex flex-col gap-2 py-5 text-sm text-mist sm:flex-row sm:items-center sm:justify-between"><span>© {{ year }} Rol Mendoza.</span><span>Hecho para que ninguna aventura quede sin mesa.</span></div></div>
+  <div class="footer-bottom"><div class="page-shell"><span>© {{ year }} Cumbre20</span><span>Comunidad rolera de Mendoza</span></div></div>
 </footer>

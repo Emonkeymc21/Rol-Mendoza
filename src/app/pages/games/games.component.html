@@ -23,7 +23,7 @@
     <div *ngIf="error$ | async as error" class="feedback-error mt-6" role="alert">{{ error }} <button type="button" class="ml-2 font-bold underline" (click)="retry()">Reintentar</button></div>
 
     <ng-container *ngIf="!(loading$ | async)">
-      <div class="mt-8 flex items-center justify-between"><p class="text-sm text-mist"><strong class="text-parchment">{{ games.length }}</strong> partidas disponibles</p><span class="inline-flex items-center gap-2 text-sm text-mist"><app-icon name="filter" [size]="17"></app-icon> Datos actualizados desde Google Sheets</span></div>
+      <div class="mt-8 flex items-center justify-between"><p class="text-sm text-mist"><strong class="text-parchment">{{ games.length }}</strong> partidas disponibles</p><span class="inline-flex items-center gap-2 text-sm text-mist"><app-icon name="check" [size]="17"></app-icon> Información actualizada</span></div>
       <div *ngIf="games.length; else noResults" class="mt-5 grid gap-5 lg:grid-cols-2"><app-game-card *ngFor="let game of games" [game]="game"></app-game-card></div>
       <ng-template #noResults>
         <div class="glass-panel mt-5 rounded-2xl p-10 text-center">

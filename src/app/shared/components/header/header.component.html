@@ -1,14 +1,14 @@
 <header class="site-header sticky top-0 z-50">
   <div class="page-shell flex min-h-[76px] items-center justify-between gap-5">
-    <a routerLink="/" class="brand group flex items-center gap-3" aria-label="Rol Mendoza, inicio">
-      <span class="logo-die" aria-hidden="true"><span>20</span></span>
-      <span><strong class="block font-display text-xl leading-none text-parchment">Rol Mendoza</strong><span class="mt-1 block text-[11px] font-semibold uppercase tracking-[.16em] text-mist">Encontrá tu mesa</span></span>
+    <a routerLink="/" class="brand group flex items-center gap-3" aria-label="Cumbre20, inicio">
+      <img class="brand-mark" src="assets/cumbre20-logo.svg" alt="" aria-hidden="true">
+      <span><strong class="block font-display text-xl leading-none text-parchment">Cumbre<span class="text-gold">20</span></strong><span class="mt-1 block text-[11px] font-semibold uppercase tracking-[.16em] text-mist">Encontrá tu próxima mesa</span></span>
     </a>
     <nav class="hidden items-center gap-1 lg:flex" aria-label="Navegación principal">
       <a routerLink="/" routerLinkActive="nav-active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">Inicio</a>
       <a routerLink="/partidas" routerLinkActive="nav-active" class="nav-link">Partidas</a>
       <a routerLink="/jugadores" routerLinkActive="nav-active" class="nav-link">Jugadores</a>
-      <a routerLink="/como-funciona" routerLinkActive="nav-active" class="nav-link">Comunidad</a>
+      <a routerLink="/nosotros" routerLinkActive="nav-active" class="nav-link">Nosotros</a>
     </nav>
 
     <div class="hidden items-center gap-3 lg:flex">
@@ -16,8 +16,7 @@
         <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="create-game-link"><app-icon name="plus" [size]="17"></app-icon> Crear partida</a>
         <div class="relative">
           <button type="button" class="account-trigger" (click)="toggleAccountMenu($event)" [attr.aria-expanded]="accountMenuOpen" aria-haspopup="menu">
-            <img *ngIf="profile?.photoURL || user.photoURL; else desktopInitials" [src]="profile?.photoURL || user.photoURL" alt="" referrerpolicy="no-referrer">
-            <ng-template #desktopInitials><span>{{ initials(profile?.displayName || user.displayName) }}</span></ng-template>
+            <app-user-avatar [photoURL]="profile?.photoURL || user.photoURL || ''" [avatarType]="profile?.avatarType || 'WARRIOR'" [name]="profile?.displayName || user.displayName || 'Mi cuenta'" size="sm"></app-user-avatar>
             <span class="hidden text-left xl:block"><strong class="block leading-tight">{{ profile?.firstName || user.displayName || 'Mi cuenta' }}</strong><small class="block text-[11px] text-mist">{{ roleText() }}</small></span>
             <app-icon name="chevron" [size]="16"></app-icon>
           </button>
@@ -46,12 +45,11 @@
       <a routerLink="/" class="mobile-link"><app-icon name="home" [size]="19"></app-icon> Inicio</a>
       <a routerLink="/partidas" class="mobile-link">Partidas</a>
       <a routerLink="/jugadores" class="mobile-link">Jugadores</a>
-      <a routerLink="/como-funciona" class="mobile-link">Comunidad</a>
+      <a routerLink="/nosotros" class="mobile-link">Nosotros</a>
       <ng-container *ngIf="user$ | async as user; else mobileGuest">
         <div class="my-2 border-t border-white/[.08]"></div>
         <div class="mobile-account-summary">
-          <img *ngIf="profile?.photoURL || user.photoURL; else mobileInitials" [src]="profile?.photoURL || user.photoURL" alt="" referrerpolicy="no-referrer">
-          <ng-template #mobileInitials><span>{{ initials(profile?.displayName || user.displayName) }}</span></ng-template>
+          <app-user-avatar [photoURL]="profile?.photoURL || user.photoURL || ''" [avatarType]="profile?.avatarType || 'WARRIOR'" [name]="profile?.displayName || user.displayName || 'Mi cuenta'" size="sm"></app-user-avatar>
           <div><strong>{{ profile?.displayName || user.displayName || user.email }}</strong><small>{{ roleText() }}</small></div>
         </div>
         <a routerLink="/perfil" class="mobile-link">Mi perfil</a>

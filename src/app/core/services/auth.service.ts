@@ -15,6 +15,7 @@ import {
 } from 'firebase/auth';
 import { BehaviorSubject, distinctUntilChanged, filter, firstValueFrom, map, Observable, take } from 'rxjs';
 import { FirebaseService } from './firebase.service';
+import { avatarForUid } from '../data/avatar-options';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -136,7 +137,7 @@ export class AuthService {
       'auth/unauthorized-domain': 'Este dominio todavía no está autorizado en Firebase Authentication.',
       'auth/operation-not-allowed': 'Este método de acceso no está habilitado en Firebase Authentication.',
       'auth/account-exists-with-different-credential': 'Ese correo ya utiliza otro método de acceso.',
-      'auth/user-disabled': 'Esta cuenta fue deshabilitada. Contactá al equipo de Rol Mendoza.',
+      'auth/user-disabled': 'Esta cuenta fue deshabilitada. Contactá al equipo de Cumbre20.',
       'auth/network-request-failed': 'No pudimos conectarnos. Revisá tu conexión e intentá otra vez.',
       'auth/too-many-requests': 'Hubo demasiados intentos. Esperá unos minutos antes de volver a probar.'
     };
@@ -191,6 +192,7 @@ export class AuthService {
       province: 'Mendoza',
       city: '',
       photoURL: user.photoURL || '',
+      avatarType: avatarForUid(user.uid),
       active: true,
       profileCompleted: false,
       preferences: {

@@ -1,6 +1,6 @@
 <article class="group glass-panel flex h-full flex-col rounded-2xl p-5 transition duration-300 hover:-translate-y-1 hover:border-gold/30">
   <div class="flex items-start gap-4">
-    <div class="avatar overflow-hidden" [style.background]="player.accent"><img *ngIf="player.photoURL; else initials" [src]="player.photoURL" [alt]="player.name" class="h-full w-full object-cover"><ng-template #initials>{{ player.initials }}</ng-template></div>
+    <app-user-avatar [photoURL]="player.photoURL || ''" [avatarType]="player.avatarType" [name]="player.name"></app-user-avatar>
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-2"><h3 class="truncate font-display text-xl font-bold text-parchment">{{ player.name }}</h3><span *ngIf="player.verified" class="text-gold" title="Perfil verificado"><app-icon name="shield" [size]="17"></app-icon></span></div>
       <p class="mt-1 text-sm font-semibold text-gold">{{ player.role }}</p>
@@ -11,8 +11,8 @@
   <p class="mt-4 line-clamp-3 flex-1 text-sm leading-6 text-mist">{{ player.bio }}</p>
   <div class="mt-5 flex flex-wrap gap-2"><span *ngFor="let system of player.systems.slice(0, 2)" class="tag">{{ system }}</span></div>
   <div *ngIf="contact?.whatsappUrl || contact?.instagramUrl" class="mt-5 flex flex-wrap gap-2 border-t border-white/[.08] pt-4">
-    <a *ngIf="contact?.whatsappUrl as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-mini">💬 WhatsApp</a>
-    <a *ngIf="contact?.instagramUrl as instagram" [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-mini">📷 Instagram</a>
+    <a *ngIf="contact?.whatsappUrl as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-mini"><app-icon name="whatsapp" [size]="16"></app-icon> WhatsApp</a>
+    <a *ngIf="contact?.instagramUrl as instagram" [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-mini"><app-icon name="instagram" [size]="16"></app-icon> Instagram</a>
   </div>
   <a [routerLink]="['/jugadores', player.id]" class="mt-5 inline-flex items-center gap-2 font-bold text-parchment transition group-hover:text-gold">Ver perfil <app-icon name="arrow" [size]="18"></app-icon></a>
 </article>

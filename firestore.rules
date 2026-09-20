@@ -14,6 +14,10 @@ service cloud.firestore {
       return role == 'DM' || role == 'PLAYER' || role == 'BOTH';
     }
 
+    function validAvatar(avatar) {
+      return avatar in ['ELF', 'DWARF', 'WARRIOR', 'DRUID', 'RANGER', 'WIZARD'];
+    }
+
     function currentUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
@@ -52,7 +56,7 @@ service cloud.firestore {
       let data = request.resource.data;
       return data.keys().hasOnly([
           'uid', 'displayName', 'firstName', 'lastName', 'role', 'province',
-          'city', 'photoURL', 'active', 'profileCompleted', 'preferences',
+          'city', 'photoURL', 'avatarType', 'active', 'profileCompleted', 'preferences',
           'createdAt', 'updatedAt'
         ])
         && data.uid == userId
@@ -68,6 +72,7 @@ service cloud.firestore {
         && data.city.size() <= 80
         && data.photoURL is string
         && data.photoURL.size() <= 1000
+        && validAvatar(data.avatarType)
         && data.active is bool
         && data.profileCompleted is bool
         && validPreferences(data.preferences, data.profileCompleted)

@@ -86,6 +86,7 @@ export class CommunityService {
       lookingFor: `${profile.preferences.atmosphere}. Busca jugar con frecuencia ${profile.preferences.frequency.toLowerCase()}.`,
       accent: this.colorFor(profile.uid || name),
       photoURL: profile.photoURL,
+      avatarType: profile.avatarType,
       matchScore: this.compatibility(profile, own),
       verified: profile.profileCompleted
     };

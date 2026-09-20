@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
+import { AVATAR_OPTIONS, AvatarType, avatarForUid } from '../../core/data/avatar-options';
+import { MENDOZA_LOCATIONS, OTHER_LOCATION, resolveLocation, splitLocation } from '../../core/data/mendoza-locations';
 import { CommunityRole, ProfileInput } from '../../core/models/user-profile.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ContactNormalizerService } from '../../core/services/contact-normalizer.service';
@@ -17,6 +18,8 @@ const exactLocationValidator = (): ValidatorFn => (control: AbstractControl): Va
 })
 export class CompleteProfileComponent implements OnInit {
   readonly locations = MENDOZA_LOCATIONS;
+  readonly otherLocation = OTHER_LOCATION;
+  readonly avatarOptions = AVATAR_OPTIONS;
   readonly roles: { value: CommunityRole; label: string; detail: string }[] = [
     { value: 'DM', label: 'Dungeon Master / DM', detail: 'Dirijo partidas y busco jugadores.' },
     { value: 'PLAYER', label: 'Jugador/a', detail: 'Busco mesas y nuevas aventuras.' },
@@ -34,7 +37,9 @@ export class CompleteProfileComponent implements OnInit {
     firstName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
     lastName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
     city: ['', [Validators.required, exactLocationValidator()]],
+    otherCity: ['', Validators.maxLength(80)],
     role: ['' as CommunityRole | '', Validators.required],
+    avatarType: ['WARRIOR' as AvatarType, Validators.required],
     whatsapp: ['', [Validators.required, this.whatsappValidator()]],
     alternatePhone: ['', Validators.maxLength(30)],
     instagram: ['', this.instagramValidator()],
@@ -59,6 +64,7 @@ export class CompleteProfileComponent implements OnInit {
     this.editing = route.snapshot.routeConfig?.path === 'perfil/editar';
     const requested = route.snapshot.queryParamMap.get('returnUrl') || '/';
     this.returnUrl = requested.startsWith('/') && !requested.startsWith('//') ? requested : '/';
+    this.form.controls.city.valueChanges.subscribe(() => this.updateOtherCityValidation());
   }
 
   async ngOnInit(): Promise<void> {
@@ -68,11 +74,14 @@ export class CompleteProfileComponent implements OnInit {
         this.profiles.getOwnPrivateProfile()
       ]);
       const nameParts = (this.auth.currentUser?.displayName || '').trim().split(/\s+/).filter(Boolean);
+      const selectedLocation = splitLocation(profile?.city === 'Mendoza' ? '' : profile?.city);
       this.form.patchValue({
         firstName: profile?.firstName || nameParts[0] || '',
         lastName: profile?.lastName || nameParts.slice(1).join(' '),
-        city: profile?.city === 'Mendoza' ? '' : profile?.city || '',
+        city: selectedLocation.city,
+        otherCity: selectedLocation.otherCity,
         role: profile?.profileCompleted ? profile.role : '',
+        avatarType: profile?.avatarType || avatarForUid(this.auth.currentUser?.uid || ''),
         whatsapp: privateProfile?.whatsappNumber || '',
         alternatePhone: privateProfile?.alternatePhone || '',
         instagram: privateProfile?.instagramUsername || '',
@@ -85,6 +94,7 @@ export class CompleteProfileComponent implements OnInit {
         bio: profile?.preferences.bio && !profile.preferences.bio.startsWith('Con ganas de') ? profile.preferences.bio : '',
         privacyConsent: privateProfile?.privacyConsent === true
       });
+      this.updateOtherCityValidation();
     } catch (error) {
       console.error('No se pudo cargar el perfil para el onboarding.', error);
       this.errorMessage = this.messageFor(error);
@@ -141,8 +151,9 @@ export class CompleteProfileComponent implements OnInit {
     const input: ProfileInput = {
       firstName: value.firstName,
       lastName: value.lastName,
-      city: value.city,
+      city: resolveLocation(value.city, value.otherCity),
       role: value.role as CommunityRole,
+      avatarType: value.avatarType,
       whatsapp: value.whatsapp,
       alternatePhone: value.alternatePhone,
       instagram: value.instagram,
@@ -174,7 +185,7 @@ export class CompleteProfileComponent implements OnInit {
   }
 
   private controlsForStep(step: number): AbstractControl[] {
-    if (step === 0) return [this.form.controls.firstName, this.form.controls.lastName, this.form.controls.city];
+    if (step === 0) return [this.form.controls.firstName, this.form.controls.lastName, this.form.controls.city, this.form.controls.otherCity, this.form.controls.avatarType];
     if (step === 1) return [this.form.controls.role];
     if (step === 2) return [this.form.controls.whatsapp, this.form.controls.alternatePhone, this.form.controls.instagram];
     return [
@@ -191,7 +202,7 @@ export class CompleteProfileComponent implements OnInit {
 
   private invalidFormMessage(): string {
     const labels: Partial<Record<keyof typeof this.form.controls, string>> = {
-      firstName: 'el nombre', lastName: 'el apellido', city: 'la localidad', role: 'el rol',
+      firstName: 'el nombre', lastName: 'el apellido', city: 'la localidad', otherCity: 'tu localidad', role: 'el rol', avatarType: 'el avatar',
       whatsapp: 'el WhatsApp', instagram: 'Instagram', systems: 'los sistemas preferidos',
       availability: 'la disponibilidad', bio: 'la presentación personal',
       privacyConsent: 'el consentimiento de privacidad'
@@ -213,6 +224,14 @@ export class CompleteProfileComponent implements OnInit {
   private instagramValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null =>
       !control.value || this.contacts.normalizeInstagram(String(control.value)) ? null : { instagram: true };
+  }
+
+  private updateOtherCityValidation(): void {
+    const control = this.form.controls.otherCity;
+    control.setValidators(this.form.controls.city.value === OTHER_LOCATION
+      ? [Validators.required, Validators.minLength(2), Validators.maxLength(80)]
+      : [Validators.maxLength(80)]);
+    control.updateValueAndValidity({ emitEvent: false });
   }
 
   private messageFor(error: unknown): string {

@@ -37,6 +37,14 @@
 .cta-panel h2 { @apply mt-3 max-w-3xl font-display text-3xl font-bold sm:text-4xl; }
 .cta-panel p { @apply mt-3 max-w-2xl text-mist; }
 .cta-panel .btn-primary { @apply shrink-0; }
+.dm-callout { @apply flex flex-col gap-5 rounded-3xl border border-gold/20 bg-white/[.025] p-6 sm:p-8 lg:flex-row lg:items-center; }
+.dm-mark { @apply grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-wine/60 text-gold; }
+.dm-callout h2 { @apply mt-2 font-display text-2xl font-bold sm:text-3xl; }
+.dm-callout p { @apply mt-2 text-sm text-mist; }
+.dm-callout .btn-primary { @apply lg:ml-auto lg:shrink-0; }
+.about-strip { @apply border-y border-white/[.06] bg-black/15 py-14 sm:py-20; }
+.about-strip > div { @apply flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between; }
+.about-strip .btn-secondary { @apply shrink-0 self-start lg:self-auto; }
 select option { background:#1d1518; }
 
 @media (max-width: 639px) {

@@ -5,20 +5,15 @@
       <div class="account-head p-6 sm:p-10">
         <span class="eyebrow">Mi cuenta</span>
         <div class="mt-5 flex flex-col gap-5 sm:flex-row sm:items-center">
-          <img *ngIf="profile?.photoURL || user.photoURL; else initialsAvatar" class="avatar object-cover" [src]="profile?.photoURL || user.photoURL" alt="Foto de perfil" referrerpolicy="no-referrer">
-          <ng-template #initialsAvatar><div class="avatar">{{ (user.displayName || user.email || 'RM').slice(0, 2).toUpperCase() }}</div></ng-template>
-          <div><h1 class="font-display text-4xl font-bold">{{ profile?.displayName || user.displayName || 'Aventurero/a' }}</h1><p class="mt-1 text-mist">{{ user.email }}</p></div>
+          <app-user-avatar [photoURL]="profile?.photoURL || user.photoURL || ''" [avatarType]="profile?.avatarType || 'WARRIOR'" [name]="profile?.displayName || user.displayName || 'Mi perfil'" size="lg"></app-user-avatar>
+          <div><div class="flex flex-wrap items-center gap-3"><h1 class="font-display text-4xl font-bold">{{ profile?.displayName || user.displayName || 'Aventurero/a' }}</h1><span class="profile-role">{{ roleText() }}</span></div><p class="mt-2 flex items-center gap-2 text-mist"><app-icon name="map" [size]="17"></app-icon>{{ profile?.city }}</p></div>
         </div>
       </div>
       <div *ngIf="!loading" class="grid gap-6 p-6 sm:p-10 lg:grid-cols-[1fr_300px]">
         <div>
-          <h2 class="font-display text-2xl font-bold">Tu perfil</h2>
-          <div class="mt-5 grid gap-4 sm:grid-cols-2">
-            <div class="account-tile"><span>Correo</span><strong>{{ user.emailVerified ? 'Verificado' : 'Pendiente de verificar' }}</strong></div>
-            <div class="account-tile"><span>Ciudad</span><strong>{{ profile?.city }}</strong></div>
-            <div class="account-tile"><span>Rol</span><strong>{{ roleText() }}</strong></div>
-          </div>
-          <div *ngIf="!user.emailVerified" class="mt-5 rounded-2xl border border-gold/25 bg-gold/10 p-4 text-sm text-mist">Revisá tu correo y abrí el enlace de Firebase para verificar la dirección.</div>
+          <h2 class="font-display text-2xl font-bold">Sobre mí</h2>
+          <p class="profile-bio">{{ profile?.preferences?.bio }}</p>
+          <div *ngIf="!user.emailVerified" class="mt-5 rounded-2xl border border-gold/25 bg-gold/10 p-4 text-sm text-mist">Revisá tu correo y abrí el enlace de verificación para confirmar la dirección.</div>
           <section class="mt-7 rounded-2xl border border-white/[.08] bg-black/20 p-5">
             <h2 class="font-display text-xl font-bold">Preferencias</h2>
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
@@ -27,7 +22,6 @@
               <div><span class="text-sm text-mist">Frecuencia</span><p class="mt-1 font-semibold">{{ profile?.preferences?.frequency }}</p></div>
               <div><span class="text-sm text-mist">Disponibilidad</span><p class="mt-1 font-semibold">{{ profile?.preferences?.availability }}</p></div>
             </div>
-            <p *ngIf="profile?.preferences?.bio" class="mt-4 whitespace-pre-line text-sm leading-6 text-mist">{{ profile?.preferences?.bio }}</p>
           </section>
           <section class="mt-7 rounded-2xl border border-white/[.08] bg-black/20 p-5">
             <h2 class="font-display text-xl font-bold">Contacto guardado</h2>

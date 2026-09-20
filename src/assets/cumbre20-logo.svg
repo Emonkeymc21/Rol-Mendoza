@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 96" role="img" aria-labelledby="title desc">
+  <title id="title">Cumbre20</title><desc id="desc">Silueta de Mendoza con un dado de veinte caras integrado</desc>
+  <defs><linearGradient id="m" x1="12" y1="8" x2="74" y2="88" gradientUnits="userSpaceOnUse"><stop stop-color="#b34a55"/><stop offset="1" stop-color="#651d2b"/></linearGradient></defs>
+  <path fill="url(#m)" d="M29 3 47 8l5 10 14 4-3 12 9 11-7 12 2 16-13 4-6 15-14-7-9 7-7-18-9-8 7-12-3-14 10-9-2-14Z"/>
+  <path fill="#201418" stroke="#f1d28a" stroke-width="2" stroke-linejoin="round" d="m43 26 18 10 1 21-19 12-19-12 1-21Z"/>
+  <path fill="none" stroke="#f1d28a" stroke-width="1.6" stroke-linejoin="round" d="m25 36 18 8 18-8M43 44v25M25 57l18-13 19 13"/>
+  <text x="43" y="42" fill="#f6ead1" font-family="Georgia,serif" font-size="13" font-weight="700" text-anchor="middle">20</text>
+</svg>

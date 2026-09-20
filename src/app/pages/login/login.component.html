@@ -9,7 +9,7 @@
 
     <div class="glass-panel rounded-3xl p-6 sm:p-9">
       <h2 class="font-display text-3xl font-bold">Ingresar</h2>
-      <p class="mt-2 text-sm text-mist">Usá la cuenta con la que te registraste en Rol Mendoza.</p>
+      <p class="mt-2 text-sm text-mist">Usá la cuenta con la que te registraste en Cumbre20.</p>
       <button type="button" class="google-button mt-6" (click)="loginWithGoogle()" [disabled]="googleSaving || saving"><span class="google-mark">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
       <div class="my-6 flex items-center gap-3 text-xs uppercase tracking-widest text-mist"><span class="h-px flex-1 bg-white/10"></span>o con correo<span class="h-px flex-1 bg-white/10"></span></div>
       <form [formGroup]="form" (ngSubmit)="login()" class="space-y-5">
