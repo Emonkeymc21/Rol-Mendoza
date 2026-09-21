@@ -1,3 +1,4 @@
-.login-art { background: radial-gradient(circle at 80% 10%, rgba(216, 173, 87, .18), transparent 16rem), linear-gradient(145deg, rgba(111, 29, 42, .62), rgba(29, 21, 24, .92)); border: 1px solid rgba(255,255,255,.1); }
-.google-button { @apply flex min-h-[50px] w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/[.06] px-5 font-bold text-parchment transition hover:border-gold/50 hover:bg-white/[.1] disabled:cursor-not-allowed disabled:opacity-50; }
+.login-art { background:radial-gradient(circle at 80% 10%,var(--brand-soft),transparent 16rem),linear-gradient(145deg,var(--surface-brand),var(--surface));border:1px solid var(--border); }
+.google-button { @apply flex min-h-[50px] w-full items-center justify-center gap-3 rounded-xl px-5 font-bold transition disabled:cursor-not-allowed disabled:opacity-50; border:1px solid var(--border-strong);background:var(--surface-muted);color:var(--text-primary); }
+.google-button:hover { border-color:var(--brand-border);background:var(--surface-hover); }
 .google-mark { @apply grid h-7 w-7 place-items-center rounded-full bg-white font-bold text-[#4285f4]; }

@@ -19,8 +19,8 @@
 
     <div *ngIf="!loading && games.length" class="grid gap-5 lg:grid-cols-2">
       <article *ngFor="let game of games" class="glass-panel rounded-2xl p-5 sm:p-6">
-        <div class="flex items-start justify-between gap-4">
-          <div>
+        <div class="game-admin-head flex items-start justify-between gap-4">
+          <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-wider text-gold">{{ game.system }}</p>
             <h2 class="mt-2 font-display text-2xl font-bold">{{ game.title }}</h2>
           </div>
@@ -32,7 +32,8 @@
           <span>{{ game.seats }} de {{ game.totalSeats }} lugares libres</span>
           <span>Actualizada: {{ game.updatedAt | date:'d/M/yy, HH:mm' }}</span>
         </div>
-        <div class="mt-6 flex flex-wrap gap-2 border-t border-white/[.08] pt-5">
+        <div class="game-admin-actions mt-6 flex flex-wrap gap-2 pt-5">
+          <a *ngIf="canCreate" [routerLink]="['/solicitudes']" [queryParams]="{ gameId: game.id }" class="request-button"><app-icon name="users" [size]="17"></app-icon> Solicitudes <span *ngIf="requestCount(game.id)">{{ requestCount(game.id) }}</span></a>
           <a [routerLink]="['/mis-partidas', game.id, 'editar']" class="btn-secondary !min-h-[40px] !px-4">Editar</a>
           <button *ngIf="game.status !== 'ACTIVE'" type="button" class="action-button" (click)="changeStatus(game, 'ACTIVE')" [disabled]="busyGameId === game.id">Activar</button>
           <button *ngIf="game.status === 'ACTIVE' || game.status === 'FULL'" type="button" class="action-button" (click)="changeStatus(game, 'PAUSED')" [disabled]="busyGameId === game.id">Pausar</button>

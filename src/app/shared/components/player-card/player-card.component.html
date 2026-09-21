@@ -1,16 +1,16 @@
-<article class="group glass-panel flex h-full flex-col rounded-2xl p-5 transition duration-300 hover:-translate-y-1 hover:border-gold/30">
-  <div class="flex items-start gap-4">
+<article class="player-card group glass-panel flex h-full flex-col rounded-2xl p-4 transition duration-300 hover:-translate-y-1 hover:border-gold/30 sm:p-5">
+  <div class="player-card-head flex min-w-0 items-start gap-3 sm:gap-4">
     <app-user-avatar [photoURL]="player.photoURL || ''" [avatarType]="player.avatarType" [name]="player.name"></app-user-avatar>
     <div class="min-w-0 flex-1">
-      <div class="flex items-center gap-2"><h3 class="truncate font-display text-xl font-bold text-parchment">{{ player.name }}</h3><span *ngIf="player.verified" class="text-gold" title="Perfil verificado"><app-icon name="shield" [size]="17"></app-icon></span></div>
+      <div class="flex min-w-0 items-start gap-2"><h3 class="player-card-name font-display text-xl font-bold text-parchment">{{ player.name }}</h3><span *ngIf="player.verified" class="shrink-0 text-gold" title="Perfil completo"><app-icon name="shield" [size]="17"></app-icon></span></div>
       <p class="mt-1 text-sm font-semibold text-gold">{{ player.role }}</p>
     </div>
-    <span *ngIf="player.matchScore" class="rounded-full bg-gold/10 px-2.5 py-1 text-xs font-bold text-gold">{{ player.matchScore }}% afín</span>
+    <span *ngIf="player.matchScore" class="match-badge">{{ player.matchScore }}% afín</span>
   </div>
   <div class="mt-5 flex items-center gap-2 text-sm text-mist"><app-icon name="map" [size]="17"></app-icon><span>{{ player.city }}</span></div>
   <p class="mt-4 line-clamp-3 flex-1 text-sm leading-6 text-mist">{{ player.bio }}</p>
   <div class="mt-5 flex flex-wrap gap-2"><span *ngFor="let system of player.systems.slice(0, 2)" class="tag">{{ system }}</span></div>
-  <div *ngIf="contact?.whatsappUrl || contact?.instagramUrl" class="mt-5 flex flex-wrap gap-2 border-t border-white/[.08] pt-4">
+  <div *ngIf="contact?.whatsappUrl || contact?.instagramUrl" class="player-card-contact mt-5 flex flex-wrap gap-2 pt-4">
     <a *ngIf="contact?.whatsappUrl as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-mini"><app-icon name="whatsapp" [size]="16"></app-icon> WhatsApp</a>
     <a *ngIf="contact?.instagramUrl as instagram" [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-mini"><app-icon name="instagram" [size]="16"></app-icon> Instagram</a>
   </div>

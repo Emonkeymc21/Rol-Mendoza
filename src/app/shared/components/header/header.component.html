@@ -1,5 +1,5 @@
 <header class="site-header sticky top-0 z-50">
-  <div class="page-shell flex min-h-[76px] items-center justify-between gap-5">
+  <div class="header-row page-shell flex min-h-[76px] items-center justify-between gap-5">
     <a routerLink="/" class="brand group flex items-center gap-3" aria-label="Cumbre20, inicio">
       <img class="brand-mark" src="assets/cumbre20-logo.svg" alt="" aria-hidden="true">
       <span><strong class="block font-display text-xl leading-none text-parchment">Cumbre<span class="text-gold">20</span></strong><span class="mt-1 block text-[11px] font-semibold uppercase tracking-[.16em] text-mist">Encontrá tu próxima mesa</span></span>
@@ -14,6 +14,7 @@
     <div class="hidden items-center gap-3 lg:flex">
       <ng-container *ngIf="user$ | async as user; else desktopGuest">
         <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="create-game-link"><app-icon name="plus" [size]="17"></app-icon> Crear partida</a>
+        <a routerLink="/notificaciones" class="notification-trigger" aria-label="Notificaciones"><app-icon name="bell" [size]="21"></app-icon><span *ngIf="unreadCount$ | async as unread">{{ unread > 99 ? '99+' : unread }}</span></a>
         <div class="relative">
           <button type="button" class="account-trigger" (click)="toggleAccountMenu($event)" [attr.aria-expanded]="accountMenuOpen" aria-haspopup="menu">
             <app-user-avatar [photoURL]="profile?.photoURL || user.photoURL || ''" [avatarType]="profile?.avatarType || 'WARRIOR'" [name]="profile?.displayName || user.displayName || 'Mi cuenta'" size="sm"></app-user-avatar>
@@ -26,7 +27,11 @@
               <a routerLink="/perfil" role="menuitem"><app-icon name="user" [size]="18"></app-icon> Mi perfil</a>
               <a routerLink="/perfil/editar" role="menuitem"><app-icon name="edit" [size]="18"></app-icon> Editar perfil</a>
               <a routerLink="/mis-partidas" role="menuitem"><app-icon name="dice" [size]="18"></app-icon> Mis partidas</a>
+              <a routerLink="/mis-solicitudes" role="menuitem"><app-icon name="check" [size]="18"></app-icon> Mis solicitudes</a>
+              <a *ngIf="canCreateGames()" routerLink="/solicitudes" role="menuitem"><app-icon name="users" [size]="18"></app-icon> Solicitudes de jugadores</a>
+              <a routerLink="/notificaciones" role="menuitem"><app-icon name="bell" [size]="18"></app-icon> Notificaciones</a>
               <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" role="menuitem"><app-icon name="plus" [size]="18"></app-icon> Crear partida</a>
+              <div class="theme-picker" aria-label="Tema visual"><span>Tema</span><div><button type="button" [class.active]="themePreference === 'system'" (click)="setTheme('system')" title="Usar tema del sistema"><app-icon name="monitor" [size]="16"></app-icon></button><button type="button" [class.active]="themePreference === 'light'" (click)="setTheme('light')" title="Tema claro"><app-icon name="sun" [size]="16"></app-icon></button><button type="button" [class.active]="themePreference === 'dark'" (click)="setTheme('dark')" title="Tema oscuro"><app-icon name="moon" [size]="16"></app-icon></button></div></div>
               <button type="button" role="menuitem" (click)="logout()" [disabled]="loggingOut"><app-icon name="logout" [size]="18"></app-icon> {{ loggingOut ? 'Cerrando…' : 'Cerrar sesión' }}</button>
             </div>
           </div>
@@ -35,19 +40,17 @@
       <ng-template #desktopGuest><a routerLink="/ingresar" class="nav-link">Ingresar</a><a routerLink="/registrarme" class="btn-primary !min-h-[42px] !px-5">Registrarme</a></ng-template>
     </div>
 
-    <button type="button" class="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[.04] lg:hidden" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen" aria-label="Abrir menú">
-      <app-icon [name]="menuOpen ? 'close' : 'menu'" [size]="23"></app-icon>
-    </button>
+    <div class="mobile-header-actions lg:hidden"><a *ngIf="user$ | async" routerLink="/notificaciones" class="notification-trigger" aria-label="Notificaciones"><app-icon name="bell" [size]="21"></app-icon><span *ngIf="unreadCount$ | async as unread">{{ unread > 99 ? '99+' : unread }}</span></a><button type="button" class="menu-trigger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen" aria-label="Abrir menú"><app-icon [name]="menuOpen ? 'close' : 'menu'" [size]="23"></app-icon></button></div>
   </div>
 
-  <div *ngIf="menuOpen" class="border-t border-white/[.08] bg-ink px-4 pb-5 pt-3 lg:hidden">
+  <div *ngIf="menuOpen" class="mobile-menu px-4 pb-5 pt-3 lg:hidden">
     <nav class="mx-auto flex max-w-7xl flex-col gap-1" aria-label="Navegación móvil">
       <a routerLink="/" class="mobile-link"><app-icon name="home" [size]="19"></app-icon> Inicio</a>
       <a routerLink="/partidas" class="mobile-link">Partidas</a>
       <a routerLink="/jugadores" class="mobile-link">Jugadores</a>
       <a routerLink="/nosotros" class="mobile-link">Nosotros</a>
       <ng-container *ngIf="user$ | async as user; else mobileGuest">
-        <div class="my-2 border-t border-white/[.08]"></div>
+        <div class="mobile-divider my-2"></div>
         <div class="mobile-account-summary">
           <app-user-avatar [photoURL]="profile?.photoURL || user.photoURL || ''" [avatarType]="profile?.avatarType || 'WARRIOR'" [name]="profile?.displayName || user.displayName || 'Mi cuenta'" size="sm"></app-user-avatar>
           <div><strong>{{ profile?.displayName || user.displayName || user.email }}</strong><small>{{ roleText() }}</small></div>
@@ -55,7 +58,11 @@
         <a routerLink="/perfil" class="mobile-link">Mi perfil</a>
         <a routerLink="/perfil/editar" class="mobile-link">Editar perfil</a>
         <a routerLink="/mis-partidas" class="mobile-link">Mis partidas</a>
+        <a routerLink="/mis-solicitudes" class="mobile-link"><app-icon name="check" [size]="19"></app-icon> Mis solicitudes</a>
+        <a *ngIf="canCreateGames()" routerLink="/solicitudes" class="mobile-link"><app-icon name="users" [size]="19"></app-icon> Solicitudes de jugadores</a>
+        <a routerLink="/notificaciones" class="mobile-link"><app-icon name="bell" [size]="19"></app-icon> Notificaciones</a>
         <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="mobile-link">Crear partida</a>
+        <div class="mobile-theme-picker"><span>Tema</span><div><button type="button" [class.active]="themePreference === 'system'" (click)="setTheme('system')"><app-icon name="monitor" [size]="17"></app-icon> Sistema</button><button type="button" [class.active]="themePreference === 'light'" (click)="setTheme('light')"><app-icon name="sun" [size]="17"></app-icon> Claro</button><button type="button" [class.active]="themePreference === 'dark'" (click)="setTheme('dark')"><app-icon name="moon" [size]="17"></app-icon> Oscuro</button></div></div>
         <button type="button" class="mobile-link text-left" (click)="logout()" [disabled]="loggingOut">{{ loggingOut ? 'Cerrando…' : 'Cerrar sesión' }}</button>
       </ng-container>
       <ng-template #mobileGuest><a routerLink="/ingresar" class="mobile-link">Ingresar</a><a routerLink="/registrarme" class="btn-primary mt-3">Registrarme</a></ng-template>

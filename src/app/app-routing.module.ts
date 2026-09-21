@@ -19,6 +19,9 @@ import { GuestGuard } from './core/guards/guest.guard';
 import { DmGuard } from './core/guards/dm.guard';
 import { MyGamesComponent } from './pages/my-games/my-games.component';
 import { AboutComponent } from './pages/about/about.component';
+import { MyRequestsComponent } from './pages/my-requests/my-requests.component';
+import { DmRequestsComponent } from './pages/dm-requests/dm-requests.component';
+import { NotificationsComponent } from './pages/notifications/notifications.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent, title: 'Cumbre20 | Encontrá tu próxima mesa' },
@@ -27,6 +30,9 @@ const routes: Routes = [
   { path: 'partidas', component: GamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Partidas disponibles | Cumbre20' },
   { path: 'partidas/nueva', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Crear una partida | Cumbre20' },
   { path: 'mis-partidas', component: MyGamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis partidas | Cumbre20' },
+  { path: 'mis-solicitudes', component: MyRequestsComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis solicitudes | Cumbre20' },
+  { path: 'solicitudes', component: DmRequestsComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Solicitudes de jugadores | Cumbre20' },
+  { path: 'notificaciones', component: NotificationsComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Notificaciones | Cumbre20' },
   { path: 'mis-partidas/:id/editar', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar partida | Cumbre20' },
   { path: 'partidas/:id', component: GameDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Detalle de partida | Cumbre20' },
   { path: 'como-funciona', component: HowItWorksComponent, title: 'Cómo funciona | Cumbre20' },

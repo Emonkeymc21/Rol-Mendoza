@@ -20,7 +20,7 @@
       <div><app-icon name="calendar" [size]="18"></app-icon><span><strong>{{ game.schedule }}</strong><small>{{ game.frequency }}</small></span></div>
     </div>
 
-    <div class="mt-5 border-t border-white/[.08] pt-5">
+    <div class="game-card-footer mt-5 pt-5">
       <div class="flex items-center justify-between gap-4 text-sm"><span class="inline-flex items-center gap-2 text-mist"><app-icon name="users" [size]="17"></app-icon><strong class="text-parchment">{{ occupiedSeats() }} de {{ game.totalSeats }}</strong> jugadores</span><span class="text-xs font-bold text-gold">{{ game.status === 'FULL' ? 'Mesa completa' : (game.seats + ' lugares') }}</span></div>
       <div class="capacity-track mt-3"><span [style.width.%]="capacityPercent()"></span></div>
       <a [routerLink]="['/partidas', game.id]" class="game-card-action">Ver detalles <app-icon name="arrow" [size]="18"></app-icon></a>

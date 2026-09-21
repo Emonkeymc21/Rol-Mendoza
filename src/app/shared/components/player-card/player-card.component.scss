@@ -1,1 +1,7 @@
-.contact-mini { @apply inline-flex min-h-[38px] items-center rounded-full border border-white/10 bg-white/[.05] px-3 py-2 text-xs font-bold text-parchment transition hover:border-gold/50 hover:text-gold; }
+.player-card { min-width:0;overflow:hidden; }
+.player-card-name { display:-webkit-box;min-width:0;overflow:hidden;overflow-wrap:anywhere;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.15; }
+.match-badge { flex:0 0 auto;border:1px solid var(--brand-border);border-radius:999px;background:var(--brand-soft);padding:.25rem .55rem;color:var(--brand-secondary);font-size:.68rem;font-weight:800; }
+.player-card-contact { border-top:1px solid var(--border); }
+.contact-mini { @apply inline-flex min-h-[38px] items-center rounded-full px-3 py-2 text-xs font-bold transition; border:1px solid var(--border);background:var(--surface-muted);color:var(--text-primary); }
+.contact-mini:hover { border-color:var(--brand-border);color:var(--brand-secondary); }
+@media(max-width:359px){.player-card-head{flex-wrap:wrap}.match-badge{margin-left:66px}}

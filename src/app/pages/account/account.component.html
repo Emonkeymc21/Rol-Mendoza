@@ -2,11 +2,11 @@
   <div class="page-shell max-w-5xl" *ngIf="user$ | async as user">
     <p *ngIf="successMessage" class="feedback-success mb-5" role="status">{{ successMessage }}</p>
     <div class="glass-panel overflow-hidden rounded-3xl">
-      <div class="account-head p-6 sm:p-10">
+      <div class="account-head p-5 sm:p-10">
         <span class="eyebrow">Mi cuenta</span>
-        <div class="mt-5 flex flex-col gap-5 sm:flex-row sm:items-center">
+        <div class="account-identity mt-5">
           <app-user-avatar [photoURL]="profile?.photoURL || user.photoURL || ''" [avatarType]="profile?.avatarType || 'WARRIOR'" [name]="profile?.displayName || user.displayName || 'Mi perfil'" size="lg"></app-user-avatar>
-          <div><div class="flex flex-wrap items-center gap-3"><h1 class="font-display text-4xl font-bold">{{ profile?.displayName || user.displayName || 'Aventurero/a' }}</h1><span class="profile-role">{{ roleText() }}</span></div><p class="mt-2 flex items-center gap-2 text-mist"><app-icon name="map" [size]="17"></app-icon>{{ profile?.city }}</p></div>
+          <div class="account-identity-copy"><div class="account-name-row"><h1>{{ profile?.displayName || user.displayName || 'Aventurero/a' }}</h1><span class="profile-role">{{ roleText() }}</span></div><p class="account-location"><app-icon name="map" [size]="17"></app-icon>{{ profile?.city }}</p></div>
         </div>
       </div>
       <div *ngIf="!loading" class="grid gap-6 p-6 sm:p-10 lg:grid-cols-[1fr_300px]">
@@ -14,7 +14,7 @@
           <h2 class="font-display text-2xl font-bold">Sobre mí</h2>
           <p class="profile-bio">{{ profile?.preferences?.bio }}</p>
           <div *ngIf="!user.emailVerified" class="mt-5 rounded-2xl border border-gold/25 bg-gold/10 p-4 text-sm text-mist">Revisá tu correo y abrí el enlace de verificación para confirmar la dirección.</div>
-          <section class="mt-7 rounded-2xl border border-white/[.08] bg-black/20 p-5">
+          <section class="account-section mt-7">
             <h2 class="font-display text-xl font-bold">Preferencias</h2>
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
               <div><span class="text-sm text-mist">Sistemas</span><p class="mt-1 font-semibold">{{ profile?.preferences?.systems?.join(', ') || 'Sin especificar' }}</p></div>
@@ -23,19 +23,19 @@
               <div><span class="text-sm text-mist">Disponibilidad</span><p class="mt-1 font-semibold">{{ profile?.preferences?.availability }}</p></div>
             </div>
           </section>
-          <section class="mt-7 rounded-2xl border border-white/[.08] bg-black/20 p-5">
+          <section class="account-section mt-7">
             <h2 class="font-display text-xl font-bold">Contacto guardado</h2>
             <dl class="mt-4 space-y-3 text-sm"><div><dt class="text-mist">WhatsApp</dt><dd class="font-semibold">{{ privateProfile?.whatsappNumber || 'Sin cargar' }}</dd></div><div *ngIf="privateProfile?.instagramUsername"><dt class="text-mist">Instagram</dt><dd class="font-semibold">@{{ privateProfile?.instagramUsername }}</dd></div><div *ngIf="privateProfile?.alternatePhone"><dt class="text-mist">Teléfono alternativo</dt><dd class="font-semibold">{{ privateProfile?.alternatePhone }}</dd></div></dl>
             <p class="mt-4 text-xs leading-5 text-mist">Estos datos solamente pueden ser consultados por usuarios autenticados con rol DM o Ambos que no estén bloqueados.</p>
             <button type="button" class="mt-4 text-sm font-bold text-red-200 hover:text-red-100" (click)="deleteContactData()" [disabled]="deletingContact">{{ deletingContact ? 'Eliminando…' : 'Eliminar mis datos de contacto' }}</button>
           </section>
-          <section class="mt-7 rounded-2xl border border-white/[.08] bg-black/20 p-5">
+          <section class="account-section mt-7">
             <h2 class="font-display text-xl font-bold">Usuarios bloqueados</h2>
             <p *ngIf="!blockedUsers.length" class="mt-3 text-sm text-mist">No bloqueaste a ninguna persona.</p>
             <div *ngIf="blockedUsers.length" class="mt-4 divide-y divide-white/[.08]"><div *ngFor="let blocked of blockedUsers" class="flex items-center justify-between gap-4 py-3"><span class="font-semibold">{{ blocked.displayName }}</span><button type="button" class="text-sm font-bold text-gold hover:text-parchment" (click)="unblock(blocked)">Desbloquear</button></div></div>
           </section>
         </div>
-        <aside class="rounded-2xl border border-white/[.08] bg-black/20 p-5">
+        <aside class="account-section account-actions">
           <h2 class="font-display text-xl font-bold">Acciones rápidas</h2>
           <a routerLink="/perfil/editar" class="btn-primary mt-5 w-full">Editar mi perfil</a>
           <a *ngIf="profile" [routerLink]="['/jugadores', profile.uid]" class="btn-secondary mt-3 w-full">Ver perfil público</a>

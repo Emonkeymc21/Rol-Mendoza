@@ -18,6 +18,10 @@ service cloud.firestore {
       return avatar in ['ELF', 'DWARF', 'WARRIOR', 'DRUID', 'RANGER', 'WIZARD'];
     }
 
+    function validJoinStatus(status) {
+      return status in ['PENDING', 'APPROVED', 'REJECTED'];
+    }
+
     function currentUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
@@ -174,6 +178,67 @@ service cloud.firestore {
           || request.resource.data.createdAt == resource.data.createdAt)
         && ((!('privacyConsentAt' in resource.data) && request.resource.data.privacyConsentAt == request.time)
           || request.resource.data.privacyConsentAt == resource.data.privacyConsentAt);
+      allow delete: if ownDocument(userId);
+    }
+
+    match /gameJoinRequests/{requestId} {
+      allow get, list: if signedIn()
+        && (resource.data.playerUid == request.auth.uid || resource.data.dmUid == request.auth.uid);
+      // Las solicitudes se crean en Apps Script después de validar el token y
+      // obtener el creatorUid directamente desde la partida en Sheets.
+      allow create, delete: if false;
+      allow update: if signedIn()
+        && resource.data.dmUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'seenByDm', 'seenAt', 'resolvedAt', 'updatedAt'
+        ])
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.gameId == resource.data.gameId
+        && request.resource.data.playerUid == resource.data.playerUid
+        && request.resource.data.dmUid == resource.data.dmUid
+        && validJoinStatus(request.resource.data.status)
+        && request.resource.data.seenByDm == true
+        && request.resource.data.updatedAt == request.time
+        && (
+          (resource.data.status == 'PENDING'
+            && request.resource.data.status == 'PENDING'
+            && request.resource.data.seenAt == request.time
+            && !('resolvedAt' in request.resource.data))
+          ||
+          (resource.data.status == 'PENDING'
+            && request.resource.data.status in ['APPROVED', 'REJECTED']
+            && request.resource.data.resolvedAt == request.time
+            && ((resource.data.seenByDm == true && request.resource.data.seenAt == resource.data.seenAt)
+              || (resource.data.seenByDm == false && request.resource.data.seenAt == request.time)))
+        );
+    }
+
+    match /users/{userId}/notifications/{notificationId} {
+      allow get, list: if ownDocument(userId);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'id', 'type', 'title', 'message', 'gameId', 'gameTitle',
+          'requestId', 'actorUid', 'read', 'createdAt'
+        ])
+        && request.resource.data.id == notificationId
+        && ((request.resource.data.type == 'REQUEST_APPROVED'
+              && notificationId == request.resource.data.requestId + '-approved')
+          || (request.resource.data.type == 'REQUEST_REJECTED'
+              && notificationId == request.resource.data.requestId + '-rejected'))
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.read == false
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.type in ['REQUEST_APPROVED', 'REQUEST_REJECTED']
+        && getAfter(/databases/$(database)/documents/gameJoinRequests/$(request.resource.data.requestId)).data.dmUid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/gameJoinRequests/$(request.resource.data.requestId)).data.playerUid == userId
+        && ((getAfter(/databases/$(database)/documents/gameJoinRequests/$(request.resource.data.requestId)).data.status == 'APPROVED'
+              && request.resource.data.type == 'REQUEST_APPROVED')
+          || (getAfter(/databases/$(database)/documents/gameJoinRequests/$(request.resource.data.requestId)).data.status == 'REJECTED'
+              && request.resource.data.type == 'REQUEST_REJECTED'));
+      allow update: if ownDocument(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt'])
+        && request.resource.data.read == true
+        && request.resource.data.readAt == request.time;
       allow delete: if ownDocument(userId);
     }
 

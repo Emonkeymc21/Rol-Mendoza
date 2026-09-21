@@ -37,6 +37,7 @@ export interface PublicComment {
 
 export interface ApiMutationResult {
   id: string;
-  status: 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'FULL' | 'received' | 'published';
+  status: 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'FULL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'received' | 'published';
   message: string;
+  duplicate?: boolean;
 }

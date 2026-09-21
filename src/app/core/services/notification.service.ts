@@ -1,0 +1,200 @@
+import { Injectable } from '@angular/core';
+import type { DocumentData } from 'firebase/firestore';
+import { map, Observable, shareReplay } from 'rxjs';
+import { AppNotification, GameJoinRequest, JoinRequestStatus } from '../models/join-request.model';
+import { AuthService } from './auth.service';
+import { FirebaseService } from './firebase.service';
+
+@Injectable({ providedIn: 'root' })
+export class NotificationService {
+  readonly notifications$: Observable<AppNotification[]>;
+  readonly unreadCount$: Observable<number>;
+
+  constructor(private auth: AuthService, private firebase: FirebaseService) {
+    this.notifications$ = this.watchNotifications().pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    this.unreadCount$ = this.notifications$.pipe(map(items => items.filter(item => !item.read).length));
+  }
+
+  watchMyRequests(): Observable<GameJoinRequest[]> {
+    return this.watchRequests('playerUid');
+  }
+
+  watchDmRequests(): Observable<GameJoinRequest[]> {
+    return this.watchRequests('dmUid');
+  }
+
+  watchNotifications(): Observable<AppNotification[]> {
+    return new Observable(subscriber => {
+      let stopped = false;
+      let unsubscribe: (() => void) | undefined;
+      void this.loadFirestore().then(({ api, database }) => {
+        if (stopped) return;
+        const uid = this.requireUid();
+        const notifications = api.query(
+          api.collection(database, 'users', uid, 'notifications'),
+          api.orderBy('createdAt', 'desc'),
+          api.limit(60)
+        );
+        unsubscribe = api.onSnapshot(notifications, snapshot => {
+          subscriber.next(snapshot.docs.map(item => this.mapNotification(item.data())));
+        }, error => subscriber.error(error));
+      }).catch(error => subscriber.error(error));
+      return () => { stopped = true; unsubscribe?.(); };
+    });
+  }
+
+  async markSeen(request: GameJoinRequest): Promise<void> {
+    if (request.seenByDm) return;
+    const uid = this.requireUid();
+    if (request.dmUid !== uid) throw new Error('No tenés permisos para abrir esta solicitud.');
+    const { api, database } = await this.loadFirestore();
+    await api.updateDoc(api.doc(database, 'gameJoinRequests', request.id), {
+      seenByDm: true,
+      seenAt: api.serverTimestamp(),
+      updatedAt: api.serverTimestamp()
+    });
+  }
+
+  async resolve(request: GameJoinRequest, status: Exclude<JoinRequestStatus, 'PENDING'>): Promise<void> {
+    const uid = this.requireUid();
+    if (request.dmUid !== uid) throw new Error('No tenés permisos para resolver esta solicitud.');
+    if (request.status !== 'PENDING') throw new Error('Esta solicitud ya fue resuelta.');
+    const { api, database } = await this.loadFirestore();
+    const batch = api.writeBatch(database);
+    const requestRef = api.doc(database, 'gameJoinRequests', request.id);
+    const notificationId = `${request.id}-${status.toLowerCase()}`;
+    const notificationRef = api.doc(database, 'users', request.playerUid, 'notifications', notificationId);
+    const requestUpdate: DocumentData = {
+      status,
+      seenByDm: true,
+      resolvedAt: api.serverTimestamp(),
+      updatedAt: api.serverTimestamp()
+    };
+    if (!request.seenByDm) requestUpdate['seenAt'] = api.serverTimestamp();
+    batch.update(requestRef, requestUpdate);
+    batch.set(notificationRef, {
+      id: notificationId,
+      type: status === 'APPROVED' ? 'REQUEST_APPROVED' : 'REQUEST_REJECTED',
+      title: status === 'APPROVED' ? '¡Solicitud aceptada!' : 'Actualización de tu solicitud',
+      message: status === 'APPROVED'
+        ? `Te aceptaron en “${request.gameTitle}”.`
+        : `Tu solicitud para “${request.gameTitle}” no fue aceptada.`,
+      gameId: request.gameId,
+      gameTitle: request.gameTitle,
+      requestId: request.id,
+      actorUid: uid,
+      read: false,
+      createdAt: api.serverTimestamp()
+    });
+    await batch.commit();
+  }
+
+  async markRead(notification: AppNotification): Promise<void> {
+    if (notification.read) return;
+    const uid = this.requireUid();
+    const { api, database } = await this.loadFirestore();
+    await api.updateDoc(api.doc(database, 'users', uid, 'notifications', notification.id), {
+      read: true,
+      readAt: api.serverTimestamp()
+    });
+  }
+
+  async markJoinNotificationRead(requestId: string): Promise<void> {
+    const uid = this.requireUid();
+    const { api, database } = await this.loadFirestore();
+    const reference = api.doc(database, 'users', uid, 'notifications', `join-${requestId}`);
+    const snapshot = await api.getDoc(reference);
+    if (!snapshot.exists() || snapshot.data()['read'] === true) return;
+    await api.updateDoc(reference, { read: true, readAt: api.serverTimestamp() });
+  }
+
+  async markAllRead(notifications: AppNotification[]): Promise<void> {
+    const pending = notifications.filter(item => !item.read);
+    if (!pending.length) return;
+    const uid = this.requireUid();
+    const { api, database } = await this.loadFirestore();
+    const batch = api.writeBatch(database);
+    pending.forEach(item => batch.update(api.doc(database, 'users', uid, 'notifications', item.id), {
+      read: true,
+      readAt: api.serverTimestamp()
+    }));
+    await batch.commit();
+  }
+
+  private watchRequests(field: 'playerUid' | 'dmUid'): Observable<GameJoinRequest[]> {
+    return new Observable(subscriber => {
+      let stopped = false;
+      let unsubscribe: (() => void) | undefined;
+      void this.loadFirestore().then(({ api, database }) => {
+        if (stopped) return;
+        const requests = api.query(
+          api.collection(database, 'gameJoinRequests'),
+          api.where(field, '==', this.requireUid())
+        );
+        unsubscribe = api.onSnapshot(requests, snapshot => {
+          const items = snapshot.docs.map(item => this.mapRequest(item.data()));
+          items.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+          subscriber.next(items);
+        }, error => subscriber.error(error));
+      }).catch(error => subscriber.error(error));
+      return () => { stopped = true; unsubscribe?.(); };
+    });
+  }
+
+  private mapRequest(data: DocumentData): GameJoinRequest {
+    return {
+      id: String(data['id'] || ''),
+      gameId: String(data['gameId'] || ''),
+      gameTitle: String(data['gameTitle'] || 'Partida'),
+      playerUid: String(data['playerUid'] || ''),
+      playerName: String(data['playerName'] || 'Jugador/a'),
+      dmUid: String(data['dmUid'] || ''),
+      dmName: String(data['dmName'] || 'Dungeon Master'),
+      message: String(data['message'] || ''),
+      status: data['status'] === 'APPROVED' || data['status'] === 'REJECTED' ? data['status'] : 'PENDING',
+      seenByDm: data['seenByDm'] === true,
+      createdAt: this.toDate(data['createdAt']),
+      updatedAt: this.toDate(data['updatedAt']),
+      seenAt: this.toDate(data['seenAt']),
+      resolvedAt: this.toDate(data['resolvedAt'])
+    };
+  }
+
+  private mapNotification(data: DocumentData): AppNotification {
+    const type = data['type'] === 'REQUEST_APPROVED' || data['type'] === 'REQUEST_REJECTED'
+      ? data['type'] : 'JOIN_REQUEST';
+    return {
+      id: String(data['id'] || ''), type,
+      title: String(data['title'] || 'Nueva notificación'),
+      message: String(data['message'] || ''),
+      gameId: String(data['gameId'] || ''),
+      gameTitle: String(data['gameTitle'] || ''),
+      requestId: String(data['requestId'] || ''),
+      actorUid: String(data['actorUid'] || ''),
+      read: data['read'] === true,
+      createdAt: this.toDate(data['createdAt']),
+      readAt: this.toDate(data['readAt'])
+    };
+  }
+
+  private toDate(value: unknown): Date | undefined {
+    if (value && typeof value === 'object' && 'toDate' in value) {
+      const timestamp = value as { toDate?: () => Date };
+      if (typeof timestamp.toDate === 'function') return timestamp.toDate();
+    }
+    if (value instanceof Date) return value;
+    return undefined;
+  }
+
+  private requireUid(): string {
+    const uid = this.auth.currentUser?.uid;
+    if (!uid) throw new Error('Necesitás iniciar sesión para continuar.');
+    return uid;
+  }
+
+  private async loadFirestore() {
+    if (!this.firebase.app) throw new Error('Firestore no está disponible en este momento.');
+    const api = await import('firebase/firestore');
+    return { api, database: api.getFirestore(this.firebase.app) };
+  }
+}

@@ -9,7 +9,7 @@ const CONFIG = Object.freeze({
   gamesSpreadsheetId: '1ZtbK4j_V8ePbUgaZZkeTtP7vFcnjsn2R7s2brRtvw9k',
   firebaseWebApiKey: 'AIzaSyDAUvtcTyEQmbGmmmOGJTsyVg34dt1h_gU',
   firebaseProjectId: 'rol-mendoza',
-  apiVersion: '5.0.0',
+  apiVersion: '6.0.0',
   sheets: Object.freeze({
     games: 'PARTIDAS',
     requests: 'SOLICITUDES',
@@ -27,8 +27,8 @@ const CONFIG = Object.freeze({
 
 /**
  * Ejecutar una vez desde el editor después de cambiar permisos o publicar una
- * versión. Fuerza el consentimiento para Sheets y solicitudes externas sin
- * cambiar el deployment ni su URL pública.
+ * versión. Fuerza el consentimiento para Sheets, solicitudes externas y
+ * Firestore sin cambiar el deployment ni su URL pública.
  */
 function autorizarServiciosCumbre20() {
   const spreadsheet = SpreadsheetApp.openById(CONFIG.gamesSpreadsheetId);
@@ -40,10 +40,30 @@ function autorizarServiciosCumbre20() {
   if (status < 200 || status >= 400) {
     throw new Error('No se pudo comprobar el permiso de solicitudes externas. Código HTTP: ' + status);
   }
+  const firestoreCheck = UrlFetchApp.fetch(
+    'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.firebaseProjectId) +
+      '/databases/(default)/documents:runQuery',
+    {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      payload: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: 'users' }],
+          limit: 1
+        }
+      }),
+      muteHttpExceptions: true
+    }
+  );
+  if (firestoreCheck.getResponseCode() < 200 || firestoreCheck.getResponseCode() >= 300) {
+    throw new Error('No se pudo acceder a Firestore con la cuenta propietaria. Código HTTP: ' + firestoreCheck.getResponseCode());
+  }
   return {
     ok: true,
     spreadsheet: spreadsheet.getName(),
     externalRequest: true,
+    firestore: true,
     apiVersion: CONFIG.apiVersion
   };
 }
@@ -109,6 +129,7 @@ function doPost(e) {
       case 'deleteGame':
         return json_({ ok: true, data: cancelGame_(payload, user.uid) });
       case 'joinGame':
+        requirePlayer_(idToken, user.uid);
         return json_({ ok: true, data: createJoinRequest_(payload, firebaseAccount_(user)) });
       case 'createComment':
         return json_({ ok: true, data: createComment_(payload, firebaseAccount_(user)) });
@@ -300,21 +321,132 @@ function createJoinRequest_(payload, account) {
     throw new Error('La partida ya no tiene inscripciones abiertas.');
   }
 
-  const id = makeId_('SOL');
-  appendObject_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.requests, {
-    solicitud_id: id,
-    fecha: new Date(),
-    partida_id: gameId,
-    usuario_uid: account.firebase_uid,
-    nombre_publico: account.nombre_publico,
-    mensaje: cleanText_(payload.message, 500),
-    estado: 'Pendiente',
-    respuesta_admin: '',
-    fecha_respuesta: '',
-    visible_para_usuario: 'No'
-  });
+  const dmUid = requiredText_(game.creador_uid, 'creador de la partida', 160);
+  if (dmUid === account.firebase_uid) throw new Error('No podés solicitar unirte a una partida creada por vos.');
 
-  return { id: id, status: 'received', message: 'Tu solicitud fue registrada y quedó disponible para el máster.' };
+  const id = stableRequestId_(gameId, account.firebase_uid);
+  const existing = getFirestoreDocument_('gameJoinRequests/' + id);
+  if (existing) {
+    const status = firestoreString_(existing, 'status') || 'PENDING';
+    const messages = {
+      PENDING: 'Ya tenés una solicitud pendiente para esta partida.',
+      APPROVED: 'Ya formás parte de esta partida.',
+      REJECTED: 'Esta solicitud no fue aceptada.'
+    };
+    return { id: id, status: status, duplicate: true, message: messages[status] || messages.PENDING };
+  }
+
+  const now = new Date();
+  const gameTitle = requiredText_(game.titulo, 'título de la partida', 120);
+  const requestDocument = {
+    id: id,
+    gameId: gameId,
+    gameTitle: gameTitle,
+    playerUid: account.firebase_uid,
+    playerName: account.nombre_publico,
+    dmUid: dmUid,
+    dmName: cleanText_(game.master_nombre_publico || 'Dungeon Master', 80),
+    message: cleanText_(payload.message, 500),
+    status: 'PENDING',
+    seenByDm: false,
+    createdAt: now,
+    updatedAt: now
+  };
+  const notificationId = 'join-' + id;
+  const notificationDocument = {
+    id: notificationId,
+    type: 'JOIN_REQUEST',
+    title: account.nombre_publico + ' quiere unirse a tu partida',
+    message: gameTitle,
+    gameId: gameId,
+    gameTitle: gameTitle,
+    requestId: id,
+    actorUid: account.firebase_uid,
+    read: false,
+    createdAt: now
+  };
+
+  createFirestoreDocuments_([
+    { path: 'gameJoinRequests/' + id, data: requestDocument },
+    { path: 'users/' + dmUid + '/notifications/' + notificationId, data: notificationDocument }
+  ]);
+
+  return { id: id, status: 'PENDING', message: 'Solicitud enviada. El DM recibió tu solicitud.' };
+}
+
+function stableRequestId_(gameId, playerUid) {
+  const digest = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    String(gameId) + ':' + String(playerUid),
+    Utilities.Charset.UTF_8
+  );
+  return 'REQ-' + Utilities.base64EncodeWebSafe(digest).replace(/=+$/g, '').slice(0, 32);
+}
+
+function firestoreDocumentsUrl_() {
+  return 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.firebaseProjectId) +
+    '/databases/(default)/documents';
+}
+
+function getFirestoreDocument_(path) {
+  const response = UrlFetchApp.fetch(firestoreDocumentsUrl_() + '/' + path, {
+    method: 'get',
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+    muteHttpExceptions: true
+  });
+  if (response.getResponseCode() === 404) return null;
+  if (response.getResponseCode() !== 200) {
+    throw new Error('No pudimos comprobar si ya existe la solicitud. Código HTTP: ' + response.getResponseCode());
+  }
+  return JSON.parse(response.getContentText());
+}
+
+function createFirestoreDocuments_(documents) {
+  const projectPath = 'projects/' + CONFIG.firebaseProjectId + '/databases/(default)/documents/';
+  const writes = documents.map(function (item) {
+    return {
+      update: {
+        name: projectPath + item.path,
+        fields: firestoreFields_(item.data)
+      },
+      currentDocument: { exists: false }
+    };
+  });
+  const response = UrlFetchApp.fetch(
+    'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.firebaseProjectId) +
+      '/databases/(default)/documents:commit',
+    {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      payload: JSON.stringify({ writes: writes }),
+      muteHttpExceptions: true
+    }
+  );
+  if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+    if (response.getResponseCode() === 409) throw new Error('Ya existe una solicitud para esta partida.');
+    console.error(response.getContentText());
+    throw new Error('No pudimos guardar la solicitud en Firestore. Código HTTP: ' + response.getResponseCode());
+  }
+}
+
+function firestoreFields_(data) {
+  const fields = {};
+  Object.keys(data).forEach(function (key) { fields[key] = firestoreValue_(data[key]); });
+  return fields;
+}
+
+function firestoreValue_(value) {
+  if (Object.prototype.toString.call(value) === '[object Date]') return { timestampValue: value.toISOString() };
+  if (typeof value === 'boolean') return { booleanValue: value };
+  if (typeof value === 'number' && Number.isInteger(value)) return { integerValue: String(value) };
+  if (typeof value === 'number') return { doubleValue: value };
+  return { stringValue: String(value === null || value === undefined ? '' : value) };
+}
+
+function firestoreString_(document, field) {
+  const value = document && document.fields && document.fields[field];
+  return value && value.stringValue ? String(value.stringValue) : '';
 }
 
 function createComment_(payload, account) {
@@ -347,20 +479,7 @@ function firebaseAccount_(user) {
 }
 
 function requireDm_(idToken, uid) {
-  const response = UrlFetchApp.fetch(
-    'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.firebaseProjectId) +
-      '/databases/(default)/documents/users/' + encodeURIComponent(uid),
-    {
-      method: 'get',
-      headers: { Authorization: 'Bearer ' + idToken },
-      muteHttpExceptions: true
-    }
-  );
-  if (response.getResponseCode() !== 200) {
-    throw new Error('No pudimos verificar tu perfil de Dungeon Master. Completá tu perfil e intentá nuevamente.');
-  }
-  const document = JSON.parse(response.getContentText());
-  const fields = document.fields || {};
+  const fields = firebaseProfileFields_(idToken, uid);
   const role = fields.role && fields.role.stringValue;
   const completed = fields.profileCompleted && fields.profileCompleted.booleanValue === true;
   const active = !fields.active || fields.active.booleanValue === true;
@@ -371,6 +490,33 @@ function requireDm_(idToken, uid) {
     role: role,
     city: cleanText_(fields.city && fields.city.stringValue, 80)
   };
+}
+
+function requirePlayer_(idToken, uid) {
+  const fields = firebaseProfileFields_(idToken, uid);
+  const role = fields.role && fields.role.stringValue;
+  const completed = fields.profileCompleted && fields.profileCompleted.booleanValue === true;
+  const active = !fields.active || fields.active.booleanValue === true;
+  if (!completed || !active || (role !== 'PLAYER' && role !== 'BOTH')) {
+    throw new Error('Para solicitar unirte, tu perfil debe tener rol Jugador o Ambos.');
+  }
+}
+
+function firebaseProfileFields_(idToken, uid) {
+  const response = UrlFetchApp.fetch(
+    'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.firebaseProjectId) +
+      '/databases/(default)/documents/users/' + encodeURIComponent(uid),
+    {
+      method: 'get',
+      headers: { Authorization: 'Bearer ' + idToken },
+      muteHttpExceptions: true
+    }
+  );
+  if (response.getResponseCode() !== 200) {
+    throw new Error('No pudimos verificar tu perfil. Completá tus datos e intentá nuevamente.');
+  }
+  const document = JSON.parse(response.getContentText());
+  return document.fields || {};
 }
 
 function verifyFirebaseToken_(idToken) {

@@ -28,7 +28,7 @@ Escrituras autenticadas:
 
 Cada POST incluye un Firebase ID token. Apps Script valida el token antes de escribir y obtiene desde Firebase el UID y el nombre del autor. No necesita una hoja de cuentas.
 
-La API usa un sobre de acciones porque los Web Apps de Apps Script exponen `doGet` y `doPost`. El frontend centraliza este contrato en `GoogleAppsScriptService`; los componentes nunca construyen requests por su cuenta. Antes de cada grupo de operaciones se comprueba que la versión publicada sea `5.0.0`, evitando crear datos contra un backend antiguo y fallar después al intentar listarlos.
+La API usa un sobre de acciones porque los Web Apps de Apps Script exponen `doGet` y `doPost`. El frontend centraliza este contrato en `GoogleAppsScriptService`; los componentes nunca construyen requests por su cuenta. Antes de cada grupo de operaciones se comprueba que la versión publicada sea `6.0.0`, evitando crear datos contra un backend antiguo y fallar después al intentar listarlos.
 
 La hoja conserva nombres `snake_case` como `partida_id` y `creador_uid`. El adaptador del frontend los convierte al modelo Angular en `camelCase`, por lo que existe una sola traducción y no se mezclan convenciones dentro de los componentes.
 
@@ -42,9 +42,9 @@ La hoja conserva nombres `snake_case` como `partida_id` y `creador_uid`. El adap
 6. Mantené **Ejecutar como: Yo** y **Quién tiene acceso: Cualquier persona**.
 7. Implementá. La URL `/exec` seguirá siendo la misma.
 
-## Autorizar Sheets y solicitudes externas
+## Autorizar Sheets, solicitudes externas y Firestore
 
-La API valida el Firebase ID Token y el rol DM mediante servicios de Google. Por eso necesita los scopes de Sheets y `script.external_request` declarados en `appsscript.json`.
+La API valida el Firebase ID Token y los roles mediante servicios de Google. También crea de forma atómica la solicitud y la primera notificación en Firestore. Por eso necesita los scopes de Sheets, `script.external_request` y `datastore` declarados en `appsscript.json`.
 
 1. En Apps Script abrí **Configuración del proyecto** y activá **Mostrar el archivo de manifiesto `appsscript.json` en el editor**.
 2. Confirmá que el manifiesto del editor coincide con el archivo de esta carpeta.
@@ -62,7 +62,7 @@ Abrí:
 TU_URL_EXEC?action=health
 ```
 
-La respuesta debe indicar la versión `5.0.0` y `auth: configured`.
+La respuesta debe indicar la versión `6.0.0` y `auth: configured`.
 
 ## Publicación y estados
 
@@ -74,13 +74,15 @@ En la pestaña `PARTIDAS`:
 - `FULL` permanece visible, pero deja de aceptar solicitudes.
 - Editar o cambiar el estado exige que el UID autenticado coincida con `creador_uid`.
 
-Las solicitudes se registran en `SOLICITUDES` y los comentarios en `COMENTARIOS`.
+Las solicitudes y notificaciones se registran en Firestore. La pestaña histórica `SOLICITUDES` ya no es necesaria para el flujo nuevo; las partidas continúan en `PARTIDAS` y los comentarios en `COMENTARIOS`.
 
 ## Seguridad
 
 - Firebase administra las credenciales.
 - Cada escritura valida el Firebase ID token.
 - Crear una partida comprueba en Firestore que el perfil tenga rol `DM` o `BOTH`.
+- Solicitar unirse comprueba en Firestore que el perfil tenga rol `PLAYER` o `BOTH`.
+- El `dmUid` se obtiene de `creador_uid` en la partida; el navegador no puede elegirlo.
 - Editar, pausar o cancelar comprueba la propiedad en el servidor.
 - El cliente no elige su propio UID ni nombre de autor.
 - Los textos se sanitizan y se evita la inyección de fórmulas.

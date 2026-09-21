@@ -28,8 +28,17 @@ No se utiliza Google Forms ni existe chat interno.
 - Menú de usuario con perfil, edición, preferencias, partidas propias y cierre de sesión.
 - Creación restringida a roles `DM` y `BOTH`, validada también en el backend.
 - Edición, pausa, activación y cancelación de partidas por su propietario.
+- Solicitudes únicas para unirse a partidas, con estado pendiente, vista, aceptada o no aceptada.
+- Notificaciones internas en tiempo real y contador de novedades sin reintroducir chat.
+- Tema del sistema, claro u oscuro, persistido localmente y aplicado antes de iniciar Angular.
 - Diseño mobile-first para PC, Android, iPhone y tablets.
 - Configuración SPA lista para Vercel.
+
+## Identidad visual
+
+- `src/assets/cumbre20-logo.svg`: marca compacta Mendoza + d20 usada en navbar y favicon.
+- `src/assets/mendoza-silhouette-reference.png`: referencia original aportada para conservar la forma real de la provincia y facilitar una futura vectorización definitiva.
+- La combinación actual usa carbón, bordó, dorado apagado y crema mediante tokens CSS para los temas claro y oscuro.
 
 ## Requisitos
 
@@ -73,6 +82,8 @@ users/{uid}                         perfil público y preferencias
 userPrivate/{uid}                   WhatsApp, Instagram y consentimiento
 users/{uid}/blockedUsers/{uid}      personas bloqueadas
 users/{uid}/blockedBy/{uid}         espejo privado para ocultamiento mutuo
+gameJoinRequests/{requestId}        relación segura entre jugador, partida y DM
+users/{uid}/notifications/{id}      notificaciones privadas del usuario
 ```
 
 `userPrivate` no admite consultas de lista. Un tercero solo puede leer un documento concreto si posee un perfil completo con rol `DM` o `BOTH`, existe consentimiento y no hay bloqueo en ninguna dirección.
@@ -91,7 +102,7 @@ No hace falta ejecutar una migración masiva. Cuando un usuario existente inicia
 
 Firestore es la fuente principal para autenticación, perfiles, búsquedas, contactos, permisos y bloqueos.
 
-Google Sheets es la fuente de datos de partidas, solicitudes y comentarios. El backend está en `google-apps-script/` y no consulta hojas de perfiles o cuentas.
+Google Sheets es la fuente de datos de partidas y comentarios. Firestore almacena solicitudes y notificaciones, mientras el backend de `google-apps-script/` valida la partida y crea esos dos documentos de manera atómica.
 
 Flujo de partidas:
 
@@ -107,9 +118,9 @@ Para actualizarlo:
 2. Ejecutá `autorizarServiciosCumbre20` desde el editor y aceptá los permisos solicitados.
 3. Editá el deployment existente y publicá una **Nueva versión**.
 4. Conservá la misma URL `/exec` configurada en los environments.
-5. Verificá que `?action=health` devuelva `version: 5.0.0`.
+5. Verificá que `?action=health` devuelva `version: 6.0.0`.
 
-`UrlFetchApp` es necesario: valida el Firebase ID Token contra Identity Toolkit y consulta el perfil de Firestore para confirmar el rol DM/BOTH. No existe una llamada HTTP del script hacia sí mismo. El manifiesto sólo solicita los scopes de Sheets y `script.external_request`.
+`UrlFetchApp` es necesario: valida el Firebase ID Token contra Identity Toolkit, consulta el perfil de Firestore y crea solicitudes/notificaciones en Firestore. No existe una llamada HTTP del script hacia sí mismo. El manifiesto solicita únicamente Sheets, `script.external_request` y `datastore`.
 
 La pestaña `PARTIDAS` ya está preparada con los campos adicionales, estados `ACTIVE`, `PAUSED`, `FULL`, `CANCELLED` y publicación inmediata al guardarse.
 

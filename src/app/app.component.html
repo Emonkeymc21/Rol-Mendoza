@@ -4,7 +4,7 @@
   <app-footer></app-footer>
 </div>
 
-<div *ngIf="authLoading$ | async" class="fixed inset-0 z-[100] grid place-items-center bg-[#090d12]/95" role="status" aria-live="polite">
+<div *ngIf="authLoading$ | async" class="auth-loading fixed inset-0 z-[100] grid place-items-center" role="status" aria-live="polite">
   <div class="glass-panel rounded-2xl px-8 py-7 text-center">
     <div class="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-gold/30 border-t-gold"></div>
     <p class="mt-4 text-sm text-mist">Estamos recuperando tu sesión…</p>

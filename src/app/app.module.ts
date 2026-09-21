@@ -26,6 +26,9 @@ import { CompleteProfileComponent } from './pages/complete-profile/complete-prof
 import { MyGamesComponent } from './pages/my-games/my-games.component';
 import { UserAvatarComponent } from './shared/components/user-avatar/user-avatar.component';
 import { AboutComponent } from './pages/about/about.component';
+import { MyRequestsComponent } from './pages/my-requests/my-requests.component';
+import { DmRequestsComponent } from './pages/dm-requests/dm-requests.component';
+import { NotificationsComponent } from './pages/notifications/notifications.component';
 
 @NgModule({
   declarations: [
@@ -49,7 +52,10 @@ import { AboutComponent } from './pages/about/about.component';
     CompleteProfileComponent,
     MyGamesComponent,
     UserAvatarComponent,
-    AboutComponent
+    AboutComponent,
+    MyRequestsComponent,
+    DmRequestsComponent,
+    NotificationsComponent
   ],
   imports: [
     BrowserModule,

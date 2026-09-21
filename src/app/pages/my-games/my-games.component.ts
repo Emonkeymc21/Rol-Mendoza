@@ -3,6 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Game, GameStatus } from '../../core/models/game.model';
 import { GameService } from '../../core/services/game.service';
 import { ProfileService } from '../../core/services/profile.service';
+import { GameJoinRequest } from '../../core/models/join-request.model';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-my-games',
@@ -16,14 +18,19 @@ export class MyGamesComponent implements OnInit {
   notice = '';
   busyGameId = '';
   canCreate = false;
+  requests: GameJoinRequest[] = [];
 
-  constructor(private gamesService: GameService, profiles: ProfileService, route: ActivatedRoute) {
+  constructor(private gamesService: GameService, profiles: ProfileService, route: ActivatedRoute, notifications: NotificationService) {
     if (route.snapshot.queryParamMap.get('saved')) {
       this.notice = route.snapshot.queryParamMap.get('action') === 'published'
         ? '¡Partida publicada! Tu partida ya está disponible para la comunidad.'
         : 'Los cambios de la partida se guardaron correctamente.';
     }
     void profiles.getOwnProfile().then(profile => this.canCreate = profile?.role === 'DM' || profile?.role === 'BOTH');
+    notifications.watchDmRequests().subscribe({
+      next: requests => this.requests = requests,
+      error: error => console.error('No se pudieron contar las solicitudes de partidas.', error)
+    });
   }
 
   ngOnInit(): void {
@@ -71,5 +78,9 @@ export class MyGamesComponent implements OnInit {
       ACTIVE: 'Activa', PAUSED: 'Pausada', CANCELLED: 'Cancelada', FULL: 'Sin cupos'
     };
     return labels[status];
+  }
+
+  requestCount(gameId: string): number {
+    return this.requests.filter(item => item.gameId === gameId && item.status === 'PENDING').length;
   }
 }

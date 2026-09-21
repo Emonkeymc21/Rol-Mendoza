@@ -1,6 +1,14 @@
-.account-head { background: radial-gradient(circle at 85% 20%, rgba(216, 173, 87, .2), transparent 17rem), linear-gradient(145deg, rgba(111, 29, 42, .62), rgba(29, 21, 24, .92)); }
+.account-head { background:radial-gradient(circle at 85% 20%,var(--brand-soft),transparent 17rem),linear-gradient(145deg,var(--surface-brand),var(--surface)); }
+.account-identity { display:flex;min-width:0;flex-direction:column;align-items:center;gap:1rem;text-align:center; }
+.account-identity-copy,.account-name-row { min-width:0;max-width:100%; }
+.account-name-row { display:flex;flex-direction:column;align-items:center;gap:.7rem; }
+.account-name-row h1 { display:-webkit-box;max-width:100%;overflow:hidden;overflow-wrap:anywhere;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-family:Georgia,Cambria,serif;font-size:clamp(1.8rem,8vw,2.5rem);font-weight:700;line-height:1.08;color:var(--text-primary); }
+.account-location { display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.6rem;color:var(--text-secondary);font-size:.9rem; }
 .account-tile { @apply rounded-2xl border border-white/[.08] bg-white/[.03] p-5; }
 .account-tile span { @apply block text-sm text-mist; }
 .account-tile strong { @apply mt-2 block text-parchment; }
 .profile-role { @apply rounded-full border border-gold/25 bg-gold/10 px-3 py-1 text-xs font-bold text-gold; }
-.profile-bio { @apply mt-4 whitespace-pre-line rounded-2xl border border-white/[.08] bg-white/[.025] p-5 text-sm leading-7 text-mist; }
+.profile-bio { margin-top:1rem;white-space:pre-line;overflow-wrap:anywhere;border:1px solid var(--border);border-radius:1rem;background:var(--surface-muted);padding:1rem;color:var(--text-secondary);font-size:.9rem;line-height:1.7; }
+.account-section { border:1px solid var(--border);border-radius:1rem;background:var(--surface-muted);padding:1rem; }
+.account-actions { align-self:start;width:100%; }
+@media(min-width:640px){.account-identity{flex-direction:row;text-align:left}.account-name-row{flex-direction:row;align-items:center}.account-location{justify-content:flex-start}.profile-bio,.account-section{padding:1.25rem}}

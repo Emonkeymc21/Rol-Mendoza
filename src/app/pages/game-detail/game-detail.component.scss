@@ -19,4 +19,7 @@
 .admin-reply { @apply mt-4 rounded-xl border border-gold/20 bg-gold/10 p-3 text-sm text-parchment; }
 .feedback-success { @apply mt-4 rounded-xl border border-gold/20 bg-gold/10 p-3 text-sm text-parchment; }
 .feedback-error { @apply mt-4 rounded-xl border border-red-300/25 bg-red-950/30 p-3 text-sm text-red-100; }
-
+.request-state { margin-top:.85rem;border:1px solid var(--warning-border);border-radius:.8rem;background:var(--warning-soft);padding:.7rem .8rem;color:var(--warning);font-size:.78rem;line-height:1.5; }
+.request-state.approved { border-color:var(--success-border);background:var(--success-soft);color:var(--success); }
+.request-state.rejected { border-color:var(--danger-border);background:var(--danger-soft);color:var(--danger); }
+.request-state a { display:inline;font-weight:800;text-decoration:underline;text-underline-offset:2px; }

@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 96" role="img" aria-labelledby="title desc">
-  <title id="title">Cumbre20</title><desc id="desc">Silueta de Mendoza con un dado de veinte caras integrado</desc>
-  <defs><linearGradient id="m" x1="12" y1="8" x2="74" y2="88" gradientUnits="userSpaceOnUse"><stop stop-color="#b34a55"/><stop offset="1" stop-color="#651d2b"/></linearGradient></defs>
-  <path fill="url(#m)" d="M29 3 47 8l5 10 14 4-3 12 9 11-7 12 2 16-13 4-6 15-14-7-9 7-7-18-9-8 7-12-3-14 10-9-2-14Z"/>
-  <path fill="#201418" stroke="#f1d28a" stroke-width="2" stroke-linejoin="round" d="m43 26 18 10 1 21-19 12-19-12 1-21Z"/>
-  <path fill="none" stroke="#f1d28a" stroke-width="1.6" stroke-linejoin="round" d="m25 36 18 8 18-8M43 44v25M25 57l18-13 19 13"/>
-  <text x="43" y="42" fill="#f6ead1" font-family="Georgia,serif" font-size="13" font-weight="700" text-anchor="middle">20</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 98" role="img" aria-labelledby="title desc">
+  <title id="title">Cumbre20</title><desc id="desc">Silueta real de Mendoza con un dado de veinte caras integrado</desc>
+  <defs><linearGradient id="m" x1="8" y1="3" x2="66" y2="92" gradientUnits="userSpaceOnUse"><stop stop-color="#b84b58"/><stop offset="1" stop-color="#651d2b"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity=".25"/></filter></defs>
+  <path fill="url(#m)" filter="url(#s)" d="M25 0C22 1 21 4 18 4L7 6C5 7 6 11 7 14c1 4 4 6 2 10-1 2 2 4 5 3l-2 5c-1 4 2 6 0 9L7 45c-2 3-3 7-4 11L0 58l3 3c1 4-1 7 1 10-2 2-1 5 1 7 1 5 5 7 7 11 3 5 9 8 15 8 4 0 8-1 13 1l1-27h29c2-9 1-18-4-26-4-6-5-13-5-20 0-5-2-10-7-11-5-1-6-5-12-3-5 3-8 4-12 1L30 5c-2-2-2-5-5-5Z"/>
+  <path fill="var(--logo-die-bg,#201418)" stroke="#f1d28a" stroke-width="1.6" stroke-linejoin="round" d="m35 27 15 8 1 18-16 10-16-10 1-18Z"/>
+  <path fill="none" stroke="#f1d28a" stroke-width="1.35" stroke-linejoin="round" d="m20 35 15 7 15-7M35 42v21M19 53l16-11 16 11"/>
+  <text x="35" y="40" fill="#f7ebd2" font-family="Georgia,serif" font-size="10" font-weight="700" text-anchor="middle">20</text>
 </svg>
