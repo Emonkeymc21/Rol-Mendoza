@@ -1,4 +1,8 @@
 .player-card { min-width:0;overflow:hidden; }
+.player-art { position:relative;height:92px;overflow:hidden;border-bottom:1px solid var(--brand-border);background:linear-gradient(120deg,#311016,#6f1d2a 55%,#241014),radial-gradient(circle at 82% 22%,rgba(216,173,87,.32),transparent 12rem); }
+:root[data-theme='light'] .player-art { background:linear-gradient(120deg,#7a2432,#a53a4b 60%,#5c1a26); }
+.player-art-letter { position:absolute;left:1rem;bottom:.1rem;font-family:Cinzel,Georgia,serif;font-weight:900;font-size:3.2rem;color:rgba(241,232,213,.92);text-shadow:0 3px 16px rgba(0,0,0,.5); }
+.player-art-d20 { position:absolute;right:.5rem;top:50%;transform:translateY(-46%) rotate(-8deg);font-family:Cinzel,Georgia,serif;font-weight:900;font-size:4.8rem;color:transparent;-webkit-text-stroke:1px rgba(216,173,87,.38); }
 .player-card-name { display:-webkit-box;min-width:0;overflow:hidden;overflow-wrap:anywhere;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.15; }
 .match-badge { flex:0 0 auto;border:1px solid var(--brand-border);border-radius:999px;background:var(--brand-soft);padding:.25rem .55rem;color:var(--brand-secondary);font-size:.68rem;font-weight:800; }
 .player-card-contact { border-top:1px solid var(--border); }

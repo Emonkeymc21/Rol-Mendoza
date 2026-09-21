@@ -1,10 +1,13 @@
 <section class="hero relative overflow-hidden border-b border-white/[.06]">
+  <div class="hero-dragon" aria-hidden="true">20</div>
   <div class="andes-line" aria-hidden="true"></div>
   <div class="hero-orbit hero-orbit-one" aria-hidden="true"></div><div class="hero-orbit hero-orbit-two" aria-hidden="true"></div>
+  <div class="hero-vignette" aria-hidden="true"></div>
   <div class="page-shell relative grid min-h-[650px] items-center gap-10 py-14 lg:grid-cols-[1.08fr_.92fr] lg:py-20">
     <div class="max-w-3xl">
-      <span class="community-pill"><span></span> Cumbre20 · Mendoza</span>
+      <span class="community-pill"><i></i> Cumbre20 · Mendoza <i></i></span>
       <h1 class="display-title mt-6">Encontrá tu<br><span class="hero-highlight">próxima mesa.</span></h1>
+      <div class="dnd-divider mt-6 !mx-0" aria-hidden="true"><span></span></div>
       <p class="mt-6 max-w-2xl text-lg leading-8 text-mist">Conectá con jugadores y Dungeon Masters de Mendoza, descubrí nuevas partidas y empezá una historia con tu próximo grupo.</p>
       <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <a routerLink="/partidas" class="btn-primary">Buscar partidas <app-icon name="arrow" [size]="19"></app-icon></a>
@@ -16,12 +19,18 @@
         <div><strong>{{ playerCount }}</strong><span>perfiles</span></div>
         <div><strong>{{ systemCount }}</strong><span>sistemas</span></div>
       </div>
+      <div class="hero-codes mt-6">
+        <span><app-icon name="dice" [size]="15"></app-icon> D&D · Vampiro · Cthulhu</span>
+        <span><app-icon name="map" [size]="15"></app-icon> Presencial · Online · Mixto</span>
+        <span><app-icon name="shield" [size]="15"></app-icon> Todos los niveles</span>
+      </div>
     </div>
 
     <div class="relative">
       <div class="absolute -inset-8 rounded-full bg-wine/20 blur-3xl"></div>
-      <form [formGroup]="searchForm" (ngSubmit)="search()" class="search-card relative">
-        <div class="flex items-start justify-between gap-4"><div><span class="eyebrow">Explorá la comunidad</span><h2 class="mt-2 font-display text-2xl font-bold">¿Qué querés encontrar?</h2></div><div class="search-icon"><app-icon name="search" [size]="23"></app-icon></div></div>
+      <form [formGroup]="searchForm" (ngSubmit)="search()" class="search-card tavern-board relative">
+        <span class="rivet rivet-tl" aria-hidden="true"></span><span class="rivet rivet-tr" aria-hidden="true"></span><span class="rivet rivet-bl" aria-hidden="true"></span><span class="rivet rivet-br" aria-hidden="true"></span>
+        <div class="flex items-start justify-between gap-4"><div><span class="eyebrow">Tablero de aventuras</span><h2 class="mt-2 font-display text-2xl font-bold">¿Qué querés encontrar?</h2></div><div class="search-icon"><app-icon name="search" [size]="23"></app-icon></div></div>
         <div class="search-tabs mt-6">
           <label><input class="peer sr-only" type="radio" formControlName="type" value="partidas"><span>Partidas</span></label>
           <label><input class="peer sr-only" type="radio" formControlName="type" value="personas"><span>Jugadores y DM</span></label>
@@ -32,6 +41,14 @@
         <div class="search-foot"><span><app-icon name="shield" [size]="15"></app-icon> Perfiles registrados</span><span><app-icon name="map" [size]="15"></app-icon> Comunidad local</span></div>
       </form>
     </div>
+  </div>
+</section>
+
+<section class="path-strip" aria-label="Elegí tu camino">
+  <div class="page-shell path-grid">
+    <a routerLink="/partidas" class="path-card"><span class="path-icon"><app-icon name="dice" [size]="22"></app-icon></span><span><strong>Explorá partidas</strong><small>One-shots y campañas</small></span><app-icon name="arrow" [size]="18"></app-icon></a>
+    <a routerLink="/jugadores" class="path-card"><span class="path-icon"><app-icon name="users" [size]="22"></app-icon></span><span><strong>Encontrá tu grupo</strong><small>Jugadores y DMs</small></span><app-icon name="arrow" [size]="18"></app-icon></a>
+    <a routerLink="/como-funciona" class="path-card"><span class="path-icon"><app-icon name="map" [size]="22"></app-icon></span><span><strong>Empezá a jugar</strong><small>Cómo funciona</small></span><app-icon name="arrow" [size]="18"></app-icon></a>
   </div>
 </section>
 
