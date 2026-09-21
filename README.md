@@ -30,6 +30,7 @@ No se utiliza Google Forms ni existe chat interno.
 - Edición, pausa, activación y cancelación de partidas por su propietario.
 - Solicitudes únicas para unirse a partidas, con estado pendiente, vista, aceptada o no aceptada.
 - Aceptación con cupo real e idempotente: participante en Firestore y contador sincronizado en Sheets.
+- Al aceptar, se habilita contacto recíproco entre DM y jugador; WhatsApp abre con un mensaje contextual de la partida e Instagram abre el perfil indicado.
 - Notificaciones internas en tiempo real y contador de novedades sin reintroducir chat.
 - Doce emblemas de clase propios de Cumbre20; las fotos personales de proveedores no se muestran ni se copian a perfiles nuevos.
 - Tema del sistema, claro u oscuro, persistido localmente y aplicado antes de iniciar Angular.
@@ -86,10 +87,11 @@ users/{uid}/blockedUsers/{uid}      personas bloqueadas
 users/{uid}/blockedBy/{uid}         espejo privado para ocultamiento mutuo
 gameJoinRequests/{requestId}        relación segura entre jugador, partida y DM
 gameParticipants/{idDeterminístico} participantes confirmados por partida y jugador
+contactGrants/{uid}/viewers/{uid}      acceso de contacto entre integrantes aceptados
 users/{uid}/notifications/{id}      notificaciones privadas del usuario
 ```
 
-`userPrivate` no admite consultas de lista. Un tercero solo puede leer un documento concreto si posee un perfil completo con rol `DM` o `BOTH`, existe consentimiento y no hay bloqueo en ninguna dirección.
+`userPrivate` no admite consultas de lista. Un tercero solo puede leer un documento concreto si posee un perfil completo con rol `DM` o `BOTH`, o si Apps Script creó un permiso por participación aceptada. También deben existir consentimiento y ausencia de bloqueo en ambas direcciones.
 
 Los documentos antiguos del chat quedan completamente denegados por las reglas. Si la colección remota `conversations` no contiene información necesaria, puede eliminarse manualmente desde Firebase Console.
 
@@ -119,9 +121,10 @@ Para actualizarlo:
 
 1. Copiá `google-apps-script/Code.gs` y `appsscript.json` al proyecto existente.
 2. Ejecutá `autorizarServiciosCumbre20` desde el editor y aceptá los permisos solicitados.
-3. Editá el deployment existente y publicá una **Nueva versión**.
-4. Conservá la misma URL `/exec` configurada en los environments.
-5. Verificá que `?action=health` devuelva `version: 7.0.0`.
+3. Ejecutá una vez `migrarContactosAceptadosCumbre20` para habilitar el contacto en aceptaciones anteriores.
+4. Editá el deployment existente y publicá una **Nueva versión**.
+5. Conservá la misma URL `/exec` configurada en los environments.
+6. Verificá que `?action=health` devuelva `version: 8.0.0`.
 
 `UrlFetchApp` es necesario: valida el Firebase ID Token contra Identity Toolkit, consulta el perfil de Firestore y crea solicitudes/notificaciones en Firestore. No existe una llamada HTTP del script hacia sí mismo. El manifiesto solicita únicamente Sheets, `script.external_request` y `datastore`.
 

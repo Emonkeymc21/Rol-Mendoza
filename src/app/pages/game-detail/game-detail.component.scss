@@ -36,4 +36,10 @@
 .participant-card small { margin-top:.15rem;color:var(--text-secondary);font-size:.75rem; }
 .participant-card>app-icon { flex:0 0 auto;color:var(--brand-secondary); }
 .master-summary { display:flex;align-items:center;gap:.65rem; }
+.approved-contact { margin-top:.85rem;border:1px solid var(--success-border);border-radius:1rem;background:var(--success-soft);padding:.85rem; }
+.approved-contact>strong { display:block;color:var(--text-primary);font-size:.88rem; }
+.approved-contact>p { margin-top:.25rem;color:var(--text-secondary);font-size:.75rem;line-height:1.5; }
+.approved-contact>div { display:grid;gap:.5rem;margin-top:.75rem; }
+.contact-action { display:inline-flex;min-height:42px;align-items:center;justify-content:center;gap:.45rem;border:1px solid var(--border-strong);border-radius:999px;background:var(--surface);padding:.55rem .8rem;color:var(--text-primary);font-size:.78rem;font-weight:800; }
+.contact-action.whatsapp { border-color:var(--success-border);color:var(--success); }
 @media(min-width:640px){.participant-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

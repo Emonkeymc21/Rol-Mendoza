@@ -42,6 +42,14 @@
             <button type="button" class="btn-primary mt-6 w-full" (click)="join()" [disabled]="game.status === 'FULL' || !!joinRequest || (joinRoleLoaded && !canRequestJoin && !isOwnGame())">{{ joinButtonText() }} <app-icon *ngIf="game.status !== 'FULL' && !joinRequest && (!joinRoleLoaded || canRequestJoin)" name="arrow" [size]="19"></app-icon></button>
             <p *ngIf="joinNotice && !joinOpen && !joinRequest" class="feedback-success" role="status">{{ joinNotice }}</p>
             <p *ngIf="joinRequest" class="request-state" [class.approved]="joinRequest.status === 'APPROVED'" [class.rejected]="joinRequest.status === 'REJECTED'" role="status">{{ requestMessage() }} <a routerLink="/mis-solicitudes">Ver mis solicitudes</a></p>
+            <section *ngIf="joinRequest?.status === 'APPROVED' && (dmContact?.whatsappUrl || dmContact?.instagramUrl)" class="approved-contact" aria-label="Contacto con el máster">
+              <strong>Coordiná con el máster</strong>
+              <p>Estos datos se habilitaron porque ya formás parte de la mesa.</p>
+              <div>
+                <a *ngIf="dmWhatsappUrl() as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-action whatsapp"><app-icon name="whatsapp" [size]="18"></app-icon> Escribir por WhatsApp</a>
+                <a *ngIf="dmContact?.instagramUrl as instagram" [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-action"><app-icon name="instagram" [size]="18"></app-icon> Ver Instagram</a>
+              </div>
+            </section>
             <a *ngIf="game.masterUserId" [routerLink]="['/jugadores', game.masterUserId]" class="btn-secondary mt-3 w-full">Ver perfil del máster</a>
 
             <form *ngIf="joinOpen" [formGroup]="joinForm" (ngSubmit)="submitJoin()" class="mt-5 space-y-4 border-t border-white/[.08] pt-5">

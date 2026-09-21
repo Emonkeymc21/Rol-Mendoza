@@ -42,5 +42,11 @@ export class ContactNormalizerService {
   normalizeAlternatePhone(rawValue: string): string {
     return (rawValue || '').replace(/\D/g, '').slice(0, 15);
   }
-}
 
+  whatsappWithMessage(whatsappUrl: string, message: string): string {
+    const baseUrl = String(whatsappUrl || '').trim().split('?')[0];
+    const cleanMessage = String(message || '').trim();
+    if (!/^https:\/\/wa\.me\/\d+$/.test(baseUrl)) return '';
+    return cleanMessage ? `${baseUrl}?text=${encodeURIComponent(cleanMessage)}` : baseUrl;
+  }
+}

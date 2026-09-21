@@ -10,7 +10,8 @@ import { NotificationService } from '../../core/services/notification.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { GameParticipantView } from '../../core/models/game-participant.model';
 import { GameParticipantService } from '../../core/services/game-participant.service';
-import { UserProfile } from '../../core/models/user-profile.model';
+import { UserPrivateProfile, UserProfile } from '../../core/models/user-profile.model';
+import { ContactNormalizerService } from '../../core/services/contact-normalizer.service';
 
 @Component({ selector: 'app-game-detail', templateUrl: './game-detail.component.html', styleUrls: ['./game-detail.component.scss'] })
 export class GameDetailComponent {
@@ -29,6 +30,8 @@ export class GameDetailComponent {
   joinRoleLoaded = false;
   participants: GameParticipantView[] = [];
   dmProfile?: UserProfile;
+  dmContact?: UserPrivateProfile;
+  ownProfile?: UserProfile;
   readonly apiConnected: boolean;
   private readonly gameId: string;
 
@@ -45,6 +48,7 @@ export class GameDetailComponent {
     private auth: AuthService,
     notifications: NotificationService,
     private profiles: ProfileService,
+    private contacts: ContactNormalizerService,
     participants: GameParticipantService,
     private router: Router
   ) {
@@ -57,14 +61,21 @@ export class GameDetailComponent {
     });
     if (this.auth.currentUser) {
       void profiles.getOwnProfile().then(profile => {
+        this.ownProfile = profile || undefined;
         this.canRequestJoin = profile?.role === 'PLAYER' || profile?.role === 'BOTH';
         this.joinRoleLoaded = true;
+        void this.loadApprovedDmContact();
       }).catch(() => this.joinRoleLoaded = true);
       notifications.watchMyRequests().subscribe({
         next: requests => {
           const previous = this.joinRequest?.status;
           this.joinRequest = requests.find(item => item.gameId === this.gameId);
-          if (this.joinRequest?.status === 'APPROVED' && previous !== 'APPROVED') this.loadGame();
+          if (this.joinRequest?.status === 'APPROVED') {
+            void this.loadApprovedDmContact();
+            if (previous !== 'APPROVED') this.loadGame();
+          } else {
+            this.dmContact = undefined;
+          }
         },
         error: error => console.error('No se pudo consultar el estado de la solicitud.', error)
       });
@@ -156,6 +167,15 @@ export class GameDetailComponent {
     return `${this.game.seats} ${this.game.seats === 1 ? 'lugar disponible' : 'lugares disponibles'}`;
   }
 
+  dmWhatsappUrl(): string {
+    if (!this.dmContact?.whatsappUrl || !this.game) return '';
+    const playerName = this.ownProfile?.displayName || 'un jugador de Cumbre20';
+    return this.contacts.whatsappWithMessage(
+      this.dmContact.whatsappUrl,
+      `¡Hola! Soy ${playerName}, de Cumbre20. Me aceptaste en la partida “${this.game.title}”. ¿Coordinamos los detalles?`
+    );
+  }
+
   submitComment(): void {
     if (this.commentForm.invalid) { this.commentForm.markAllAsTouched(); return; }
     if (!this.auth.currentUser) {
@@ -192,6 +212,18 @@ export class GameDetailComponent {
       if (game?.masterUserId) {
         void this.profiles.getProfile(game.masterUserId).then(profile => this.dmProfile = profile || undefined).catch(() => this.dmProfile = undefined);
       }
+      void this.loadApprovedDmContact();
     });
+  }
+
+  private async loadApprovedDmContact(): Promise<void> {
+    const dmUid = this.game?.masterUserId;
+    if (this.joinRequest?.status !== 'APPROVED' || !dmUid) return;
+    try {
+      this.dmContact = await this.profiles.getContact(dmUid) || undefined;
+    } catch (error) {
+      this.dmContact = undefined;
+      console.error('No se pudo cargar el contacto del máster aceptante.', error);
+    }
   }
 }

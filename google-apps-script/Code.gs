@@ -9,7 +9,7 @@ const CONFIG = Object.freeze({
   gamesSpreadsheetId: '1ZtbK4j_V8ePbUgaZZkeTtP7vFcnjsn2R7s2brRtvw9k',
   firebaseWebApiKey: 'AIzaSyDAUvtcTyEQmbGmmmOGJTsyVg34dt1h_gU',
   firebaseProjectId: 'rol-mendoza',
-  apiVersion: '7.0.0',
+  apiVersion: '8.0.0',
   sheets: Object.freeze({
     games: 'PARTIDAS',
     requests: 'SOLICITUDES',
@@ -67,6 +67,56 @@ function autorizarServiciosCumbre20() {
     firestore: true,
     apiVersion: CONFIG.apiVersion
   };
+}
+
+/**
+ * Ejecutar una vez al publicar la versión 8.0.0. Crea los permisos de contacto
+ * para solicitudes que ya estaban aceptadas antes de incorporar contactGrants.
+ */
+function migrarContactosAceptadosCumbre20() {
+  const response = UrlFetchApp.fetch(
+    'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.firebaseProjectId) +
+      '/databases/(default)/documents:runQuery',
+    {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      payload: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: 'gameJoinRequests' }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: 'status' },
+              op: 'EQUAL',
+              value: { stringValue: 'APPROVED' }
+            }
+          }
+        }
+      }),
+      muteHttpExceptions: true
+    }
+  );
+  if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+    throw new Error('No pudimos leer las solicitudes aceptadas. Código HTTP: ' + response.getResponseCode());
+  }
+
+  const rows = JSON.parse(response.getContentText());
+  const writes = [];
+  let migrated = 0;
+  rows.forEach(function (row) {
+    if (!row.document) return;
+    const request = row.document;
+    const requestId = String(request.name || '').split('/').pop();
+    const dmUid = firestoreString_(request, 'dmUid');
+    const playerUid = firestoreString_(request, 'playerUid');
+    const gameId = firestoreString_(request, 'gameId');
+    if (!requestId || !dmUid || !playerUid || !gameId) return;
+    Array.prototype.push.apply(writes, contactGrantWrites_(dmUid, playerUid, gameId, requestId, new Date()));
+    migrated += 1;
+    if (writes.length >= 400) commitFirestoreWrites_(writes.splice(0, writes.length));
+  });
+  if (writes.length) commitFirestoreWrites_(writes);
+  return { ok: true, acceptedRequests: migrated, contactGrants: migrated * 2 };
 }
 
 function doGet(e) {
@@ -399,6 +449,25 @@ function stableParticipantId_(gameId, playerUid) {
   return 'MEM-' + Utilities.base64EncodeWebSafe(digest).replace(/=+$/g, '').slice(0, 32);
 }
 
+function contactGrantWrites_(dmUid, playerUid, gameId, requestId, now) {
+  const sharedData = {
+    gameId: gameId,
+    requestId: requestId,
+    createdAt: now,
+    updatedAt: now
+  };
+  return [
+    firestoreSetWrite_('contactGrants/' + dmUid + '/viewers/' + playerUid, Object.assign({}, sharedData, {
+      targetUid: dmUid,
+      viewerUid: playerUid
+    })),
+    firestoreSetWrite_('contactGrants/' + playerUid + '/viewers/' + dmUid, Object.assign({}, sharedData, {
+      targetUid: playerUid,
+      viewerUid: dmUid
+    }))
+  ];
+}
+
 /**
  * Resuelve una solicitud desde el backend. La aceptación usa un lock único,
  * crea un participante determinístico y sincroniza el contador de Sheets. Si
@@ -425,6 +494,12 @@ function resolveJoinRequest_(payload, uid) {
 
     if (currentStatus !== 'PENDING') {
       if (currentStatus === nextStatus) {
+        if (currentStatus === 'APPROVED') {
+          // Un reintento también repara el acceso de contacto de solicitudes
+          // aceptadas con una versión anterior del backend.
+          const repairTime = new Date();
+          commitFirestoreWrites_(contactGrantWrites_(dmUid, playerUid, gameId, requestId, repairTime));
+        }
         return {
           id: requestId,
           status: currentStatus,
@@ -520,7 +595,9 @@ function resolveJoinRequest_(payload, uid) {
         firestoreUpdateWrite_('gameJoinRequests/' + requestId, requestUpdate),
         firestoreCreateWrite_('gameParticipants/' + participantId, participant),
         firestoreCreateWrite_('users/' + playerUid + '/notifications/' + notificationId, notification)
-      ]);
+      ].concat(
+        contactGrantWrites_(uid, playerUid, gameId, requestId, now)
+      ));
     } catch (error) {
       // Firestore y Sheets no comparten transacciones. Esta compensación evita
       // dejar un cupo ocupado si la relación de participante no fue confirmada.
@@ -585,6 +662,12 @@ function firestoreUpdateWrite_(path, data) {
     update: { name: firestoreDocumentName_(path), fields: firestoreFields_(data) },
     updateMask: { fieldPaths: Object.keys(data) },
     currentDocument: { exists: true }
+  };
+}
+
+function firestoreSetWrite_(path, data) {
+  return {
+    update: { name: firestoreDocumentName_(path), fields: firestoreFields_(data) }
   };
 }
 

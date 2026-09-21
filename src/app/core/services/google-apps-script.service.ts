@@ -22,7 +22,7 @@ interface ApiHealth {
   timestamp: string;
 }
 
-const API_VERSION = '7.0.0';
+const API_VERSION = '8.0.0';
 const API_ACTION = Object.freeze({
   health: 'health',
   games: 'games',

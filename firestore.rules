@@ -120,7 +120,8 @@ service cloud.firestore {
         && request.auth.uid != targetUid
         && currentUserData().active == true
         && currentUserData().profileCompleted == true
-        && (currentUserData().role == 'DM' || currentUserData().role == 'BOTH')
+        && ((currentUserData().role == 'DM' || currentUserData().role == 'BOTH')
+          || exists(/databases/$(database)/documents/contactGrants/$(targetUid)/viewers/$(request.auth.uid)))
         && get(/databases/$(database)/documents/users/$(targetUid)).data.active == true
         && get(/databases/$(database)/documents/users/$(targetUid)).data.profileCompleted == true
         && resource.data.privacyConsent == true
@@ -212,6 +213,13 @@ service cloud.firestore {
       // la propiedad de la partida y el cupo disponible en Google Sheets.
       allow get, list: if completedViewer();
       allow create, update, delete: if false;
+    }
+
+    match /contactGrants/{targetUid}/viewers/{viewerUid} {
+      // Se crean exclusivamente desde Apps Script al aceptar una solicitud.
+      // No contienen datos personales: sólo autorizan una lectura concreta de
+      // userPrivate mientras continúen vigentes el consentimiento y bloqueos.
+      allow read, write: if false;
     }
 
     match /users/{userId}/notifications/{notificationId} {

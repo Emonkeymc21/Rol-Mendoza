@@ -7,6 +7,14 @@
       <header><app-class-avatar [avatarClass]="playerProfile?.avatarClass || 'FIGHTER'" size="lg"></app-class-avatar><div><span class="eyebrow">Quiere sumarse a</span><h2>{{ selected.gameTitle }}</h2><p>{{ playerProfile?.displayName || selected.playerName }} · {{ playerProfile?.city || 'Mendoza' }}</p></div></header>
       <div class="detail-grid"><section><h3>Sobre {{ (playerProfile?.firstName || selected.playerName).split(' ')[0] }}</h3><p>{{ playerProfile?.preferences?.bio || 'Abrí el perfil para conocer más sobre esta persona.' }}</p></section><section><h3>Sistemas preferidos</h3><div class="flex flex-wrap gap-2"><span *ngFor="let system of playerProfile?.preferences?.systems" class="tag">{{ system }}</span></div></section><section *ngIf="selected.message"><h3>Mensaje</h3><p>{{ selected.message }}</p></section></div>
       <div class="detail-actions"><a [routerLink]="['/jugadores', selected.playerUid]" class="btn-secondary">Ver perfil</a><ng-container *ngIf="selected.status === 'PENDING'"><button type="button" class="accept-button" (click)="resolve('APPROVED')" [disabled]="resolving">Aceptar</button><button type="button" class="reject-button" (click)="resolve('REJECTED')" [disabled]="resolving">Rechazar</button></ng-container><span *ngIf="selected.status !== 'PENDING'" class="resolved-label">Solicitud {{ selected.status === 'APPROVED' ? 'aceptada' : 'no aceptada' }}</span></div>
+      <section *ngIf="selected.status === 'APPROVED' && (playerContact?.whatsappUrl || playerContact?.instagramUrl)" class="approved-contact" aria-label="Contacto con el jugador aceptado">
+        <h3>Coordiná con el jugador</h3>
+        <p>El contacto se habilitó al aceptar la solicitud.</p>
+        <div>
+          <a *ngIf="playerWhatsappUrl() as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-action whatsapp"><app-icon name="whatsapp" [size]="18"></app-icon> Escribir por WhatsApp</a>
+          <a *ngIf="playerContact?.instagramUrl as instagram" [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-action"><app-icon name="instagram" [size]="18"></app-icon> Ver Instagram</a>
+        </div>
+      </section>
     </article>
     <ng-template #chooseRequest><div class="choose-request"><app-icon name="users" [size]="28"></app-icon><h2>Elegí una solicitud</h2><p>Acá vas a ver el perfil y las preferencias del jugador.</p></div></ng-template>
   </div>
