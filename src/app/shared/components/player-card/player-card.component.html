@@ -1,6 +1,6 @@
 <article class="player-card group glass-panel flex h-full flex-col rounded-2xl p-4 transition duration-300 hover:-translate-y-1 hover:border-gold/30 sm:p-5">
   <div class="player-card-head flex min-w-0 items-start gap-3 sm:gap-4">
-    <app-user-avatar [photoURL]="player.photoURL || ''" [avatarType]="player.avatarType" [name]="player.name"></app-user-avatar>
+    <app-class-avatar [avatarClass]="player.avatarClass"></app-class-avatar>
     <div class="min-w-0 flex-1">
       <div class="flex min-w-0 items-start gap-2"><h3 class="player-card-name font-display text-xl font-bold text-parchment">{{ player.name }}</h3><span *ngIf="player.verified" class="shrink-0 text-gold" title="Perfil completo"><app-icon name="shield" [size]="17"></app-icon></span></div>
       <p class="mt-1 text-sm font-semibold text-gold">{{ player.role }}</p>

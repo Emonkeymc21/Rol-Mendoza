@@ -45,9 +45,9 @@
               <label><span class="field-label">Hora *</span><input type="time" class="input-field" formControlName="time"><span *ngIf="invalid('time')" class="error-text">Seleccioná un horario.</span></label>
               <label><span class="field-label">Descripción del horario *</span><input class="input-field" formControlName="schedule" placeholder="Sábados · 18:00"><span *ngIf="invalid('schedule')" class="error-text">Indicá el día y horario.</span></label>
               <label><span class="field-label">Frecuencia *</span><select class="input-field" formControlName="frequency"><option>One-shot</option><option>Semanal</option><option>Quincenal</option><option>Mensual</option></select></label>
-              <label><span class="field-label">Lugares libres *</span><input type="number" min="1" max="12" class="input-field" formControlName="seats"><span *ngIf="invalid('seats')" class="error-text">Indicá entre 1 y 12 lugares.</span></label>
               <label><span class="field-label">Tamaño total *</span><input type="number" min="2" max="12" class="input-field" formControlName="totalSeats"></label>
               <label><span class="field-label">Jugadores actuales *</span><input type="number" min="0" max="12" class="input-field" formControlName="currentPlayers"><span *ngIf="invalid('currentPlayers')" class="error-text">Indicá un valor entre 0 y 12.</span></label>
+              <label><span class="field-label">Lugares disponibles</span><input type="number" class="input-field" formControlName="seats" readonly aria-readonly="true"><small class="mt-1 block text-xs text-mist">Se calcula automáticamente.</small></label>
             </div>
           </div>
         </div>

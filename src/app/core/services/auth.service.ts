@@ -15,7 +15,7 @@ import {
 } from 'firebase/auth';
 import { BehaviorSubject, distinctUntilChanged, filter, firstValueFrom, map, Observable, take } from 'rxjs';
 import { FirebaseService } from './firebase.service';
-import { avatarForUid } from '../data/avatar-options';
+import { avatarClassForUid } from '../data/avatar-classes';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -191,8 +191,7 @@ export class AuthService {
       role: 'PLAYER',
       province: 'Mendoza',
       city: '',
-      photoURL: user.photoURL || '',
-      avatarType: avatarForUid(user.uid),
+      avatarClass: avatarClassForUid(user.uid),
       active: true,
       profileCompleted: false,
       preferences: {

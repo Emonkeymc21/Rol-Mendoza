@@ -14,8 +14,11 @@ service cloud.firestore {
       return role == 'DM' || role == 'PLAYER' || role == 'BOTH';
     }
 
-    function validAvatar(avatar) {
-      return avatar in ['ELF', 'DWARF', 'WARRIOR', 'DRUID', 'RANGER', 'WIZARD'];
+    function validAvatarClass(avatar) {
+      return avatar in [
+        'BARBARIAN', 'BARD', 'CLERIC', 'PALADIN', 'RANGER', 'ROGUE',
+        'DRUID', 'FIGHTER', 'MONK', 'SORCERER', 'WARLOCK', 'WIZARD'
+      ];
     }
 
     function validJoinStatus(status) {
@@ -60,7 +63,7 @@ service cloud.firestore {
       let data = request.resource.data;
       return data.keys().hasOnly([
           'uid', 'displayName', 'firstName', 'lastName', 'role', 'province',
-          'city', 'photoURL', 'avatarType', 'active', 'profileCompleted', 'preferences',
+          'city', 'photoURL', 'avatarClass', 'avatarType', 'active', 'profileCompleted', 'preferences',
           'createdAt', 'updatedAt'
         ])
         && data.uid == userId
@@ -74,9 +77,9 @@ service cloud.firestore {
         && data.province == 'Mendoza'
         && data.city is string
         && data.city.size() <= 80
-        && data.photoURL is string
-        && data.photoURL.size() <= 1000
-        && validAvatar(data.avatarType)
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1000))
+        && validAvatarClass(data.avatarClass)
+        && (!('avatarType' in data) || data.avatarType is string)
         && data.active is bool
         && data.profileCompleted is bool
         && validPreferences(data.preferences, data.profileCompleted)
@@ -190,51 +193,32 @@ service cloud.firestore {
       allow update: if signedIn()
         && resource.data.dmUid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'status', 'seenByDm', 'seenAt', 'resolvedAt', 'updatedAt'
+          'seenByDm', 'seenAt', 'updatedAt'
         ])
         && request.resource.data.id == resource.data.id
         && request.resource.data.gameId == resource.data.gameId
         && request.resource.data.playerUid == resource.data.playerUid
         && request.resource.data.dmUid == resource.data.dmUid
-        && validJoinStatus(request.resource.data.status)
+        && request.resource.data.status == resource.data.status
         && request.resource.data.seenByDm == true
         && request.resource.data.updatedAt == request.time
-        && (
-          (resource.data.status == 'PENDING'
-            && request.resource.data.status == 'PENDING'
-            && request.resource.data.seenAt == request.time
-            && !('resolvedAt' in request.resource.data))
-          ||
-          (resource.data.status == 'PENDING'
-            && request.resource.data.status in ['APPROVED', 'REJECTED']
-            && request.resource.data.resolvedAt == request.time
-            && ((resource.data.seenByDm == true && request.resource.data.seenAt == resource.data.seenAt)
-              || (resource.data.seenByDm == false && request.resource.data.seenAt == request.time)))
-        );
+        && resource.data.status == 'PENDING'
+        && request.resource.data.seenAt == request.time
+        && !('resolvedAt' in request.resource.data);
+    }
+
+    match /gameParticipants/{participantId} {
+      // Apps Script crea y modifica participantes después de validar el token,
+      // la propiedad de la partida y el cupo disponible en Google Sheets.
+      allow get, list: if completedViewer();
+      allow create, update, delete: if false;
     }
 
     match /users/{userId}/notifications/{notificationId} {
       allow get, list: if ownDocument(userId);
-      allow create: if signedIn()
-        && request.resource.data.keys().hasOnly([
-          'id', 'type', 'title', 'message', 'gameId', 'gameTitle',
-          'requestId', 'actorUid', 'read', 'createdAt'
-        ])
-        && request.resource.data.id == notificationId
-        && ((request.resource.data.type == 'REQUEST_APPROVED'
-              && notificationId == request.resource.data.requestId + '-approved')
-          || (request.resource.data.type == 'REQUEST_REJECTED'
-              && notificationId == request.resource.data.requestId + '-rejected'))
-        && request.resource.data.actorUid == request.auth.uid
-        && request.resource.data.read == false
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.type in ['REQUEST_APPROVED', 'REQUEST_REJECTED']
-        && getAfter(/databases/$(database)/documents/gameJoinRequests/$(request.resource.data.requestId)).data.dmUid == request.auth.uid
-        && getAfter(/databases/$(database)/documents/gameJoinRequests/$(request.resource.data.requestId)).data.playerUid == userId
-        && ((getAfter(/databases/$(database)/documents/gameJoinRequests/$(request.resource.data.requestId)).data.status == 'APPROVED'
-              && request.resource.data.type == 'REQUEST_APPROVED')
-          || (getAfter(/databases/$(database)/documents/gameJoinRequests/$(request.resource.data.requestId)).data.status == 'REJECTED'
-              && request.resource.data.type == 'REQUEST_REJECTED'));
+      // Las notificaciones de negocio se crean en el backend junto con el
+      // cambio de solicitud. El navegador solamente puede marcarlas como leídas.
+      allow create: if false;
       allow update: if ownDocument(userId)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt'])
         && request.resource.data.read == true

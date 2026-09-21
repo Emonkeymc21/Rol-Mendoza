@@ -9,7 +9,7 @@ const CONFIG = Object.freeze({
   gamesSpreadsheetId: '1ZtbK4j_V8ePbUgaZZkeTtP7vFcnjsn2R7s2brRtvw9k',
   firebaseWebApiKey: 'AIzaSyDAUvtcTyEQmbGmmmOGJTsyVg34dt1h_gU',
   firebaseProjectId: 'rol-mendoza',
-  apiVersion: '6.0.0',
+  apiVersion: '7.0.0',
   sheets: Object.freeze({
     games: 'PARTIDAS',
     requests: 'SOLICITUDES',
@@ -21,6 +21,7 @@ const CONFIG = Object.freeze({
     setGameStatus: 3,
     deleteGame: 5,
     joinGame: 20,
+    resolveJoinRequest: 2,
     createComment: 20
   })
 });
@@ -131,6 +132,8 @@ function doPost(e) {
       case 'joinGame':
         requirePlayer_(idToken, user.uid);
         return json_({ ok: true, data: createJoinRequest_(payload, firebaseAccount_(user)) });
+      case 'resolveJoinRequest':
+        return json_({ ok: true, data: resolveJoinRequest_(payload, user.uid) });
       case 'createComment':
         return json_({ ok: true, data: createComment_(payload, firebaseAccount_(user)) });
       default:
@@ -214,13 +217,10 @@ function createGame_(payload, account, profile) {
   const mode = oneOf_(payload.mode, ['Presencial', 'Online', 'Mixto'], 'modalidad');
   const schedule = requiredText_(payload.schedule, 'día y horario', 120, 3);
   const frequency = oneOf_(payload.frequency, ['One-shot', 'Semanal', 'Quincenal', 'Mensual'], 'frecuencia');
-  const seats = integerBetween_(payload.seats, 'lugares libres', 1, 12);
   const totalSeats = integerBetween_(payload.totalSeats, 'tamaño total', 2, 12);
-  if (seats > totalSeats) throw new Error('Los lugares libres no pueden superar el tamaño total.');
   const currentPlayers = integerBetween_(payload.currentPlayers || 0, 'jugadores actuales', 0, totalSeats);
-  if (seats + currentPlayers > totalSeats) {
-    throw new Error('Los lugares libres más los jugadores actuales no pueden superar el tamaño total.');
-  }
+  const seats = totalSeats - currentPlayers;
+  const initialStatus = currentPlayers >= totalSeats ? 'FULL' : 'ACTIVE';
 
   const now = new Date();
   const id = makeId_('PRT');
@@ -248,12 +248,12 @@ function createGame_(payload, account, profile) {
     tono: requiredText_(payload.tone, 'tono', 100, 2),
     descripcion: requiredText_(payload.summary, 'resumen', 420, 30),
     herramientas_cuidado: requiredText_(payload.safety, 'herramientas de cuidado', 180, 2),
-    estado: 'ACTIVE',
+    estado: initialStatus,
     publicada: 'Sí',
     actualizada_el: now
   });
 
-  return { id: id, status: 'ACTIVE', message: '¡Partida publicada! Tu partida ya está disponible para la comunidad.' };
+  return { id: id, status: initialStatus, message: '¡Partida publicada! Tu partida ya está disponible para la comunidad.' };
 }
 
 function updateGame_(payload, account) {
@@ -263,11 +263,16 @@ function updateGame_(payload, account) {
 
   const current = record.data;
   const totalSeats = integerBetween_(payload.totalSeats, 'tamaño total', 2, 12);
-  const seats = integerBetween_(payload.seats, 'lugares libres', 0, totalSeats);
   const currentPlayers = integerBetween_(payload.currentPlayers || 0, 'jugadores actuales', 0, totalSeats);
-  if (seats + currentPlayers > totalSeats) {
-    throw new Error('Los lugares libres más los jugadores actuales no pueden superar el tamaño total.');
+  const confirmedInCumbre20 = countParticipantsForGame_(gameId);
+  if (currentPlayers < confirmedInCumbre20) {
+    throw new Error('Los jugadores actuales no pueden ser menos que los participantes confirmados en Cumbre20.');
   }
+  const seats = totalSeats - currentPlayers;
+  const currentStatus = canonicalStatus_(current.estado);
+  const capacityStatus = currentPlayers >= totalSeats
+    ? 'FULL'
+    : (currentStatus === 'FULL' ? 'ACTIVE' : currentStatus);
   const next = Object.assign({}, current, {
     titulo: requiredText_(payload.title, 'título', 120, 5),
     sistema: requiredText_(payload.system, 'sistema', 100, 2),
@@ -283,6 +288,8 @@ function updateGame_(payload, account) {
     cupos_totales: totalSeats,
     cupos_libres: seats,
     jugadores_actuales: currentPlayers,
+    estado: capacityStatus,
+    publicada: capacityStatus === 'ACTIVE' || capacityStatus === 'FULL' ? 'Sí' : 'No',
     nivel: requiredText_(payload.level, 'experiencia buscada', 100, 2),
     edad_requerida: requiredText_(payload.ageRequirement || 'Sin requisito', 'edad requerida', 60, 2),
     metodo_contacto: requiredText_(payload.contactMethod || 'Perfil del máster', 'método de contacto', 80, 2),
@@ -383,6 +390,162 @@ function stableRequestId_(gameId, playerUid) {
   return 'REQ-' + Utilities.base64EncodeWebSafe(digest).replace(/=+$/g, '').slice(0, 32);
 }
 
+function stableParticipantId_(gameId, playerUid) {
+  const digest = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    String(gameId) + ':' + String(playerUid),
+    Utilities.Charset.UTF_8
+  );
+  return 'MEM-' + Utilities.base64EncodeWebSafe(digest).replace(/=+$/g, '').slice(0, 32);
+}
+
+/**
+ * Resuelve una solicitud desde el backend. La aceptación usa un lock único,
+ * crea un participante determinístico y sincroniza el contador de Sheets. Si
+ * Firestore rechazara el commit, la fila de Sheets se restaura antes de salir.
+ */
+function resolveJoinRequest_(payload, uid) {
+  const requestId = requiredText_(payload.requestId, 'solicitud', 80);
+  const nextStatus = oneOf_(String(payload.status || '').toUpperCase(), ['APPROVED', 'REJECTED'], 'estado');
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    const requestDocument = getFirestoreDocument_('gameJoinRequests/' + requestId);
+    if (!requestDocument) throw new Error('Esta solicitud ya no existe.');
+
+    const currentStatus = firestoreString_(requestDocument, 'status') || 'PENDING';
+    const dmUid = firestoreString_(requestDocument, 'dmUid');
+    const playerUid = firestoreString_(requestDocument, 'playerUid');
+    const gameId = firestoreString_(requestDocument, 'gameId');
+    const gameTitle = firestoreString_(requestDocument, 'gameTitle') || 'la partida';
+    if (dmUid !== uid) throw new Error('No tenés permisos para resolver esta solicitud.');
+
+    const gameRecord = findGameWithRow_(gameId);
+    assertOwner_(gameRecord && gameRecord.data, uid);
+
+    if (currentStatus !== 'PENDING') {
+      if (currentStatus === nextStatus) {
+        return {
+          id: requestId,
+          status: currentStatus,
+          duplicate: true,
+          currentPlayers: Number(gameRecord.data.jugadores_actuales || 0),
+          maxPlayers: Number(gameRecord.data.cupos_totales || 0),
+          message: currentStatus === 'APPROVED'
+            ? 'Este jugador ya forma parte de la partida.'
+            : 'Esta solicitud ya fue rechazada.'
+        };
+      }
+      throw new Error('Esta solicitud ya fue resuelta.');
+    }
+
+    const now = new Date();
+    const seenAt = firestoreTimestamp_(requestDocument, 'seenAt') || now;
+    const notificationId = requestId + '-' + nextStatus.toLowerCase();
+    const notification = {
+      id: notificationId,
+      type: nextStatus === 'APPROVED' ? 'REQUEST_APPROVED' : 'REQUEST_REJECTED',
+      title: nextStatus === 'APPROVED' ? '¡Estás dentro!' : 'Actualización de tu solicitud',
+      message: nextStatus === 'APPROVED'
+        ? 'Te aceptaron en “' + gameTitle + '”.'
+        : 'Tu solicitud para “' + gameTitle + '” no fue aceptada.',
+      gameId: gameId,
+      gameTitle: gameTitle,
+      requestId: requestId,
+      actorUid: uid,
+      read: false,
+      createdAt: now
+    };
+    const requestUpdate = {
+      status: nextStatus,
+      seenByDm: true,
+      seenAt: seenAt,
+      resolvedAt: now,
+      updatedAt: now
+    };
+
+    if (nextStatus === 'REJECTED') {
+      commitFirestoreWrites_([
+        firestoreUpdateWrite_('gameJoinRequests/' + requestId, requestUpdate),
+        firestoreCreateWrite_('users/' + playerUid + '/notifications/' + notificationId, notification)
+      ]);
+      return { id: requestId, status: 'REJECTED', message: 'La solicitud fue rechazada.' };
+    }
+
+    const participantId = stableParticipantId_(gameId, playerUid);
+    const existingParticipant = getFirestoreDocument_('gameParticipants/' + participantId);
+    if (existingParticipant) {
+      // El ID determinístico vuelve segura una repetición aunque el navegador
+      // reenvíe la misma operación después de perder la respuesta.
+      return {
+        id: requestId,
+        status: 'APPROVED',
+        duplicate: true,
+        currentPlayers: Number(gameRecord.data.jugadores_actuales || 0),
+        maxPlayers: Number(gameRecord.data.cupos_totales || 0),
+        message: 'Este jugador ya forma parte de la partida.'
+      };
+    }
+
+    const game = gameRecord.data;
+    const gameStatus = canonicalStatus_(game.estado);
+    if (gameStatus === 'CANCELLED') throw new Error('La partida está cancelada.');
+    const maxPlayers = integerBetween_(game.cupos_totales, 'cantidad máxima de jugadores', 1, 99);
+    const currentPlayers = integerBetween_(game.jugadores_actuales || 0, 'jugadores confirmados', 0, maxPlayers);
+    if (gameStatus === 'FULL' || currentPlayers >= maxPlayers) {
+      throw new Error('La partida ya está completa.');
+    }
+
+    const updatedPlayers = currentPlayers + 1;
+    const updatedStatus = updatedPlayers >= maxPlayers ? 'FULL' : gameStatus;
+    const updatedGame = Object.assign({}, game, {
+      jugadores_actuales: updatedPlayers,
+      cupos_libres: Math.max(0, maxPlayers - updatedPlayers),
+      estado: updatedStatus,
+      publicada: updatedStatus === 'ACTIVE' || updatedStatus === 'FULL' ? 'Sí' : 'No',
+      actualizada_el: now
+    });
+    const participant = {
+      id: participantId,
+      gameId: gameId,
+      playerUid: playerUid,
+      dmUid: uid,
+      requestId: requestId,
+      joinedAt: now
+    };
+
+    writeObjectRow_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, updatedGame, gameRecord.rowNumber);
+    try {
+      commitFirestoreWrites_([
+        firestoreUpdateWrite_('gameJoinRequests/' + requestId, requestUpdate),
+        firestoreCreateWrite_('gameParticipants/' + participantId, participant),
+        firestoreCreateWrite_('users/' + playerUid + '/notifications/' + notificationId, notification)
+      ]);
+    } catch (error) {
+      // Firestore y Sheets no comparten transacciones. Esta compensación evita
+      // dejar un cupo ocupado si la relación de participante no fue confirmada.
+      writeObjectRow_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, game, gameRecord.rowNumber);
+      throw error;
+    }
+
+    return {
+      id: requestId,
+      status: 'APPROVED',
+      gameId: gameId,
+      participantId: participantId,
+      currentPlayers: updatedPlayers,
+      maxPlayers: maxPlayers,
+      availableSeats: Math.max(0, maxPlayers - updatedPlayers),
+      gameStatus: updatedStatus,
+      message: updatedStatus === 'FULL'
+        ? 'Jugador aceptado. La mesa quedó completa.'
+        : 'Jugador aceptado y cupo actualizado.'
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function firestoreDocumentsUrl_() {
   return 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.firebaseProjectId) +
     '/databases/(default)/documents';
@@ -402,16 +565,30 @@ function getFirestoreDocument_(path) {
 }
 
 function createFirestoreDocuments_(documents) {
-  const projectPath = 'projects/' + CONFIG.firebaseProjectId + '/databases/(default)/documents/';
-  const writes = documents.map(function (item) {
-    return {
-      update: {
-        name: projectPath + item.path,
-        fields: firestoreFields_(item.data)
-      },
-      currentDocument: { exists: false }
-    };
-  });
+  const writes = documents.map(function (item) { return firestoreCreateWrite_(item.path, item.data); });
+  commitFirestoreWrites_(writes, 'Ya existe una solicitud para esta partida.');
+}
+
+function firestoreDocumentName_(path) {
+  return 'projects/' + CONFIG.firebaseProjectId + '/databases/(default)/documents/' + path;
+}
+
+function firestoreCreateWrite_(path, data) {
+  return {
+    update: { name: firestoreDocumentName_(path), fields: firestoreFields_(data) },
+    currentDocument: { exists: false }
+  };
+}
+
+function firestoreUpdateWrite_(path, data) {
+  return {
+    update: { name: firestoreDocumentName_(path), fields: firestoreFields_(data) },
+    updateMask: { fieldPaths: Object.keys(data) },
+    currentDocument: { exists: true }
+  };
+}
+
+function commitFirestoreWrites_(writes, conflictMessage) {
   const response = UrlFetchApp.fetch(
     'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.firebaseProjectId) +
       '/databases/(default)/documents:commit',
@@ -424,9 +601,9 @@ function createFirestoreDocuments_(documents) {
     }
   );
   if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
-    if (response.getResponseCode() === 409) throw new Error('Ya existe una solicitud para esta partida.');
+    if (response.getResponseCode() === 409 && conflictMessage) throw new Error(conflictMessage);
     console.error(response.getContentText());
-    throw new Error('No pudimos guardar la solicitud en Firestore. Código HTTP: ' + response.getResponseCode());
+    throw new Error('No pudimos guardar la operación en Firestore. Código HTTP: ' + response.getResponseCode());
   }
 }
 
@@ -447,6 +624,42 @@ function firestoreValue_(value) {
 function firestoreString_(document, field) {
   const value = document && document.fields && document.fields[field];
   return value && value.stringValue ? String(value.stringValue) : '';
+}
+
+function firestoreTimestamp_(document, field) {
+  const value = document && document.fields && document.fields[field];
+  return value && value.timestampValue ? new Date(value.timestampValue) : null;
+}
+
+function countParticipantsForGame_(gameId) {
+  const response = UrlFetchApp.fetch(
+    'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.firebaseProjectId) +
+      '/databases/(default)/documents:runQuery',
+    {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      payload: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: 'gameParticipants' }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: 'gameId' },
+              op: 'EQUAL',
+              value: { stringValue: gameId }
+            }
+          },
+          select: { fields: [{ fieldPath: '__name__' }] }
+        }
+      }),
+      muteHttpExceptions: true
+    }
+  );
+  if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+    throw new Error('No pudimos comprobar los participantes confirmados. Código HTTP: ' + response.getResponseCode());
+  }
+  const rows = JSON.parse(response.getContentText());
+  return rows.filter(function (row) { return Boolean(row.document); }).length;
 }
 
 function createComment_(payload, account) {
@@ -644,19 +857,23 @@ function upsertObject_(spreadsheetId, sheetName, object, rowNumber) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const sheet = getSheet_(spreadsheetId, sheetName);
-    const lastColumn = sheet.getLastColumn();
-    const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
-    const row = headers.map(function (header) {
-      const value = Object.prototype.hasOwnProperty.call(object, header) ? object[header] : '';
-      return safeCell_(value);
-    });
-    const targetRow = rowNumber || sheet.getLastRow() + 1;
-    sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
-    SpreadsheetApp.flush();
+    writeObjectRow_(spreadsheetId, sheetName, object, rowNumber);
   } finally {
     lock.releaseLock();
   }
+}
+
+function writeObjectRow_(spreadsheetId, sheetName, object, rowNumber) {
+  const sheet = getSheet_(spreadsheetId, sheetName);
+  const lastColumn = sheet.getLastColumn();
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  const row = headers.map(function (header) {
+    const value = Object.prototype.hasOwnProperty.call(object, header) ? object[header] : '';
+    return safeCell_(value);
+  });
+  const targetRow = rowNumber || sheet.getLastRow() + 1;
+  sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
+  SpreadsheetApp.flush();
 }
 
 function getSheet_(spreadsheetId, sheetName) {

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import type { DocumentData } from 'firebase/firestore';
 import { BehaviorSubject, filter, Observable } from 'rxjs';
-import { avatarForUid, isAvatarType } from '../data/avatar-options';
+import { isAvatarClass, migrateLegacyAvatar } from '../data/avatar-classes';
 import { BlockedUser, ProfileInput, UserPrivateProfile, UserProfile } from '../models/user-profile.model';
 import { AuthService } from './auth.service';
 import { ContactNormalizerService } from './contact-normalizer.service';
@@ -28,7 +28,21 @@ export class ProfileService {
     const user = this.requireUser();
     const { api, database } = await this.loadFirestore();
     const snapshot = await api.getDoc(api.doc(database, 'users', user.uid));
-    const profile = snapshot.exists() ? this.mapPublic(snapshot.data()) : null;
+    const data = snapshot.exists() ? snapshot.data() : null;
+    const profile = data ? this.mapPublic(data) : null;
+    if (data && profile && !isAvatarClass(data['avatarClass'])) {
+      try {
+        await api.setDoc(api.doc(database, 'users', user.uid), {
+          avatarClass: profile.avatarClass,
+          updatedAt: api.serverTimestamp()
+        }, { merge: true });
+      } catch (error) {
+        // Un perfil legado incompleto puede no cumplir todavía todas las reglas
+        // actuales. Conservamos el emblema determinístico en memoria y el
+        // onboarding lo persistirá al guardar el documento completo.
+        console.warn('El emblema legado se guardará al completar el perfil.', error);
+      }
+    }
     this.ownProfileState.next(profile);
     return profile;
   }
@@ -148,8 +162,7 @@ export class ProfileService {
       role: input.role,
       province: 'Mendoza',
       city: input.city,
-      photoURL: user.photoURL || '',
-      avatarType: input.avatarType,
+      avatarClass: input.avatarClass,
       active: true,
       profileCompleted: true,
       preferences: {
@@ -270,8 +283,7 @@ export class ProfileService {
       role: data['role'] === 'DM' || data['role'] === 'BOTH' ? data['role'] : 'PLAYER',
       province: 'Mendoza',
       city: String(data['city'] || ''),
-      photoURL: String(data['photoURL'] || ''),
-      avatarType: isAvatarType(data['avatarType']) ? data['avatarType'] : avatarForUid(String(data['uid'] || '')),
+      avatarClass: migrateLegacyAvatar(data['avatarClass'] || data['avatarType'], String(data['uid'] || '')),
       active: data['active'] !== false,
       profileCompleted: data['profileCompleted'] === true && hasValidRole,
       preferences: {

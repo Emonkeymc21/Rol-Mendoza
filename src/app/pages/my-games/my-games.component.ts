@@ -5,6 +5,9 @@ import { GameService } from '../../core/services/game.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { GameJoinRequest } from '../../core/models/join-request.model';
 import { NotificationService } from '../../core/services/notification.service';
+import { GameParticipantView } from '../../core/models/game-participant.model';
+import { GameParticipantService } from '../../core/services/game-participant.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-my-games',
@@ -19,8 +22,16 @@ export class MyGamesComponent implements OnInit {
   busyGameId = '';
   canCreate = false;
   requests: GameJoinRequest[] = [];
+  participants: GameParticipantView[] = [];
 
-  constructor(private gamesService: GameService, profiles: ProfileService, route: ActivatedRoute, notifications: NotificationService) {
+  constructor(
+    private gamesService: GameService,
+    profiles: ProfileService,
+    route: ActivatedRoute,
+    notifications: NotificationService,
+    participantService: GameParticipantService,
+    auth: AuthService
+  ) {
     if (route.snapshot.queryParamMap.get('saved')) {
       this.notice = route.snapshot.queryParamMap.get('action') === 'published'
         ? '¡Partida publicada! Tu partida ya está disponible para la comunidad.'
@@ -30,6 +41,10 @@ export class MyGamesComponent implements OnInit {
     notifications.watchDmRequests().subscribe({
       next: requests => this.requests = requests,
       error: error => console.error('No se pudieron contar las solicitudes de partidas.', error)
+    });
+    if (auth.currentUser) participantService.watchOwned(auth.currentUser.uid).subscribe({
+      next: participants => this.participants = participants,
+      error: error => console.error('No se pudieron cargar los participantes de tus partidas.', error)
     });
   }
 
@@ -82,5 +97,14 @@ export class MyGamesComponent implements OnInit {
 
   requestCount(gameId: string): number {
     return this.requests.filter(item => item.gameId === gameId && item.status === 'PENDING').length;
+  }
+
+  participantsFor(gameId: string): GameParticipantView[] {
+    return this.participants.filter(item => item.participant.gameId === gameId);
+  }
+
+  availableMessage(game: Game): string {
+    if (game.status === 'FULL' || game.seats <= 0) return 'Mesa completa';
+    return `${game.seats} ${game.seats === 1 ? 'lugar disponible' : 'lugares disponibles'}`;
   }
 }

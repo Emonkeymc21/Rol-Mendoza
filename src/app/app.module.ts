@@ -24,7 +24,7 @@ import { LoginComponent } from './pages/login/login.component';
 import { AccountComponent } from './pages/account/account.component';
 import { CompleteProfileComponent } from './pages/complete-profile/complete-profile.component';
 import { MyGamesComponent } from './pages/my-games/my-games.component';
-import { UserAvatarComponent } from './shared/components/user-avatar/user-avatar.component';
+import { ClassAvatarComponent } from './shared/components/user-avatar/user-avatar.component';
 import { AboutComponent } from './pages/about/about.component';
 import { MyRequestsComponent } from './pages/my-requests/my-requests.component';
 import { DmRequestsComponent } from './pages/dm-requests/dm-requests.component';
@@ -51,7 +51,7 @@ import { NotificationsComponent } from './pages/notifications/notifications.comp
     AccountComponent,
     CompleteProfileComponent,
     MyGamesComponent,
-    UserAvatarComponent,
+    ClassAvatarComponent,
     AboutComponent,
     MyRequestsComponent,
     DmRequestsComponent,

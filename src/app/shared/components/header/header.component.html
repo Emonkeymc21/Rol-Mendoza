@@ -17,7 +17,7 @@
         <a routerLink="/notificaciones" class="notification-trigger" aria-label="Notificaciones"><app-icon name="bell" [size]="21"></app-icon><span *ngIf="unreadCount$ | async as unread">{{ unread > 99 ? '99+' : unread }}</span></a>
         <div class="relative">
           <button type="button" class="account-trigger" (click)="toggleAccountMenu($event)" [attr.aria-expanded]="accountMenuOpen" aria-haspopup="menu">
-            <app-user-avatar [photoURL]="profile?.photoURL || user.photoURL || ''" [avatarType]="profile?.avatarType || 'WARRIOR'" [name]="profile?.displayName || user.displayName || 'Mi cuenta'" size="sm"></app-user-avatar>
+            <app-class-avatar [avatarClass]="profile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar>
             <span class="hidden text-left xl:block"><strong class="block leading-tight">{{ profile?.firstName || user.displayName || 'Mi cuenta' }}</strong><small class="block text-[11px] text-mist">{{ roleText() }}</small></span>
             <app-icon name="chevron" [size]="16"></app-icon>
           </button>
@@ -52,7 +52,7 @@
       <ng-container *ngIf="user$ | async as user; else mobileGuest">
         <div class="mobile-divider my-2"></div>
         <div class="mobile-account-summary">
-          <app-user-avatar [photoURL]="profile?.photoURL || user.photoURL || ''" [avatarType]="profile?.avatarType || 'WARRIOR'" [name]="profile?.displayName || user.displayName || 'Mi cuenta'" size="sm"></app-user-avatar>
+          <app-class-avatar [avatarClass]="profile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar>
           <div><strong>{{ profile?.displayName || user.displayName || user.email }}</strong><small>{{ roleText() }}</small></div>
         </div>
         <a routerLink="/perfil" class="mobile-link">Mi perfil</a>

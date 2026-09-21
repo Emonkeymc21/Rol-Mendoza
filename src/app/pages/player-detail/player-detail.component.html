@@ -5,7 +5,7 @@
       <div class="profile-cover" [style.--accent]="player.accent" aria-hidden="true"></div>
       <div class="profile-content">
         <header class="profile-header">
-          <app-user-avatar [photoURL]="player.photoURL || ''" [avatarType]="player.avatarType" [name]="player.name" size="lg"></app-user-avatar>
+          <app-class-avatar [avatarClass]="player.avatarClass" size="lg"></app-class-avatar>
           <div class="profile-heading">
             <div class="profile-name-row"><h1>{{ player.name }}</h1><span *ngIf="player.verified" class="verified-mark" title="Perfil completo"><app-icon name="shield" [size]="20"></app-icon></span></div>
             <p class="profile-role">{{ player.role }}</p>

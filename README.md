@@ -29,7 +29,9 @@ No se utiliza Google Forms ni existe chat interno.
 - Creación restringida a roles `DM` y `BOTH`, validada también en el backend.
 - Edición, pausa, activación y cancelación de partidas por su propietario.
 - Solicitudes únicas para unirse a partidas, con estado pendiente, vista, aceptada o no aceptada.
+- Aceptación con cupo real e idempotente: participante en Firestore y contador sincronizado en Sheets.
 - Notificaciones internas en tiempo real y contador de novedades sin reintroducir chat.
+- Doce emblemas de clase propios de Cumbre20; las fotos personales de proveedores no se muestran ni se copian a perfiles nuevos.
 - Tema del sistema, claro u oscuro, persistido localmente y aplicado antes de iniciar Angular.
 - Diseño mobile-first para PC, Android, iPhone y tablets.
 - Configuración SPA lista para Vercel.
@@ -83,6 +85,7 @@ userPrivate/{uid}                   WhatsApp, Instagram y consentimiento
 users/{uid}/blockedUsers/{uid}      personas bloqueadas
 users/{uid}/blockedBy/{uid}         espejo privado para ocultamiento mutuo
 gameJoinRequests/{requestId}        relación segura entre jugador, partida y DM
+gameParticipants/{idDeterminístico} participantes confirmados por partida y jugador
 users/{uid}/notifications/{id}      notificaciones privadas del usuario
 ```
 
@@ -102,7 +105,7 @@ No hace falta ejecutar una migración masiva. Cuando un usuario existente inicia
 
 Firestore es la fuente principal para autenticación, perfiles, búsquedas, contactos, permisos y bloqueos.
 
-Google Sheets es la fuente de datos de partidas y comentarios. Firestore almacena solicitudes y notificaciones, mientras el backend de `google-apps-script/` valida la partida y crea esos dos documentos de manera atómica.
+Google Sheets es la fuente de datos de partidas y comentarios. Firestore almacena solicitudes, participantes y notificaciones. El backend de `google-apps-script/` valida la propiedad y el cupo, registra al participante con un ID determinístico y sincroniza `currentPlayers` con Sheets.
 
 Flujo de partidas:
 
@@ -118,7 +121,7 @@ Para actualizarlo:
 2. Ejecutá `autorizarServiciosCumbre20` desde el editor y aceptá los permisos solicitados.
 3. Editá el deployment existente y publicá una **Nueva versión**.
 4. Conservá la misma URL `/exec` configurada en los environments.
-5. Verificá que `?action=health` devuelva `version: 6.0.0`.
+5. Verificá que `?action=health` devuelva `version: 7.0.0`.
 
 `UrlFetchApp` es necesario: valida el Firebase ID Token contra Identity Toolkit, consulta el perfil de Firestore y crea solicitudes/notificaciones en Firestore. No existe una llamada HTTP del script hacia sí mismo. El manifiesto solicita únicamente Sheets, `script.external_request` y `datastore`.
 

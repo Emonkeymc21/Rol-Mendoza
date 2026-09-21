@@ -8,11 +8,12 @@
 .stepper .active button, .stepper .done button { color:var(--text-primary);border-bottom-color:var(--brand-primary); }
 .stepper .active span, .stepper .done span { color:var(--button-primary-text);background:var(--brand-primary);border-color:var(--brand-primary); }
 .step-content { animation:step-in .22s ease-out; }
-.avatar-picker { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; }
+.avatar-picker { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem; }
 .avatar-picker label { cursor:pointer; }
-.avatar-picker label > span { display:flex;min-height:72px;align-items:center;gap:.6rem;border:1px solid var(--border);border-radius:14px;padding:.6rem;color:var(--text-secondary);transition:.2s ease; }
+.avatar-picker label > span { display:flex;min-height:122px;align-items:center;justify-content:center;gap:.35rem;border:1px solid var(--border);border-radius:14px;padding:.55rem .35rem;color:var(--text-secondary);text-align:center;transition:.2s ease;flex-direction:column; }
 .avatar-picker input:checked + span { border-color:var(--brand-border);background:var(--brand-soft);color:var(--text-primary);box-shadow:0 0 0 2px var(--brand-soft); }
-.avatar-picker strong { font-size:.78rem; }
+.avatar-picker strong { font-size:.72rem;line-height:1.1; }
+.avatar-picker small { display:none;color:var(--text-muted);font-size:.64rem;line-height:1.2; }
 .role-option { display:flex;align-items:center;gap:1rem;padding:1rem;border:1px solid var(--border);border-radius:1rem;background:var(--surface-muted);cursor:pointer;transition:.2s ease; }
 .role-option:hover, .role-option:has(input:checked) { border-color:var(--brand-border);background:var(--brand-soft); }
 .role-option input { width:1.15rem;height:1.15rem;accent-color:var(--brand-primary); }
@@ -25,4 +26,5 @@
 .consent-box small { margin-top:.45rem;color:var(--text-secondary);line-height:1.55; }
 @keyframes step-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 @media(max-width:639px){.stepper small{display:none}.stepper button{min-height:60px;padding:.5rem}.stepper span{width:1.7rem;height:1.7rem}}
-@media(max-width:520px){.avatar-picker{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(min-width:640px){.avatar-picker{grid-template-columns:repeat(4,minmax(0,1fr));gap:.7rem}.avatar-picker label>span{min-height:136px;padding:.7rem}.avatar-picker strong{font-size:.78rem}.avatar-picker small{display:block}}
+@media(min-width:900px){.avatar-picker{grid-template-columns:repeat(6,minmax(0,1fr))}}

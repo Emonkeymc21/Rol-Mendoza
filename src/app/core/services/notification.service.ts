@@ -1,16 +1,24 @@
 import { Injectable } from '@angular/core';
 import type { DocumentData } from 'firebase/firestore';
-import { map, Observable, shareReplay } from 'rxjs';
+import { firstValueFrom, map, Observable, shareReplay } from 'rxjs';
 import { AppNotification, GameJoinRequest, JoinRequestStatus } from '../models/join-request.model';
 import { AuthService } from './auth.service';
 import { FirebaseService } from './firebase.service';
+import { GameService } from './game.service';
+import { GoogleAppsScriptService } from './google-apps-script.service';
+import { ApiMutationResult } from '../models/community-api.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   readonly notifications$: Observable<AppNotification[]>;
   readonly unreadCount$: Observable<number>;
 
-  constructor(private auth: AuthService, private firebase: FirebaseService) {
+  constructor(
+    private auth: AuthService,
+    private firebase: FirebaseService,
+    private api: GoogleAppsScriptService,
+    private games: GameService
+  ) {
     this.notifications$ = this.watchNotifications().pipe(shareReplay({ bufferSize: 1, refCount: true }));
     this.unreadCount$ = this.notifications$.pipe(map(items => items.filter(item => !item.read).length));
   }
@@ -55,38 +63,14 @@ export class NotificationService {
     });
   }
 
-  async resolve(request: GameJoinRequest, status: Exclude<JoinRequestStatus, 'PENDING'>): Promise<void> {
+  async resolve(request: GameJoinRequest, status: Exclude<JoinRequestStatus, 'PENDING'>): Promise<ApiMutationResult> {
     const uid = this.requireUid();
     if (request.dmUid !== uid) throw new Error('No tenés permisos para resolver esta solicitud.');
     if (request.status !== 'PENDING') throw new Error('Esta solicitud ya fue resuelta.');
-    const { api, database } = await this.loadFirestore();
-    const batch = api.writeBatch(database);
-    const requestRef = api.doc(database, 'gameJoinRequests', request.id);
-    const notificationId = `${request.id}-${status.toLowerCase()}`;
-    const notificationRef = api.doc(database, 'users', request.playerUid, 'notifications', notificationId);
-    const requestUpdate: DocumentData = {
-      status,
-      seenByDm: true,
-      resolvedAt: api.serverTimestamp(),
-      updatedAt: api.serverTimestamp()
-    };
-    if (!request.seenByDm) requestUpdate['seenAt'] = api.serverTimestamp();
-    batch.update(requestRef, requestUpdate);
-    batch.set(notificationRef, {
-      id: notificationId,
-      type: status === 'APPROVED' ? 'REQUEST_APPROVED' : 'REQUEST_REJECTED',
-      title: status === 'APPROVED' ? '¡Solicitud aceptada!' : 'Actualización de tu solicitud',
-      message: status === 'APPROVED'
-        ? `Te aceptaron en “${request.gameTitle}”.`
-        : `Tu solicitud para “${request.gameTitle}” no fue aceptada.`,
-      gameId: request.gameId,
-      gameTitle: request.gameTitle,
-      requestId: request.id,
-      actorUid: uid,
-      read: false,
-      createdAt: api.serverTimestamp()
-    });
-    await batch.commit();
+    const token = await this.auth.getIdToken();
+    const result = await firstValueFrom(this.api.resolveJoinRequest(request.id, status, token));
+    this.games.refresh();
+    return result;
   }
 
   async markRead(notification: AppNotification): Promise<void> {

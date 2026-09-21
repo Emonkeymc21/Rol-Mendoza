@@ -5,7 +5,7 @@
       <div class="account-head p-5 sm:p-10">
         <span class="eyebrow">Mi cuenta</span>
         <div class="account-identity mt-5">
-          <app-user-avatar [photoURL]="profile?.photoURL || user.photoURL || ''" [avatarType]="profile?.avatarType || 'WARRIOR'" [name]="profile?.displayName || user.displayName || 'Mi perfil'" size="lg"></app-user-avatar>
+          <app-class-avatar [avatarClass]="profile?.avatarClass || 'FIGHTER'" size="lg"></app-class-avatar>
           <div class="account-identity-copy"><div class="account-name-row"><h1>{{ profile?.displayName || user.displayName || 'Aventurero/a' }}</h1><span class="profile-role">{{ roleText() }}</span></div><p class="account-location"><app-icon name="map" [size]="17"></app-icon>{{ profile?.city }}</p></div>
         </div>
       </div>

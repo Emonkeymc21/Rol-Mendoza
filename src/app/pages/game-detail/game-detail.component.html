@@ -32,13 +32,13 @@
           <div class="glass-panel sticky top-28 rounded-2xl p-6">
             <p class="text-sm font-bold uppercase tracking-wider text-gold">Datos de la mesa</p>
             <dl class="mt-6 space-y-5">
-              <div><dt class="text-sm text-mist">Máster</dt><dd class="mt-1 font-bold">{{ game.gm }}</dd></div>
+              <div><dt class="text-sm text-mist">Máster</dt><dd class="master-summary mt-2"><app-class-avatar [avatarClass]="dmProfile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar><strong>{{ game.gm }}</strong></dd></div>
               <div><dt class="text-sm text-mist">Lugar</dt><dd class="mt-1 flex items-center gap-2 font-bold"><app-icon name="map" [size]="18"></app-icon>{{ game.location }} · {{ game.mode }}</dd></div>
               <div><dt class="text-sm text-mist">Ciudad</dt><dd class="mt-1 font-bold">{{ game.city }}</dd></div>
               <div><dt class="text-sm text-mist">Horario</dt><dd class="mt-1 flex items-center gap-2 font-bold"><app-icon name="calendar" [size]="18"></app-icon>{{ game.schedule }}<span *ngIf="game.date || game.time"> · {{ game.date | date:'d/M/yy' }} {{ game.time }}</span></dd></div>
             </dl>
             <div class="my-6 border-t border-white/[.08]"></div>
-            <div><strong class="text-3xl text-gold">{{ game.seats }}</strong><span class="ml-2 text-sm text-mist">de {{ game.totalSeats }} lugares libres</span></div>
+            <div class="capacity-summary"><div><app-icon name="users" [size]="19"></app-icon><strong>{{ occupiedPlayers() }} / {{ game.totalSeats }}</strong><span>jugadores</span></div><p [class.full]="game.status === 'FULL' || game.seats === 0">{{ availableMessage() }}</p></div>
             <button type="button" class="btn-primary mt-6 w-full" (click)="join()" [disabled]="game.status === 'FULL' || !!joinRequest || (joinRoleLoaded && !canRequestJoin && !isOwnGame())">{{ joinButtonText() }} <app-icon *ngIf="game.status !== 'FULL' && !joinRequest && (!joinRoleLoaded || canRequestJoin)" name="arrow" [size]="19"></app-icon></button>
             <p *ngIf="joinNotice && !joinOpen && !joinRequest" class="feedback-success" role="status">{{ joinNotice }}</p>
             <p *ngIf="joinRequest" class="request-state" [class.approved]="joinRequest.status === 'APPROVED'" [class.rejected]="joinRequest.status === 'REJECTED'" role="status">{{ requestMessage() }} <a routerLink="/mis-solicitudes">Ver mis solicitudes</a></p>
@@ -56,6 +56,20 @@
           </div>
         </aside>
       </div>
+
+      <section class="glass-panel mt-6 rounded-3xl p-6 sm:p-8" aria-labelledby="participants-title">
+        <span class="eyebrow">La mesa</span>
+        <h2 id="participants-title" class="mt-2 font-display text-3xl font-bold">Jugadores confirmados</h2>
+        <p class="mt-2 text-sm text-mist">Personas que el máster ya aceptó mediante Cumbre20.</p>
+        <div *ngIf="participants.length; else noParticipants" class="participant-grid mt-6">
+          <a *ngFor="let item of participants" [routerLink]="['/jugadores', item.participant.playerUid]" class="participant-card">
+            <app-class-avatar [avatarClass]="item.profile?.avatarClass || 'FIGHTER'" size="md"></app-class-avatar>
+            <span><strong>{{ item.profile?.displayName || 'Jugador/a de Cumbre20' }}</strong><small>{{ item.profile?.city || 'Mendoza' }} · {{ item.profile?.role === 'BOTH' ? 'Jugador/a y DM' : (item.profile?.role === 'DM' ? 'DM' : 'Jugador/a') }}</small></span>
+            <app-icon name="arrow" [size]="17"></app-icon>
+          </a>
+        </div>
+        <ng-template #noParticipants><p class="mt-6 rounded-2xl border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay jugadores confirmados mediante Cumbre20.</p></ng-template>
+      </section>
 
       <section class="glass-panel mt-6 rounded-3xl p-6 sm:p-8" aria-labelledby="comments-title">
         <div class="grid gap-8 lg:grid-cols-[1fr_360px]">

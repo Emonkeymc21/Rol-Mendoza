@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppNotification } from '../../core/models/join-request.model';
 import { NotificationService } from '../../core/services/notification.service';
+import { UserProfile } from '../../core/models/user-profile.model';
+import { ProfileService } from '../../core/services/profile.service';
 
 @Component({ selector: 'app-notifications', templateUrl: './notifications.component.html', styleUrls: ['./notifications.component.scss'] })
 export class NotificationsComponent {
@@ -9,10 +11,15 @@ export class NotificationsComponent {
   loading = true;
   markingAll = false;
   errorMessage = '';
+  actorProfiles: Record<string, UserProfile | null> = {};
 
-  constructor(private notificationService: NotificationService, private router: Router) {
+  constructor(private notificationService: NotificationService, private router: Router, private profiles: ProfileService) {
     notificationService.notifications$.subscribe({
-      next: notifications => { this.notifications = notifications; this.loading = false; },
+      next: notifications => {
+        this.notifications = notifications;
+        this.loading = false;
+        void this.loadActorProfiles(notifications);
+      },
       error: error => {
         console.error('No se pudieron cargar las notificaciones.', error);
         this.errorMessage = 'No pudimos cargar tus notificaciones.';
@@ -36,5 +43,13 @@ export class NotificationsComponent {
     try { await this.notificationService.markAllRead(this.notifications); }
     catch (error) { this.errorMessage = 'No pudimos marcar las notificaciones como leídas.'; }
     finally { this.markingAll = false; }
+  }
+
+  private async loadActorProfiles(notifications: AppNotification[]): Promise<void> {
+    const missing = [...new Set(notifications.map(item => item.actorUid).filter(uid => uid && !(uid in this.actorProfiles)))];
+    await Promise.all(missing.map(async uid => {
+      try { this.actorProfiles[uid] = await this.profiles.getProfile(uid); }
+      catch { this.actorProfiles[uid] = null; }
+    }));
   }
 }

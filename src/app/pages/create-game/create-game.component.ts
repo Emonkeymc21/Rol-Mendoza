@@ -29,7 +29,7 @@ export class CreateGameComponent implements OnInit {
     time: ['', Validators.required],
     schedule: ['', Validators.required],
     frequency: ['One-shot', Validators.required],
-    seats: [2, [Validators.required, Validators.min(1), Validators.max(12)]],
+    seats: [5, [Validators.required, Validators.min(0), Validators.max(12)]],
     totalSeats: [5, [Validators.required, Validators.min(2), Validators.max(12)]],
     currentPlayers: [0, [Validators.required, Validators.min(0), Validators.max(12)]],
     level: ['Principiantes bienvenidos', Validators.required],
@@ -52,6 +52,8 @@ export class CreateGameComponent implements OnInit {
     this.gameId = route.snapshot.paramMap.get('id') || '';
     this.editing = Boolean(this.gameId);
     this.form.controls.city.valueChanges.subscribe(() => this.updateOtherCityValidation());
+    this.form.controls.totalSeats.valueChanges.subscribe(() => this.syncAvailableSeats());
+    this.form.controls.currentPlayers.valueChanges.subscribe(() => this.syncAvailableSeats());
   }
 
   async ngOnInit(): Promise<void> {
@@ -70,6 +72,7 @@ export class CreateGameComponent implements OnInit {
             tags: game.tags.join(', ')
           });
           this.updateOtherCityValidation();
+          this.syncAvailableSeats();
           this.loading = false;
         },
         error: error => {
@@ -85,6 +88,7 @@ export class CreateGameComponent implements OnInit {
       const profile = await this.profiles.getOwnProfile();
       if (profile?.city) this.form.patchValue(splitLocation(profile.city));
       this.updateOtherCityValidation();
+      this.syncAvailableSeats();
     } catch (error) {
       console.error('No se pudo precargar la ciudad del perfil.', error);
     }
@@ -100,8 +104,8 @@ export class CreateGameComponent implements OnInit {
       return;
     }
     const value = this.form.getRawValue();
-    if (value.seats > value.totalSeats || value.currentPlayers > value.totalSeats || value.seats + value.currentPlayers > value.totalSeats) {
-      this.saveError = 'Los lugares libres más los jugadores actuales no pueden superar el tamaño total de la mesa.';
+    if (value.currentPlayers > value.totalSeats) {
+      this.saveError = 'Los jugadores actuales no pueden superar el tamaño total de la mesa.';
       return;
     }
     const user = this.auth.currentUser;
@@ -152,5 +156,11 @@ export class CreateGameComponent implements OnInit {
       ? [Validators.required, Validators.minLength(2), Validators.maxLength(80)]
       : [Validators.maxLength(80)]);
     control.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private syncAvailableSeats(): void {
+    const total = Number(this.form.controls.totalSeats.value) || 0;
+    const current = Number(this.form.controls.currentPlayers.value) || 0;
+    this.form.controls.seats.setValue(Math.max(0, total - current), { emitEvent: false });
   }
 }

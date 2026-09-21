@@ -29,9 +29,19 @@
         <div class="mt-5 grid gap-3 text-sm text-mist sm:grid-cols-2">
           <span>{{ game.city }} · {{ game.mode }}</span>
           <span>{{ game.schedule }}</span>
-          <span>{{ game.seats }} de {{ game.totalSeats }} lugares libres</span>
+          <span><strong>{{ game.currentPlayers }} / {{ game.totalSeats }}</strong> jugadores · {{ availableMessage(game) }}</span>
           <span>Actualizada: {{ game.updatedAt | date:'d/M/yy, HH:mm' }}</span>
         </div>
+        <section class="confirmed-players mt-5" *ngIf="participantsFor(game.id) as confirmed">
+          <div class="flex items-center justify-between gap-3"><h3>Jugadores confirmados</h3><span>{{ confirmed.length }}</span></div>
+          <div *ngIf="confirmed.length; else noConfirmed" class="confirmed-list mt-3">
+            <a *ngFor="let item of confirmed" [routerLink]="['/jugadores', item.participant.playerUid]">
+              <app-class-avatar [avatarClass]="item.profile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar>
+              <span>{{ item.profile?.displayName || 'Jugador/a de Cumbre20' }}</span>
+            </a>
+          </div>
+          <ng-template #noConfirmed><p class="mt-2 text-xs text-mist">Todavía no aceptaste jugadores mediante Cumbre20.</p></ng-template>
+        </section>
         <div class="game-admin-actions mt-6 flex flex-wrap gap-2 pt-5">
           <a *ngIf="canCreate" [routerLink]="['/solicitudes']" [queryParams]="{ gameId: game.id }" class="request-button"><app-icon name="users" [size]="17"></app-icon> Solicitudes <span *ngIf="requestCount(game.id)">{{ requestCount(game.id) }}</span></a>
           <a [routerLink]="['/mis-partidas', game.id, 'editar']" class="btn-secondary !min-h-[40px] !px-4">Editar</a>

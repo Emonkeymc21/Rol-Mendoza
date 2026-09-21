@@ -13,6 +13,7 @@ export class DmRequestsComponent {
   loading = true;
   resolving = false;
   errorMessage = '';
+  successMessage = '';
   readonly gameFilter: string;
   private readonly requestedId: string;
 
@@ -58,8 +59,10 @@ export class DmRequestsComponent {
     if (!this.selected || this.resolving) return;
     this.resolving = true;
     this.errorMessage = '';
+    this.successMessage = '';
     try {
-      await this.notifications.resolve(this.selected, status);
+      const result = await this.notifications.resolve(this.selected, status);
+      this.successMessage = result.message;
     } catch (error) {
       console.error('No se pudo resolver la solicitud.', error);
       this.errorMessage = error instanceof Error ? error.message : 'No pudimos actualizar la solicitud.';

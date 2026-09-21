@@ -40,4 +40,10 @@ export interface ApiMutationResult {
   status: 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'FULL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'received' | 'published';
   message: string;
   duplicate?: boolean;
+  gameId?: string;
+  participantId?: string;
+  currentPlayers?: number;
+  maxPlayers?: number;
+  availableSeats?: number;
+  gameStatus?: 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'FULL';
 }

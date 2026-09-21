@@ -8,6 +8,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { GameJoinRequest } from '../../core/models/join-request.model';
 import { NotificationService } from '../../core/services/notification.service';
 import { ProfileService } from '../../core/services/profile.service';
+import { GameParticipantView } from '../../core/models/game-participant.model';
+import { GameParticipantService } from '../../core/services/game-participant.service';
+import { UserProfile } from '../../core/models/user-profile.model';
 
 @Component({ selector: 'app-game-detail', templateUrl: './game-detail.component.html', styleUrls: ['./game-detail.component.scss'] })
 export class GameDetailComponent {
@@ -24,6 +27,8 @@ export class GameDetailComponent {
   joinRequest?: GameJoinRequest;
   canRequestJoin = false;
   joinRoleLoaded = false;
+  participants: GameParticipantView[] = [];
+  dmProfile?: UserProfile;
   readonly apiConnected: boolean;
   private readonly gameId: string;
 
@@ -39,19 +44,28 @@ export class GameDetailComponent {
     private community: CommunityService,
     private auth: AuthService,
     notifications: NotificationService,
-    profiles: ProfileService,
+    private profiles: ProfileService,
+    participants: GameParticipantService,
     private router: Router
   ) {
     this.gameId = route.snapshot.paramMap.get('id') ?? '';
     this.apiConnected = community.isConnected();
-    community.getGame(this.gameId).subscribe(game => this.game = game);
+    this.loadGame();
+    participants.watchGame(this.gameId).subscribe({
+      next: items => this.participants = items,
+      error: error => console.error('No se pudieron cargar los jugadores confirmados.', error)
+    });
     if (this.auth.currentUser) {
       void profiles.getOwnProfile().then(profile => {
         this.canRequestJoin = profile?.role === 'PLAYER' || profile?.role === 'BOTH';
         this.joinRoleLoaded = true;
       }).catch(() => this.joinRoleLoaded = true);
       notifications.watchMyRequests().subscribe({
-        next: requests => this.joinRequest = requests.find(item => item.gameId === this.gameId),
+        next: requests => {
+          const previous = this.joinRequest?.status;
+          this.joinRequest = requests.find(item => item.gameId === this.gameId);
+          if (this.joinRequest?.status === 'APPROVED' && previous !== 'APPROVED') this.loadGame();
+        },
         error: error => console.error('No se pudo consultar el estado de la solicitud.', error)
       });
     }
@@ -132,6 +146,16 @@ export class GameDetailComponent {
       : 'El DM recibió tu solicitud.';
   }
 
+  occupiedPlayers(): number {
+    if (!this.game) return 0;
+    return Math.min(this.game.totalSeats, Math.max(0, this.game.currentPlayers));
+  }
+
+  availableMessage(): string {
+    if (!this.game || this.game.status === 'FULL' || this.game.seats <= 0) return 'Mesa completa';
+    return `${this.game.seats} ${this.game.seats === 1 ? 'lugar disponible' : 'lugares disponibles'}`;
+  }
+
   submitComment(): void {
     if (this.commentForm.invalid) { this.commentForm.markAllAsTouched(); return; }
     if (!this.auth.currentUser) {
@@ -159,6 +183,15 @@ export class GameDetailComponent {
     this.community.getComments(this.gameId).subscribe({
       next: comments => this.comments = comments,
       error: () => this.comments = []
+    });
+  }
+
+  private loadGame(): void {
+    this.community.getGame(this.gameId).subscribe(game => {
+      this.game = game;
+      if (game?.masterUserId) {
+        void this.profiles.getProfile(game.masterUserId).then(profile => this.dmProfile = profile || undefined).catch(() => this.dmProfile = undefined);
+      }
     });
   }
 }

@@ -22,7 +22,7 @@ interface ApiHealth {
   timestamp: string;
 }
 
-const API_VERSION = '6.0.0';
+const API_VERSION = '7.0.0';
 const API_ACTION = Object.freeze({
   health: 'health',
   games: 'games',
@@ -35,6 +35,7 @@ const API_ACTION = Object.freeze({
   setGameStatus: 'setGameStatus',
   deleteGame: 'deleteGame',
   joinGame: 'joinGame',
+  resolveJoinRequest: 'resolveJoinRequest',
   createComment: 'createComment'
 });
 
@@ -88,6 +89,10 @@ export class GoogleAppsScriptService {
 
   joinGame(gameId: string, message: string, idToken: string): Observable<ApiMutationResult> {
     return this.post<ApiMutationResult>(API_ACTION.joinGame, { gameId, message }, idToken);
+  }
+
+  resolveJoinRequest(requestId: string, status: 'APPROVED' | 'REJECTED', idToken: string): Observable<ApiMutationResult> {
+    return this.post<ApiMutationResult>(API_ACTION.resolveJoinRequest, { requestId, status }, idToken);
   }
 
   createComment(gameId: string, comment: string, idToken: string): Observable<ApiMutationResult> {

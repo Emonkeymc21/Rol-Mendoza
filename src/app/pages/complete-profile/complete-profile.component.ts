@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AVATAR_OPTIONS, AvatarType, avatarForUid } from '../../core/data/avatar-options';
+import { AVATAR_CLASS_OPTIONS, AvatarClass, avatarClassForUid } from '../../core/data/avatar-classes';
 import { MENDOZA_LOCATIONS, OTHER_LOCATION, resolveLocation, splitLocation } from '../../core/data/mendoza-locations';
 import { CommunityRole, ProfileInput } from '../../core/models/user-profile.model';
 import { AuthService } from '../../core/services/auth.service';
@@ -19,7 +19,7 @@ const exactLocationValidator = (): ValidatorFn => (control: AbstractControl): Va
 export class CompleteProfileComponent implements OnInit {
   readonly locations = MENDOZA_LOCATIONS;
   readonly otherLocation = OTHER_LOCATION;
-  readonly avatarOptions = AVATAR_OPTIONS;
+  readonly avatarOptions = AVATAR_CLASS_OPTIONS;
   readonly roles: { value: CommunityRole; label: string; detail: string }[] = [
     { value: 'DM', label: 'Dungeon Master / DM', detail: 'Dirijo partidas y busco jugadores.' },
     { value: 'PLAYER', label: 'Jugador/a', detail: 'Busco mesas y nuevas aventuras.' },
@@ -39,7 +39,7 @@ export class CompleteProfileComponent implements OnInit {
     city: ['', [Validators.required, exactLocationValidator()]],
     otherCity: ['', Validators.maxLength(80)],
     role: ['' as CommunityRole | '', Validators.required],
-    avatarType: ['WARRIOR' as AvatarType, Validators.required],
+    avatarClass: ['FIGHTER' as AvatarClass, Validators.required],
     whatsapp: ['', [Validators.required, this.whatsappValidator()]],
     alternatePhone: ['', Validators.maxLength(30)],
     instagram: ['', this.instagramValidator()],
@@ -81,7 +81,7 @@ export class CompleteProfileComponent implements OnInit {
         city: selectedLocation.city,
         otherCity: selectedLocation.otherCity,
         role: profile?.profileCompleted ? profile.role : '',
-        avatarType: profile?.avatarType || avatarForUid(this.auth.currentUser?.uid || ''),
+        avatarClass: profile?.avatarClass || avatarClassForUid(this.auth.currentUser?.uid || ''),
         whatsapp: privateProfile?.whatsappNumber || '',
         alternatePhone: privateProfile?.alternatePhone || '',
         instagram: privateProfile?.instagramUsername || '',
@@ -153,7 +153,7 @@ export class CompleteProfileComponent implements OnInit {
       lastName: value.lastName,
       city: resolveLocation(value.city, value.otherCity),
       role: value.role as CommunityRole,
-      avatarType: value.avatarType,
+      avatarClass: value.avatarClass,
       whatsapp: value.whatsapp,
       alternatePhone: value.alternatePhone,
       instagram: value.instagram,
@@ -185,7 +185,7 @@ export class CompleteProfileComponent implements OnInit {
   }
 
   private controlsForStep(step: number): AbstractControl[] {
-    if (step === 0) return [this.form.controls.firstName, this.form.controls.lastName, this.form.controls.city, this.form.controls.otherCity, this.form.controls.avatarType];
+    if (step === 0) return [this.form.controls.firstName, this.form.controls.lastName, this.form.controls.city, this.form.controls.otherCity, this.form.controls.avatarClass];
     if (step === 1) return [this.form.controls.role];
     if (step === 2) return [this.form.controls.whatsapp, this.form.controls.alternatePhone, this.form.controls.instagram];
     return [
@@ -202,7 +202,7 @@ export class CompleteProfileComponent implements OnInit {
 
   private invalidFormMessage(): string {
     const labels: Partial<Record<keyof typeof this.form.controls, string>> = {
-      firstName: 'el nombre', lastName: 'el apellido', city: 'la localidad', otherCity: 'tu localidad', role: 'el rol', avatarType: 'el avatar',
+      firstName: 'el nombre', lastName: 'el apellido', city: 'la localidad', otherCity: 'tu localidad', role: 'el rol', avatarClass: 'el emblema',
       whatsapp: 'el WhatsApp', instagram: 'Instagram', systems: 'los sistemas preferidos',
       availability: 'la disponibilidad', bio: 'la presentación personal',
       privacyConsent: 'el consentimiento de privacidad'
