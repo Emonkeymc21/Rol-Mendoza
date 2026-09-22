@@ -30,6 +30,7 @@ import { DmRequestsComponent } from './pages/dm-requests/dm-requests.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { CustomCursorComponent } from './shared/components/custom-cursor/custom-cursor.component';
 import { RevealDirective } from './shared/directives/reveal.directive';
+import { VerifyEmailComponent } from './pages/verify-email/verify-email.component';
 
 @NgModule({
   declarations: [
@@ -57,7 +58,8 @@ import { RevealDirective } from './shared/directives/reveal.directive';
     DmRequestsComponent,
     NotificationsComponent,
     CustomCursorComponent,
-    RevealDirective
+    RevealDirective,
+    VerifyEmailComponent
   ],
   imports: [
     BrowserModule,
