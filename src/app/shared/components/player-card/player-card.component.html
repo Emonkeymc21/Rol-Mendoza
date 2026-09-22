@@ -10,7 +10,8 @@
     <span *ngIf="player.matchScore" class="match-badge">{{ player.matchScore }}% afín</span>
   </div>
   <div class="mt-5 flex items-center gap-2 text-sm text-mist"><app-icon name="map" [size]="17"></app-icon><span>{{ player.city }}</span></div>
-  <p class="mt-4 line-clamp-3 flex-1 text-sm leading-6 text-mist">{{ player.bio }}</p>
+  <p class="mt-4 flex-1 text-sm leading-6 text-mist" [class.line-clamp-3]="bioClamped()">{{ player.bio }}</p>
+  <button *ngIf="(player.bio || '').length > 150" type="button" class="bio-toggle" (click)="toggleBio()" [attr.aria-expanded]="expanded">{{ expanded ? 'Ver menos' : 'Ver más' }} <app-icon name="chevron" [size]="15"></app-icon></button>
   <div class="mt-5 flex flex-wrap gap-2"><span *ngFor="let system of player.systems.slice(0, 2)" class="tag">{{ system }}</span></div>
   <div *ngIf="contact?.whatsappUrl || contact?.instagramUrl" class="player-card-contact mt-5 flex flex-wrap gap-2 pt-4">
     <a *ngIf="whatsappUrl() as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-mini"><app-icon name="whatsapp" [size]="16"></app-icon> WhatsApp</a>

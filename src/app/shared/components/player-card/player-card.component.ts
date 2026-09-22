@@ -9,6 +9,7 @@ import { ProfileService } from '../../../core/services/profile.service';
 export class PlayerCardComponent implements OnInit {
   @Input({ required: true }) player!: Player;
   contact?: UserPrivateProfile;
+  expanded = false;
   private ownName = '';
 
   constructor(private auth: AuthService, private profiles: ProfileService, private contacts: ContactNormalizerService) {}
@@ -33,5 +34,13 @@ export class PlayerCardComponent implements OnInit {
       this.contact.whatsappUrl,
       `¡Hola ${playerName}! Soy ${dmName}, de Cumbre20. Vi tu perfil y me gustaría conversar sobre una partida. ¿Te interesa?`
     ) || this.contact.whatsappUrl;
+  }
+
+  bioClamped(): boolean {
+    return !this.expanded && (this.player.bio || '').length > 150;
+  }
+
+  toggleBio(): void {
+    this.expanded = !this.expanded;
   }
 }
