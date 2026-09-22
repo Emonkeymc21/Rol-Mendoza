@@ -64,6 +64,10 @@
 </nav>
 
 <section appReveal class="adventures-section">
+  <picture class="adventures-backdrop" aria-hidden="true">
+    <source media="(max-width: 767px)" srcset="assets/branding/games-available-real-960.webp">
+    <img src="assets/branding/games-available-real.webp" width="1800" height="791" alt="" loading="lazy" decoding="async">
+  </picture>
   <div class="page-shell">
     <header class="editorial-heading">
       <div><span class="eyebrow">Mesas de la comunidad</span><h2>Aventuras abiertas</h2></div>
@@ -91,7 +95,6 @@
 <section appReveal class="community-story">
   <div class="community-image">
     <picture><source media="(max-width: 767px)" srcset="assets/branding/community-table-real-720.webp"><img src="assets/branding/community-table-real.webp" width="1440" height="960" alt="Grupo de amistades compartiendo una partida de rol en Mendoza" loading="lazy" decoding="async"></picture>
-    <div class="community-dice"><app-dice-roller></app-dice-roller></div>
   </div>
   <div class="community-copy"><span class="eyebrow">Personas antes que personajes</span><h2>Las historias empiezan cuando alguien se sienta a la mesa.</h2><p>Conocé jugadores y Dungeon Masters por localidad, sistemas favoritos, modalidad y disponibilidad. Sin importar qué juego elijan.</p><a routerLink="/jugadores" class="btn-secondary"><app-icon name="users" [size]="19"></app-icon> Explorar la comunidad</a></div>
 </section>
@@ -101,6 +104,10 @@
 </section>
 
 <section appReveal class="journey-section">
+  <picture class="journey-backdrop" aria-hidden="true">
+    <source media="(max-width: 767px)" srcset="assets/branding/how-it-works-real-960.webp">
+    <img src="assets/branding/how-it-works-real.webp" width="1800" height="678" alt="" loading="lazy" decoding="async">
+  </picture>
   <div class="page-shell journey-layout">
     <div class="journey-intro"><span class="eyebrow">De buscar grupo a compartir mesa</span><h2>Tres pasos.<br>Una nueva historia.</h2><p>El perfil reúne lo importante para que coordinar sea más fácil.</p></div>
     <div class="journey-list">
