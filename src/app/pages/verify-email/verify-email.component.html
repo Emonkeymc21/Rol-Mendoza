@@ -1,0 +1,36 @@
+<section class="verification-page">
+  <div class="verification-layout">
+    <aside class="verification-art" aria-hidden="true">
+      <div class="verification-art-copy">
+        <span class="eyebrow">Protegemos la comunidad</span>
+        <h1>Confirmá que esta cuenta es realmente tuya.</h1>
+        <p>Una verificación breve evita cuentas con correos ajenos o escritos por error.</p>
+      </div>
+    </aside>
+
+    <div class="verification-column">
+      <a routerLink="/" class="auth-brand"><img src="assets/cumbre20-logo.svg" alt=""><span>Cumbre<strong>20</strong></span></a>
+      <div class="verification-content">
+        <span class="verification-mark"><app-icon name="shield" [size]="32"></app-icon></span>
+        <span class="eyebrow">Último paso de seguridad</span>
+        <h2>Revisá tu correo</h2>
+        <p>Enviamos un enlace de confirmación a:</p>
+        <strong class="verification-email">{{ email }}</strong>
+        <p class="verification-help">Abrí el enlace del mensaje y después volvé a esta pantalla. Si no aparece, revisá spam o correo no deseado.</p>
+
+        <p *ngIf="errorMessage" class="feedback-error" role="alert">{{ errorMessage }}</p>
+        <p *ngIf="notice" class="feedback-success" role="status">{{ notice }}</p>
+
+        <button type="button" class="btn-primary verification-primary" (click)="checkVerification()" [disabled]="checking || resending">
+          {{ checking ? 'Comprobando…' : 'Ya verifiqué mi correo' }}
+        </button>
+        <button type="button" class="btn-secondary verification-secondary" (click)="resend()" [disabled]="checking || resending || resendLocked">
+          {{ resending ? 'Enviando…' : resendLocked ? 'Correo reenviado' : 'Reenviar correo' }}
+        </button>
+        <button type="button" class="logout-button" (click)="logout()" [disabled]="loggingOut">
+          {{ loggingOut ? 'Cerrando…' : 'Usar otra cuenta' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
