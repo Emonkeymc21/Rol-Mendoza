@@ -165,6 +165,9 @@ function doPost(e) {
 
     const idToken = requiredText_(request.idToken, 'sesión', 5000);
     const user = verifyFirebaseToken_(idToken);
+    if (!user.emailVerified) {
+      throw new Error('Confirmá tu correo electrónico antes de continuar.');
+    }
     rateLimit_(action, user.uid);
 
     switch (action) {
