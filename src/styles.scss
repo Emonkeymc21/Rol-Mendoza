@@ -124,12 +124,30 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 :root[data-theme='light'] .site-header { box-shadow:0 10px 35px rgba(72,48,42,.08); }
 
+/* Fondos narrativos exclusivos de Home. Viven globalmente para no inflar el presupuesto del componente. */
+.adventures-section::before { content:'';position:absolute;z-index:-1;inset:0;background:linear-gradient(90deg,rgba(19,14,16,.97) 0%,rgba(19,14,16,.88) 43%,rgba(19,14,16,.57) 100%),linear-gradient(180deg,rgba(19,14,16,.45),rgba(19,14,16,.92));pointer-events:none; }
+.adventures-backdrop,.adventures-backdrop img,.journey-backdrop,.journey-backdrop img { position:absolute;z-index:-2;inset:0;width:100%;height:100%; }
+.adventures-backdrop,.journey-backdrop { overflow:hidden; }
+.adventures-backdrop img { object-fit:cover;object-position:center;filter:saturate(.72) contrast(1.04); }
+.journey-section::before { content:'';position:absolute;z-index:-1;inset:0;background:linear-gradient(90deg,rgba(19,14,16,.98) 0%,rgba(19,14,16,.9) 42%,rgba(19,14,16,.6) 100%),linear-gradient(180deg,rgba(19,14,16,.6),rgba(19,14,16,.9));pointer-events:none; }
+.journey-backdrop img { object-fit:cover;object-position:center right;filter:saturate(.66) contrast(1.05); }
+:root[data-theme='light'] .adventures-section::before { background:linear-gradient(90deg,rgba(241,232,213,.98),rgba(241,232,213,.88) 55%,rgba(241,232,213,.72)),linear-gradient(180deg,rgba(241,232,213,.45),rgba(241,232,213,.92)); }
+:root[data-theme='light'] .journey-section::before { background:linear-gradient(90deg,rgba(241,232,213,.98),rgba(241,232,213,.91) 50%,rgba(241,232,213,.72)),linear-gradient(180deg,rgba(241,232,213,.6),rgba(241,232,213,.92)); }
+
 @media(max-width:639px) {
   .page-shell { padding-right:1rem;padding-left:1rem; }
   .section-space { padding-top:3.5rem;padding-bottom:3.5rem; }
   .display-title { letter-spacing:-.025em; }
   .btn-primary,.btn-secondary { padding-right:1.1rem;padding-left:1.1rem; }
   .game-results-skeleton { grid-template-columns:1fr; }
+}
+
+@media(max-width:767px) {
+  .adventures-section::before { background:linear-gradient(180deg,rgba(19,14,16,.9),rgba(19,14,16,.97)); }
+  .adventures-backdrop img { object-position:62% center; }
+  .journey-section::before { background:linear-gradient(180deg,rgba(19,14,16,.93),rgba(19,14,16,.97)); }
+  .journey-backdrop img { object-position:68% center;opacity:.68; }
+  :root[data-theme='light'] .adventures-section::before,:root[data-theme='light'] .journey-section::before { background:linear-gradient(180deg,rgba(241,232,213,.88),rgba(241,232,213,.97)); }
 }
 
 @keyframes skeleton-drift { from { background-position:100% 0; } to { background-position:-120% 0; } }

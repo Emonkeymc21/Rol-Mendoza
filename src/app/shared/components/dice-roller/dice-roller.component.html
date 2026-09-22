@@ -1,6 +1,0 @@
-<div class="dice-editorial">
-  <button type="button" class="d20" [class.rolling]="rolling" (click)="roll()" [attr.aria-label]="'Tirar dado de veinte caras. Resultado actual: ' + result">
-    <span class="d20-face"><span>{{ result }}</span></span>
-  </button>
-  <div class="dice-copy"><span>Probá tu suerte</span><strong>Tirá el d20</strong><p aria-live="polite">{{ phrase }}</p><button type="button" (click)="roll()"><app-icon name="dice" [size]="17"></app-icon>{{ rolling ? 'Rodando…' : 'Tirar' }}</button></div>
-</div>

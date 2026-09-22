@@ -10,7 +10,6 @@ import { FooterComponent } from './shared/components/footer/footer.component';
 import { IconComponent } from './shared/components/icon/icon.component';
 import { PlayerCardComponent } from './shared/components/player-card/player-card.component';
 import { GameCardComponent } from './shared/components/game-card/game-card.component';
-import { DiceRollerComponent } from './shared/components/dice-roller/dice-roller.component';
 import { HomeComponent } from './pages/home/home.component';
 import { PlayersComponent } from './pages/players/players.component';
 import { PlayerDetailComponent } from './pages/player-detail/player-detail.component';
@@ -39,7 +38,6 @@ import { RevealDirective } from './shared/directives/reveal.directive';
     FooterComponent,
     PlayerCardComponent,
     GameCardComponent,
-    DiceRollerComponent,
     HomeComponent,
     PlayersComponent,
     PlayerDetailComponent,
