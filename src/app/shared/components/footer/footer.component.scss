@@ -15,7 +15,8 @@
 h2 { margin-bottom:.8rem;color:var(--brand-secondary);font-size:.75rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase; }
 nav { display:flex;flex-direction:column;gap:.5rem; }
 a { color:var(--text-secondary);transition:color .2s ease; } a:hover { color:var(--brand-secondary); }
-.social-coming { display:flex;align-items:center;gap:.75rem;color:var(--text-secondary); }
+.social-coming { display:flex;align-items:center;gap:.75rem;color:var(--text-secondary);text-decoration:none; }
+.social-coming:hover { color:var(--brand-secondary); }
 .social-coming > span { display:flex;flex-direction:column;font-weight:700; }
 .social-coming small { color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em; }
 .footer-bottom { border-top:1px solid var(--border); }
