@@ -27,7 +27,7 @@ Escrituras autenticadas:
 - `POST resolveJoinRequest`
 - `POST createComment`
 
-Cada POST incluye un Firebase ID token. Apps Script valida el token antes de escribir y obtiene desde Firebase el UID y el nombre del autor. No necesita una hoja de cuentas.
+Cada POST incluye un Firebase ID token. Apps Script valida el token, exige que el correo esté verificado y obtiene desde Firebase el UID y el nombre del autor. No necesita una hoja de cuentas.
 
 La API usa un sobre de acciones porque los Web Apps de Apps Script exponen `doGet` y `doPost`. El frontend centraliza este contrato en `GoogleAppsScriptService`; los componentes nunca construyen requests por su cuenta. Antes de cada grupo de operaciones se comprueba que la versión publicada sea `8.0.0`, evitando crear datos contra un backend antiguo y fallar después al intentar listarlos.
 
