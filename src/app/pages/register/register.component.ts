@@ -45,7 +45,7 @@ export class RegisterComponent {
     this.saving = true;
     try {
       await this.auth.registerWithEmail(value.displayName, value.email, value.password);
-      await this.router.navigate(['/completar-perfil']);
+      await this.router.navigate(['/verificar-correo']);
     } catch (error) {
       console.error('No se pudo completar el registro con correo.', error);
       this.errorMessage = this.auth.friendlyError(error);
@@ -59,7 +59,11 @@ export class RegisterComponent {
     this.errorMessage = '';
     this.googleSaving = true;
     try {
-      await this.auth.signInWithGoogle();
+      const user = await this.auth.signInWithGoogle();
+      if (!user.emailVerified) {
+        await this.router.navigate(['/verificar-correo']);
+        return;
+      }
       try {
         const complete = await this.profiles.isOwnProfileComplete();
         await this.router.navigate([complete ? '/perfil' : '/completar-perfil']);
