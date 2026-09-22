@@ -6,7 +6,7 @@
 
     <ng-container *ngIf="game; else missing">
       <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
-        <article class="glass-panel overflow-hidden rounded-3xl">
+        <article class="glass-panel overflow-hidden">
           <div class="game-masthead p-6 sm:p-10">
             <div class="relative">
               <div class="flex flex-wrap gap-2"><span *ngFor="let tag of game.tags" class="tag">{{ tag }}</span></div>
@@ -29,7 +29,7 @@
         </article>
 
         <aside>
-          <div class="glass-panel sticky top-28 rounded-2xl p-6">
+          <div class="glass-panel sticky top-28 p-6">
             <p class="text-sm font-bold uppercase tracking-wider text-gold">Datos de la mesa</p>
             <dl class="mt-6 space-y-5">
               <div><dt class="text-sm text-mist">Máster</dt><dd class="master-summary mt-2"><app-class-avatar [avatarClass]="dmProfile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar><strong>{{ game.gm }}</strong></dd></div>
@@ -65,7 +65,7 @@
         </aside>
       </div>
 
-      <section class="glass-panel mt-6 rounded-3xl p-6 sm:p-8" aria-labelledby="participants-title">
+      <section class="glass-panel mt-6 p-6 sm:p-8" aria-labelledby="participants-title">
         <span class="eyebrow">La mesa</span>
         <h2 id="participants-title" class="mt-2 font-display text-3xl font-bold">Jugadores confirmados</h2>
         <p class="mt-2 text-sm text-mist">Personas que el máster ya aceptó mediante Cumbre20.</p>
@@ -76,10 +76,10 @@
             <app-icon name="arrow" [size]="17"></app-icon>
           </a>
         </div>
-        <ng-template #noParticipants><p class="mt-6 rounded-2xl border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay jugadores confirmados mediante Cumbre20.</p></ng-template>
+        <ng-template #noParticipants><p class="mt-6 border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay jugadores confirmados mediante Cumbre20.</p></ng-template>
       </section>
 
-      <section class="glass-panel mt-6 rounded-3xl p-6 sm:p-8" aria-labelledby="comments-title">
+      <section class="glass-panel mt-6 p-6 sm:p-8" aria-labelledby="comments-title">
         <div class="grid gap-8 lg:grid-cols-[1fr_360px]">
           <div>
             <span class="eyebrow">Comunidad</span>
@@ -92,10 +92,10 @@
                 <p *ngIf="item.respuesta_admin" class="admin-reply"><strong>Equipo de Cumbre20:</strong> {{ item.respuesta_admin }}</p>
               </article>
             </div>
-            <ng-template #noComments><p class="mt-6 rounded-2xl border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay comentarios publicados.</p></ng-template>
+            <ng-template #noComments><p class="mt-6 border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay comentarios publicados.</p></ng-template>
           </div>
 
-          <form *ngIf="apiConnected; else commentsOffline" [formGroup]="commentForm" (ngSubmit)="submitComment()" class="rounded-2xl border border-white/[.08] bg-black/20 p-5">
+          <form *ngIf="apiConnected; else commentsOffline" [formGroup]="commentForm" (ngSubmit)="submitComment()" class="border border-white/[.08] bg-black/20 p-5">
             <h3 class="font-display text-xl font-bold">Dejar un comentario</h3>
             <p class="mt-1 text-xs text-mist">Se publicará con el nombre de tu cuenta.</p>
             <p class="mt-4 rounded-xl border border-white/[.08] p-3 text-xs text-mist">El comentario se publica con el nombre de tu cuenta.</p>
@@ -104,7 +104,7 @@
             <p *ngIf="commentNotice" class="feedback-success" role="status">{{ commentNotice }}</p>
             <p *ngIf="commentError" class="feedback-error" role="alert">{{ commentError }}</p>
           </form>
-          <ng-template #commentsOffline><div class="rounded-2xl border border-white/[.08] bg-black/20 p-5 text-sm text-mist">Los comentarios no están disponibles en este momento.</div></ng-template>
+          <ng-template #commentsOffline><div class="border border-white/[.08] bg-black/20 p-5 text-sm text-mist">Los comentarios no están disponibles en este momento.</div></ng-template>
         </div>
       </section>
     </ng-container>

@@ -1,4 +1,4 @@
-.class-avatar { display:inline-grid;flex:0 0 auto;place-items:center;overflow:hidden;aspect-ratio:1/1;border:1px solid var(--brand-border);border-radius:34%;background:linear-gradient(145deg,var(--brand-soft),var(--surface-raised));color:var(--brand-secondary);box-shadow:0 8px 24px rgba(0,0,0,.18),inset 0 0 0 2px rgba(255,255,255,.04); }
+.class-avatar { position:relative;display:inline-grid;flex:0 0 auto;place-items:center;overflow:hidden;aspect-ratio:1/1;border:1px solid var(--brand-border);border-radius:26% 26% 38% 38%;background:linear-gradient(145deg,var(--brand-soft),var(--surface-raised));color:var(--brand-secondary);box-shadow:0 8px 24px rgba(0,0,0,.18),inset 0 0 0 2px rgba(255,255,255,.04),inset 0 -8px 18px rgba(0,0,0,.14); }
 .class-avatar--sm { width:40px;height:40px; }
 .class-avatar--md { width:56px;height:56px; }
 .class-avatar--lg { width:100px;height:100px; }

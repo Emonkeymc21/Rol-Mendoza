@@ -9,7 +9,7 @@
 <section class="section-space">
   <div class="page-shell max-w-5xl">
     <div *ngIf="loading" class="glass-panel rounded-2xl p-10 text-center text-mist">Cargando partida…</div>
-    <p *ngIf="saveError" class="mb-6 rounded-2xl border border-red-300/25 bg-red-950/30 p-4 text-sm text-red-100" role="alert">{{ saveError }}</p>
+    <p *ngIf="saveError" class="mb-6 border-l-2 border-red-300/50 bg-red-950/30 p-4 text-sm text-red-100" role="alert">{{ saveError }}</p>
 
     <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()" class="grid gap-6 lg:grid-cols-[1fr_300px]">
       <div class="glass-panel rounded-2xl p-5 sm:p-7">
@@ -21,7 +21,7 @@
             <div class="mt-5 grid gap-5 sm:grid-cols-2">
               <label class="sm:col-span-2"><span class="field-label">Título de la partida *</span><input class="input-field" formControlName="title" placeholder="Ej: Sombras sobre el Aconcagua"><span *ngIf="invalid('title')" class="error-text">Usá entre 5 y 120 caracteres.</span></label>
               <label><span class="field-label">Sistema *</span><input class="input-field" formControlName="system" placeholder="D&D 5e, Fate, Cthulhu…"><span *ngIf="invalid('system')" class="error-text">Este dato es obligatorio.</span></label>
-              <div class="rounded-xl border border-white/[.08] bg-black/15 p-4"><span class="block text-xs uppercase tracking-wider text-mist">Publicás como</span><strong class="mt-1 block">{{ auth.currentUser?.displayName || auth.currentUser?.email }}</strong></div>
+              <div class="border-l-2 border-gold/50 bg-black/15 p-4"><span class="block text-xs uppercase tracking-wider text-mist">Publicás como</span><strong class="mt-1 block">{{ auth.currentUser?.displayName || auth.currentUser?.email }}</strong></div>
               <label class="sm:col-span-2"><span class="field-label">Resumen *</span><textarea class="input-field min-h-[140px] resize-y" formControlName="summary" placeholder="¿Cuál es la premisa y qué pueden esperar los jugadores?"></textarea><div class="mt-1 flex justify-between text-xs"><span *ngIf="invalid('summary')" class="error-text !mt-0">Entre 30 y 420 caracteres.</span><span class="ml-auto text-mist">{{ form.controls.summary.value.length }}/420</span></div></label>
               <label><span class="field-label">Tono *</span><input class="input-field" formControlName="tone" placeholder="Épico, ligero, terror…"><span *ngIf="invalid('tone')" class="error-text">Indicá el tono de la partida.</span></label>
               <label><span class="field-label">Etiquetas</span><input class="input-field" formControlName="tags" placeholder="Narrativa, misterio…"><span class="mt-1 block text-xs text-mist">Separadas por comas.</span></label>

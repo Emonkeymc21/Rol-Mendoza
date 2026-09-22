@@ -5,8 +5,8 @@
 </div>
 
 <div *ngIf="authLoading$ | async" class="auth-loading fixed inset-0 z-[100] grid place-items-center" role="status" aria-live="polite">
-  <div class="glass-panel rounded-2xl px-8 py-7 text-center">
-    <div class="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-gold/30 border-t-gold"></div>
+  <div class="glass-panel px-8 py-7 text-center">
+    <div class="session-d20 mx-auto" aria-hidden="true">20</div>
     <p class="mt-4 text-sm text-mist">Estamos recuperando tu sesión…</p>
   </div>
 </div>
