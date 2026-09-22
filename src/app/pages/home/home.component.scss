@@ -36,7 +36,7 @@
 .search-query { position:relative;min-width:0; }
 .search-query app-icon { position:absolute;z-index:1;top:50%;left:1rem;transform:translateY(-50%);color:var(--text-muted); }
 .search-query .input-field { padding-left:2.8rem; }
-.discovery-form .btn-primary { min-width:9.5rem;min-height:48px;white-space:nowrap;overflow:visible; }
+.discovery-form .btn-primary { min-height:48px; }
 
 .path-strip { background:var(--bg-primary); }
 .path-grid { display:grid; }
@@ -125,17 +125,9 @@
   .about-layout > img { grid-column:1/-1; }
 }
 
-@media(min-width:768px) and (max-width:849px) {
-  .discovery-form { grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:'tabs tabs' 'query query' 'mode button';align-items:center; }
-  .search-tabs { grid-area:tabs; }
-  .search-query { grid-area:query; }
-  .search-mode { grid-area:mode; }
-  .discovery-form .btn-primary { grid-area:button;width:100%; }
-}
-
 @media(min-width:850px) and (max-width:1279px) {
   .discovery-layout { gap:1.35rem; }
-  .discovery-form { grid-template-columns:minmax(280px,1fr) minmax(210px,.72fr) minmax(152px,auto);grid-template-areas:'tabs tabs tabs' 'query mode button';align-items:center; }
+  .discovery-form { grid-template-columns:minmax(260px,.82fr) minmax(320px,1.18fr);grid-template-areas:'tabs query' 'mode button';align-items:center; }
   .search-tabs { grid-area:tabs; }
   .search-query { grid-area:query; }
   .search-mode { grid-area:mode; }
@@ -147,14 +139,9 @@
   .community-image { min-height:680px; }
 }
 
-@media(min-width:1280px) and (max-width:1439px) {
-  .discovery-layout { gap:1.5rem; }
-  .discovery-form { grid-template-columns:minmax(270px,.9fr) minmax(300px,1.25fr) minmax(220px,.72fr) minmax(152px,auto);align-items:center; }
-}
-
-@media(min-width:1440px) {
-  .discovery-layout { grid-template-columns:minmax(210px,.42fr) minmax(0,1.72fr);gap:1.5rem;align-items:end; }
-  .discovery-form { grid-template-columns:minmax(270px,.9fr) minmax(300px,1.2fr) minmax(220px,.72fr) minmax(152px,auto);align-items:center; }
+@media(min-width:1280px) {
+  .discovery-layout { grid-template-columns:minmax(250px,.68fr) minmax(0,1.7fr);align-items:end; }
+  .discovery-form { grid-template-columns:minmax(260px,.9fr) minmax(320px,1.45fr) minmax(190px,.72fr) auto;align-items:center; }
 }
 
 @media(max-width:767px) {
