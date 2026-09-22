@@ -509,10 +509,6 @@ function removeParticipant_(payload, uid) {
   }
 }
 
-function cancelGame_(payload, uid) {
-  return setGameStatus_({ gameId: payload.gameId, status: 'CANCELLED' }, uid);
-}
-
 function createJoinRequest_(payload, account) {
   const gameId = requiredText_(payload.gameId, 'partida', 80);
   const game = findGame_(gameId);
