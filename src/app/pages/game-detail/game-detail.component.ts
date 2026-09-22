@@ -142,7 +142,7 @@ export class GameDetailComponent {
     if (this.isOwnGame()) return 'Administrar mi partida';
     if (this.joinRoleLoaded && !this.canRequestJoin) return 'Disponible para jugadores';
     if (this.joinRequest?.status === 'APPROVED') return 'Ya formás parte';
-    if (this.joinRequest.status === 'REMOVED') return 'El DM te removió de esta partida y liberó tu cupo.';
+    if (this.joinRequest?.status === 'REMOVED') return 'El DM te removió de esta partida y liberó tu cupo.';
     if (this.joinRequest?.status === 'REJECTED') return 'Solicitud no aceptada';
     if (this.joinRequest?.seenByDm) return 'Solicitud vista';
     if (this.joinRequest) return 'Solicitud pendiente';
