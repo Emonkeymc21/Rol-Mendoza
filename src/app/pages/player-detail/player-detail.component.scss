@@ -1,6 +1,6 @@
 .profile-card { min-width:0; }
-.profile-cover { height:88px;border-bottom:1px solid var(--brand-border);background:linear-gradient(110deg,color-mix(in srgb,var(--accent) 40%,var(--surface-brand)),var(--bg-primary));opacity:.88; }
-.profile-cover::after { content:'';display:block;width:100%;height:100%;background:repeating-linear-gradient(112deg,transparent 0 38px,color-mix(in srgb,var(--brand-primary) 8%,transparent) 39px 40px,transparent 41px 80px); }
+.profile-cover { height:104px;border-bottom:1px solid var(--border);background:linear-gradient(100deg,color-mix(in srgb,var(--accent) 35%,var(--surface-brand)),color-mix(in srgb,var(--bg-primary) 85%,transparent)),url('/assets/branding/map-mendoza.svg') right 42%/min(44rem,78vw) auto no-repeat;opacity:.92; }
+.profile-cover::after { content:none; }
 .profile-content { padding:1.25rem; }
 .profile-header { display:flex;min-width:0;flex-direction:column;align-items:center;gap:.9rem;text-align:center; }
 .profile-heading { min-width:0;max-width:100%; }
@@ -16,13 +16,13 @@
 .profile-main h2,.preference-card h2 { font-family:Cinzel,Georgia,serif;font-size:1.35rem;font-weight:700;color:var(--text-primary); }
 .profile-main p { margin-top:.55rem;overflow-wrap:anywhere;color:var(--text-secondary);font-family:Alegreya,Georgia,serif;font-size:1.06rem;line-height:1.72; }
 .system-list { display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem; }
-.preference-card { border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-muted);padding:1rem; }
+.preference-card { border-top:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0;background:transparent;padding:1.25rem 0; }
 .preference-card dl { display:grid;gap:.9rem;margin-top:1rem; }
 .preference-card dt { color:var(--text-secondary);font-size:.75rem; }
 .preference-card dd { display:flex;align-items:flex-start;gap:.45rem;margin-top:.15rem;overflow-wrap:anywhere;font-size:.9rem;font-weight:700;color:var(--text-primary); }
-.contact-panel { border:1px solid var(--brand-border);border-radius:var(--radius-sm);background:var(--brand-soft);padding:1rem; }
+.contact-panel { border-left:2px solid var(--brand-primary);border-radius:0;background:var(--brand-soft);padding:1rem 1.25rem; }
 .alternate-phone { display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:var(--radius-xs);padding:.55rem 1rem;color:var(--text-secondary);font-size:.82rem; }
 .safety-note { border-left:2px solid var(--brand-primary);background:var(--surface-muted);padding:1rem;color:var(--text-secondary);font-size:.85rem;line-height:1.6; }
 .safety-note strong { color:var(--text-primary); }
-@media(min-width:640px){.profile-cover{height:120px}.profile-content{padding:1.75rem}.profile-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;text-align:left}.profile-name-row{justify-content:flex-start}.profile-location{justify-content:flex-start}.edit-profile-button{width:auto}.profile-body{margin-top:2rem}}
-@media(min-width:1024px){.profile-cover{height:145px}.profile-content{padding:2rem}.profile-body{grid-template-columns:minmax(0,1fr) 320px;gap:2rem}.profile-main h2,.preference-card h2{font-size:1.65rem}}
+@media(min-width:640px){.profile-cover{height:140px}.profile-content{padding:1.75rem}.profile-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;text-align:left}.profile-name-row{justify-content:flex-start}.profile-location{justify-content:flex-start}.edit-profile-button{width:auto}.profile-body{margin-top:2rem}}
+@media(min-width:1024px){.profile-cover{height:170px}.profile-content{padding:2rem 2.5rem 2.5rem}.profile-body{grid-template-columns:minmax(0,1fr) 320px;gap:3rem}.profile-main h2,.preference-card h2{font-size:1.65rem}}

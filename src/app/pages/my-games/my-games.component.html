@@ -18,7 +18,7 @@
     <div *ngIf="loading" class="glass-panel rounded-2xl p-10 text-center text-mist">Cargando tus partidas…</div>
 
     <div *ngIf="!loading && games.length" class="grid gap-5 lg:grid-cols-2">
-      <article *ngFor="let game of games" class="glass-panel rounded-2xl p-5 sm:p-6">
+      <article *ngFor="let game of games" class="my-game-entry p-5 sm:p-6">
         <div class="game-admin-head flex items-start justify-between gap-4">
           <div class="min-w-0">
             <p class="text-xs font-bold uppercase tracking-wider text-gold">{{ game.system }}</p>

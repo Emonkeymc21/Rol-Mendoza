@@ -1,28 +1,41 @@
-:host { display: block; height: 100%; }
-.game-card { @apply relative flex h-full min-w-0 flex-col overflow-hidden transition duration-300; border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);box-shadow:var(--shadow-card); }
-.game-card::before { content:'';position:absolute;inset:6px;z-index:2;border:1px solid color-mix(in srgb,var(--brand-primary) 18%,transparent);border-radius:var(--radius-xs);pointer-events:none; }
-.game-card:hover { transform:translateY(-3px);border-color:var(--brand-border);box-shadow:var(--shadow-card),0 0 0 1px color-mix(in srgb,var(--brand-primary) 18%,transparent); }
-.card-art { position:relative;height:82px;overflow:hidden;border-bottom:1px solid var(--brand-border);background:linear-gradient(100deg,#2c1016,#6f1d2a 58%,#251014); }
-:root[data-theme='light'] .card-art { background:linear-gradient(120deg,#7a2432,#a53a4b 55%,#5c1a26); }
-.card-art-letter { position:absolute;left:1.15rem;bottom:-.05rem;font-family:Cinzel,Georgia,serif;font-weight:800;font-size:3.15rem;line-height:1;color:rgba(241,232,213,.92);text-shadow:0 3px 18px rgba(0,0,0,.5); }
-.card-art-d20 { position:absolute;right:.7rem;top:50%;transform:translateY(-50%) rotate(-4deg);font-family:Cinzel,Georgia,serif;font-weight:800;font-size:3.6rem;line-height:1;color:transparent;-webkit-text-stroke:1px rgba(216,173,87,.38);opacity:.8; }
-.card-art-fade { position:absolute;inset:0;background:repeating-linear-gradient(118deg,transparent 0 24px,rgba(216,173,87,.08) 25px 26px,transparent 27px 52px); }
-.game-card-accent { position:absolute;inset:82px 0 auto;height:2px;background:linear-gradient(90deg,var(--brand-secondary),var(--brand-primary) 55%,transparent);opacity:.9;z-index:3; }
-.system-badge { @apply rounded-md bg-wine px-2.5 py-1 text-white; font-family:Cinzel,Georgia,serif;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(216,173,87,.35); }
-.meta-badge { @apply px-2.5 py-1 text-[11px] font-bold; border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--surface-muted);color:var(--text-secondary); }
-.status-badge { @apply px-2.5 py-1 text-[11px] font-bold; border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--surface-muted);color:var(--text-secondary); }
-.status-active { border-color:var(--success-border);background:var(--success-soft);color:var(--success); }
-.status-full { border-color:var(--warning-border);background:var(--warning-soft);color:var(--warning); }
-.master-avatar { @apply grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[.07] text-[11px] font-extrabold text-gold; }
-.game-meta { @apply grid gap-3 p-4 sm:grid-cols-2; border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface-muted); }
-.game-meta > div { @apply flex min-w-0 items-start gap-3 text-gold; }
-.game-meta span { @apply min-w-0; }
-.game-meta strong { @apply block truncate text-sm font-semibold text-parchment; }
-.game-meta small { @apply mt-0.5 block truncate text-xs text-mist; }
-.capacity-track { position:relative;height:7px;overflow:hidden;border:1px solid var(--border);background:var(--surface-raised); }
-.capacity-track::after { content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(20% - 1px),rgba(19,14,16,.72) calc(20% - 1px) 20%);pointer-events:none; }
-.capacity-track span { @apply block h-full bg-gradient-to-r from-wine to-gold transition-all; }
-.game-card-action { @apply mt-5 flex min-h-[44px] items-center justify-center gap-2 px-4 text-sm font-bold transition; border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-muted);color:var(--text-primary); }
-.game-card-action:hover { border-color:var(--brand-border);background:var(--brand-soft);color:var(--brand-secondary); }
-.game-card-footer { border-top:1px solid var(--border); }
-@media(max-width:430px){.game-card h3{font-size:1.35rem}.system-badge,.meta-badge,.status-badge{font-size:10px}.status-badge{margin-left:0}.game-meta{padding:.85rem}}
+:host { display:block;height:100%;min-width:0; }
+.game-card { position:relative;display:flex;height:100%;min-width:0;flex-direction:column;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--surface);box-shadow:0 18px 40px rgba(0,0,0,.15);transition:transform .26s ease,border-color .26s ease,box-shadow .26s ease; }
+.game-card:hover { transform:translateY(-3px);border-color:color-mix(in srgb,var(--brand-primary) 38%,var(--border));box-shadow:0 24px 55px rgba(0,0,0,.22); }
+.card-art { position:relative;height:148px;flex:0 0 auto;overflow:hidden;background:linear-gradient(180deg,rgba(19,14,16,.05),rgba(19,14,16,.88)),url('/assets/branding/tabletop-detail.webp') center 54%/cover no-repeat;transition:background-size .35s ease; }
+.game-card:hover .card-art { background-size:auto,103%; }
+.card-art::after { content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(111,29,42,.5),transparent 48%);mix-blend-mode:color; }
+.card-art-system { position:absolute;z-index:1;bottom:1rem;left:1.15rem;max-width:72%;color:#f1e8d5;font-size:.69rem;font-weight:850;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 2px 12px #000; }
+.card-art-index { position:absolute;z-index:1;right:1rem;bottom:.8rem;color:rgba(241,232,213,.48);font-family:Cinzel,Georgia,serif;font-size:.72rem;font-weight:800;letter-spacing:.12em; }
+.meta-badge,.status-badge { border:1px solid var(--border);border-radius:var(--radius-xs);background:transparent;padding:.27rem .58rem;color:var(--text-secondary);font-size:.65rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase; }
+.status-active { border-color:var(--success-border);color:var(--success); }
+.status-full { border-color:var(--warning-border);color:var(--warning); }
+.game-card h3 { transition:color .2s ease; }
+.game-card:hover h3 { color:var(--brand-secondary); }
+.game-meta { display:grid;gap:.9rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1rem 0; }
+.game-meta > div { display:flex;min-width:0;align-items:flex-start;gap:.7rem;color:var(--brand-primary); }
+.game-meta span { min-width:0; }
+.game-meta strong { display:block;overflow:hidden;color:var(--text-primary);font-size:.83rem;font-weight:700;text-overflow:ellipsis;white-space:nowrap; }
+.game-meta small { display:block;overflow:hidden;margin-top:.12rem;color:var(--text-muted);font-size:.72rem;text-overflow:ellipsis;white-space:nowrap; }
+.game-card-footer { border-top:0; }
+.capacity-track { position:relative;height:4px;overflow:hidden;background:var(--surface-raised); }
+.capacity-track span { display:block;height:100%;background:linear-gradient(90deg,var(--cumbre-wine),var(--brand-primary));transition:width .25s ease; }
+.game-card-action { display:flex;min-height:44px;align-items:center;justify-content:space-between;margin-top:1.15rem;border-top:1px solid var(--border);padding-top:1rem;color:var(--text-primary);font-size:.75rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase;transition:color .2s ease; }
+.game-card-action:hover { color:var(--brand-secondary); }
+.game-card-action app-icon { transition:transform .2s ease; }
+.game-card-action:hover app-icon { transform:translateX(4px); }
+
+@media(min-width:768px) {
+  .game-meta { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  :host-context(.home-game-layout):first-child .card-art { height:255px; }
+  :host-context(.home-game-layout):first-child .game-card h3 { font-size:clamp(1.8rem,3vw,2.55rem); }
+}
+
+@media(max-width:430px) {
+  .card-art { height:126px; }
+  .game-card h3 { font-size:1.35rem; }
+  .meta-badge,.status-badge { font-size:.6rem; }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .game-card,.card-art,.game-card-action app-icon { transition:none; }
+}

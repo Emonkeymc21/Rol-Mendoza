@@ -1,79 +1,116 @@
-<section class="hero relative overflow-hidden border-b border-white/[.06]">
-  <div class="hero-dragon" aria-hidden="true">20</div>
-  <div class="andes-line" aria-hidden="true"></div>
-  <div class="hero-orbit hero-orbit-one" aria-hidden="true"></div><div class="hero-orbit hero-orbit-two" aria-hidden="true"></div>
-  <div class="hero-vignette" aria-hidden="true"></div>
-  <div class="page-shell relative grid min-h-[650px] items-center gap-10 py-14 lg:grid-cols-[1.08fr_.92fr] lg:py-20">
-    <div class="max-w-3xl">
-      <span class="community-pill"><i></i> Cumbre20 · Mendoza <i></i></span>
-      <h1 class="display-title mt-6">Encontrá tu<br><span class="hero-highlight">próxima mesa.</span></h1>
-      <div class="dnd-divider mt-6 !mx-0" aria-hidden="true"><span></span></div>
-      <p class="mt-6 max-w-2xl text-lg leading-8 text-mist">Conectá con jugadores y Dungeon Masters de Mendoza, descubrí nuevas partidas y empezá una historia con tu próximo grupo.</p>
-      <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+<section class="home-hero">
+  <picture class="hero-media" aria-hidden="true">
+    <source media="(max-width: 639px)" srcset="assets/branding/hero-cumbre20-mobile.webp">
+    <img src="assets/branding/hero-cumbre20.webp" alt="" fetchpriority="high" decoding="async">
+  </picture>
+  <div class="hero-atmosphere" aria-hidden="true"></div>
+  <div class="hero-topography" aria-hidden="true"></div>
+
+  <div class="page-shell hero-stage">
+    <div class="hero-copy">
+      <span class="hero-kicker">Comunidad rolera · Mendoza</span>
+      <h1>Tu próxima<br><span>aventura</span><br>empieza acá.</h1>
+      <p>Conectá con jugadores y Dungeon Masters de Mendoza, descubrí nuevas partidas y empezá una historia con tu próximo grupo.</p>
+      <div class="hero-actions">
         <a routerLink="/partidas" class="btn-primary">Buscar partidas <app-icon name="arrow" [size]="19"></app-icon></a>
-        <a routerLink="/jugadores" class="btn-secondary"><app-icon name="users" [size]="19"></app-icon> Encontrar jugadores</a>
-        <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-secondary"><app-icon name="plus" [size]="19"></app-icon> Crear partida</a>
-      </div>
-      <div class="community-stats mt-10">
-        <div><strong>{{ gameCount }}</strong><span>partidas</span></div>
-        <div><strong>{{ playerCount }}</strong><span>perfiles</span></div>
-        <div><strong>{{ systemCount }}</strong><span>sistemas</span></div>
-      </div>
-      <div class="hero-codes mt-6">
-        <span><app-icon name="dice" [size]="15"></app-icon> D&D · Vampiro · Cthulhu</span>
-        <span><app-icon name="map" [size]="15"></app-icon> Presencial · Online · Mixto</span>
-        <span><app-icon name="shield" [size]="15"></app-icon> Todos los niveles</span>
+        <a routerLink="/jugadores" class="hero-link"><span>Encontrar jugadores</span><app-icon name="arrow" [size]="18"></app-icon></a>
+        <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="hero-link"><span>Crear partida</span><app-icon name="plus" [size]="18"></app-icon></a>
       </div>
     </div>
 
-    <div class="relative">
-      <div class="absolute -inset-8 rounded-full bg-wine/20 blur-3xl"></div>
-      <form [formGroup]="searchForm" (ngSubmit)="search()" class="search-card tavern-board relative">
-        <span class="rivet rivet-tl" aria-hidden="true"></span><span class="rivet rivet-tr" aria-hidden="true"></span><span class="rivet rivet-bl" aria-hidden="true"></span><span class="rivet rivet-br" aria-hidden="true"></span>
-        <div class="flex items-start justify-between gap-4"><div><span class="eyebrow">Tablero de aventuras</span><h2 class="mt-2 font-display text-2xl font-bold">¿Qué querés encontrar?</h2></div><div class="search-icon"><app-icon name="search" [size]="23"></app-icon></div></div>
-        <div class="search-tabs mt-6">
-          <label><input class="peer sr-only" type="radio" formControlName="type" value="partidas"><span>Partidas</span></label>
-          <label><input class="peer sr-only" type="radio" formControlName="type" value="personas"><span>Jugadores y DM</span></label>
-        </div>
-        <label class="mt-5 block"><span class="field-label">Nombre, sistema o localidad</span><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-mist"><app-icon name="search" [size]="18"></app-icon></span><input class="input-field !pl-11" formControlName="query" placeholder="Ej: Vampiro, Maipú, Cyberpunk…"></div></label>
-        <label class="mt-4 block"><span class="field-label">Modalidad</span><select class="input-field" formControlName="mode"><option>Cualquier modalidad</option><option>Presencial</option><option>Online</option><option>Mixto</option></select></label>
-        <button type="submit" class="btn-primary mt-6 w-full">Explorar resultados <app-icon name="arrow" [size]="19"></app-icon></button>
-        <div class="search-foot"><span><app-icon name="shield" [size]="15"></app-icon> Perfiles registrados</span><span><app-icon name="map" [size]="15"></app-icon> Comunidad local</span></div>
-      </form>
+    <div class="hero-ledger" aria-label="Actividad de la comunidad">
+      <div><strong>{{ gameCount }}</strong><span>partidas</span></div>
+      <div><strong>{{ playerCount }}</strong><span>perfiles</span></div>
+      <div><strong>{{ systemCount }}</strong><span>sistemas</span></div>
     </div>
+
+    <a href="#explorar" class="scroll-cue"><span>Explorar</span><i aria-hidden="true"></i></a>
   </div>
 </section>
 
-<section class="path-strip" aria-label="Elegí tu camino">
+<section id="explorar" class="discovery-band">
+  <div class="page-shell discovery-layout">
+    <div class="discovery-heading">
+      <span class="eyebrow">Explorá la comunidad</span>
+      <h2>Encontrá tu mesa</h2>
+      <p>Buscá por nombre, sistema, localidad o modalidad.</p>
+    </div>
+
+    <form [formGroup]="searchForm" (ngSubmit)="search()" class="discovery-form">
+      <div class="search-tabs" aria-label="Tipo de búsqueda">
+        <label><input class="peer sr-only" type="radio" formControlName="type" value="partidas"><span>Partidas</span></label>
+        <label><input class="peer sr-only" type="radio" formControlName="type" value="personas"><span>Jugadores y DM</span></label>
+      </div>
+      <label class="search-query">
+        <span class="sr-only">Nombre, sistema o localidad</span>
+        <app-icon name="search" [size]="19"></app-icon>
+        <input class="input-field" formControlName="query" placeholder="Vampiro, Maipú, Cyberpunk…">
+      </label>
+      <label>
+        <span class="sr-only">Modalidad</span>
+        <select class="input-field" formControlName="mode"><option>Cualquier modalidad</option><option>Presencial</option><option>Online</option><option>Mixto</option></select>
+      </label>
+      <button type="submit" class="btn-primary">Explorar <app-icon name="arrow" [size]="19"></app-icon></button>
+    </form>
+  </div>
+</section>
+
+<nav class="path-strip" aria-label="Elegí tu camino">
   <div class="page-shell path-grid">
-    <a routerLink="/partidas" class="path-card"><span class="path-icon"><app-icon name="dice" [size]="22"></app-icon></span><span><strong>Explorá partidas</strong><small>One-shots y campañas</small></span><app-icon name="arrow" [size]="18"></app-icon></a>
-    <a routerLink="/jugadores" class="path-card"><span class="path-icon"><app-icon name="users" [size]="22"></app-icon></span><span><strong>Encontrá tu grupo</strong><small>Jugadores y DMs</small></span><app-icon name="arrow" [size]="18"></app-icon></a>
-    <a routerLink="/como-funciona" class="path-card"><span class="path-icon"><app-icon name="map" [size]="22"></app-icon></span><span><strong>Empezá a jugar</strong><small>Cómo funciona</small></span><app-icon name="arrow" [size]="18"></app-icon></a>
+    <a routerLink="/partidas"><span>01</span><strong>Explorá partidas</strong><small>One-shots y campañas</small><app-icon name="arrow" [size]="18"></app-icon></a>
+    <a routerLink="/jugadores"><span>02</span><strong>Encontrá tu grupo</strong><small>Jugadores y DMs</small><app-icon name="arrow" [size]="18"></app-icon></a>
+    <a routerLink="/como-funciona"><span>03</span><strong>Empezá a jugar</strong><small>Cómo funciona</small><app-icon name="arrow" [size]="18"></app-icon></a>
+  </div>
+</nav>
+
+<section class="adventures-section reveal-on-scroll">
+  <div class="page-shell">
+    <header class="editorial-heading">
+      <div><span class="eyebrow">Mesas de la comunidad</span><h2>Aventuras abiertas</h2></div>
+      <p>Propuestas presenciales, online y mixtas. Mundos distintos, una misma excusa para sentarse a jugar.</p>
+      <a routerLink="/partidas" class="section-link">Ver todas <app-icon name="arrow" [size]="18"></app-icon></a>
+    </header>
+
+    <div *ngIf="games.length; else noRecentGames" class="home-game-layout"><app-game-card *ngFor="let game of games" [game]="game"></app-game-card></div>
+    <ng-template #noRecentGames><div class="home-empty"><span class="empty-number" aria-hidden="true">20</span><div><h3>La próxima historia puede ser la tuya</h3><p>Todavía no hay partidas activas para mostrar. Explorá nuevamente más tarde o publicá una mesa.</p></div><a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-primary">Crear partida</a></div></ng-template>
   </div>
 </section>
 
-<section class="section-space"><div class="page-shell">
-  <div class="section-heading"><div><span class="eyebrow">Mesas de la comunidad</span><h2 class="section-title mt-3">Partidas recientes</h2><p class="mt-3 max-w-2xl text-mist">Encontrá propuestas presenciales, online y mixtas de diferentes sistemas.</p></div><a routerLink="/partidas" class="section-link">Ver todas <app-icon name="arrow" [size]="18"></app-icon></a></div>
-  <div *ngIf="games.length; else noRecentGames" class="mt-8 grid gap-5 lg:grid-cols-3"><app-game-card *ngFor="let game of games" [game]="game"></app-game-card></div>
-  <ng-template #noRecentGames><div class="home-empty mt-8"><div class="empty-icon"><app-icon name="dice" [size]="28"></app-icon></div><div><h3>La próxima historia puede ser la tuya</h3><p>Todavía no hay partidas activas para mostrar. Explorá nuevamente más tarde o publicá una mesa.</p></div><a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-primary">Crear partida</a></div></ng-template>
-</div></section>
+<section *ngIf="canCreateGames()" class="dm-editorial reveal-on-scroll">
+  <div class="dm-image" aria-hidden="true"></div>
+  <div class="page-shell dm-copy"><span class="eyebrow">Para Dungeon Masters</span><h2>Hay una historia<br>esperando mesa.</h2><p>Publicá tu propuesta, indicá los cupos y encontrá jugadores de la comunidad.</p><a routerLink="/partidas/nueva" class="btn-primary">Publicar partida <app-icon name="arrow" [size]="18"></app-icon></a></div>
+</section>
 
-<section *ngIf="canCreateGames()" class="pb-14 sm:pb-20"><div class="page-shell"><div class="dm-callout"><div class="dm-mark"><app-icon name="dice" [size]="28"></app-icon></div><div><span class="eyebrow">Para Dungeon Masters</span><h2>Hay una historia esperando mesa.</h2><p>Publicá tu propuesta, indicá los cupos y encontrá jugadores de la comunidad.</p></div><a routerLink="/partidas/nueva" class="btn-primary">Publicar partida <app-icon name="arrow" [size]="18"></app-icon></a></div></div></section>
-
-<section class="community-section"><div class="page-shell">
-  <div class="community-intro"><div><span class="eyebrow">Personas antes que personajes</span><h2 class="section-title mt-3">Encontrá un grupo compatible</h2><p class="mt-4 max-w-2xl text-mist">Conocé jugadores y Dungeon Masters por localidad, sistemas favoritos, modalidad y disponibilidad. Sin importar qué juego elijan.</p><a routerLink="/jugadores" class="btn-secondary mt-7"><app-icon name="users" [size]="19"></app-icon> Explorar la comunidad</a></div><app-dice-roller></app-dice-roller></div>
-  <div *ngIf="players.length" class="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"><app-player-card *ngFor="let player of players" [player]="player"></app-player-card></div>
-</div></section>
-
-<section class="section-space"><div class="page-shell">
-  <div class="text-center"><span class="eyebrow">Simple y directo</span><h2 class="section-title mt-3">De buscar grupo a compartir mesa</h2><p class="mx-auto mt-3 max-w-2xl text-mist">El perfil reúne lo importante para que coordinar sea más fácil.</p></div>
-  <div class="mt-10 grid gap-5 md:grid-cols-3">
-    <article class="journey-card"><span>01</span><div><h3>Creá tu perfil</h3><p>Contá qué sistemas te interesan, dónde estás y cuándo podés jugar.</p></div></article>
-    <article class="journey-card"><span>02</span><div><h3>Encontrá afinidad</h3><p>Explorá mesas y personas según modalidad, localidad y experiencia.</p></div></article>
-    <article class="journey-card"><span>03</span><div><h3>Coordiná con seguridad</h3><p>Contactá por los medios habilitados y empezá a organizar la partida.</p></div></article>
+<section class="community-story reveal-on-scroll">
+  <div class="community-image">
+    <picture><source media="(max-width: 767px)" srcset="assets/branding/community-table-720.webp"><img src="assets/branding/community-table.webp" alt="Grupo compartiendo una partida de rol alrededor de una mesa" loading="lazy" decoding="async"></picture>
+    <div class="community-dice"><app-dice-roller></app-dice-roller></div>
   </div>
-</div></section>
+  <div class="community-copy"><span class="eyebrow">Personas antes que personajes</span><h2>Las historias empiezan cuando alguien se sienta a la mesa.</h2><p>Conocé jugadores y Dungeon Masters por localidad, sistemas favoritos, modalidad y disponibilidad. Sin importar qué juego elijan.</p><a routerLink="/jugadores" class="btn-secondary"><app-icon name="users" [size]="19"></app-icon> Explorar la comunidad</a></div>
+</section>
 
-<section class="about-strip"><div class="page-shell"><div><span class="eyebrow">Sobre Cumbre20</span><h2 class="section-title mt-3">Una comunidad para que ninguna aventura quede sin mesa.</h2><p class="mt-4 max-w-3xl text-mist">Cumbre20 nació para acercar jugadores, másters y personas que quieren empezar a jugar rol en Mendoza. Todos los sistemas y niveles de experiencia tienen lugar.</p></div><a routerLink="/nosotros" class="btn-secondary">Conocé el proyecto <app-icon name="arrow" [size]="18"></app-icon></a></div></section>
+<section *ngIf="players.length" class="roster-section reveal-on-scroll">
+  <div class="page-shell"><header class="roster-heading"><span>Perfiles de la comunidad</span><a routerLink="/jugadores">Ver todas las personas <app-icon name="arrow" [size]="17"></app-icon></a></header><div class="home-player-layout"><app-player-card *ngFor="let player of players" [player]="player"></app-player-card></div></div>
+</section>
 
-<section class="pb-16 sm:pb-24"><div class="page-shell"><div class="cta-panel"><div><span class="eyebrow">Comunidad rolera mendocina</span><h2>Tu próxima mesa está más cerca.</h2><p>Sumate, completá tus preferencias y conectá con personas que también quieren jugar.</p></div><ng-container *ngIf="isAuthenticated; else guestCta"><a routerLink="/partidas" class="btn-primary">Explorar partidas <app-icon name="arrow" [size]="19"></app-icon></a></ng-container><ng-template #guestCta><a routerLink="/registrarme" class="btn-primary">Crear mi perfil <app-icon name="arrow" [size]="19"></app-icon></a></ng-template></div></div></section>
+<section class="journey-section reveal-on-scroll">
+  <div class="page-shell journey-layout">
+    <div class="journey-intro"><span class="eyebrow">De buscar grupo a compartir mesa</span><h2>Tres pasos.<br>Una nueva historia.</h2><p>El perfil reúne lo importante para que coordinar sea más fácil.</p></div>
+    <div class="journey-list">
+      <article><span>01</span><div><h3>Creá tu perfil</h3><p>Contá qué sistemas te interesan, dónde estás y cuándo podés jugar.</p></div></article>
+      <article><span>02</span><div><h3>Encontrá afinidad</h3><p>Explorá mesas y personas según modalidad, localidad y experiencia.</p></div></article>
+      <article><span>03</span><div><h3>Coordiná con seguridad</h3><p>Contactá por los medios habilitados y empezá a organizar la partida.</p></div></article>
+    </div>
+  </div>
+</section>
+
+<section class="about-editorial reveal-on-scroll">
+  <div class="page-shell about-layout"><img src="assets/branding/map-mendoza.svg" alt="" aria-hidden="true" loading="lazy"><div><span class="eyebrow">Sobre Cumbre20</span><h2>Una comunidad para que ninguna aventura quede sin mesa.</h2></div><div><p>Cumbre20 nació para acercar jugadores, másters y personas que quieren empezar a jugar rol en Mendoza. Todos los sistemas y niveles de experiencia tienen lugar.</p><a routerLink="/nosotros" class="hero-link">Conocé el proyecto <app-icon name="arrow" [size]="18"></app-icon></a></div></div>
+</section>
+
+<section class="final-cta reveal-on-scroll">
+  <div class="page-shell final-cta-inner">
+    <div><span class="eyebrow">Comunidad rolera mendocina</span><h2>¿Listo para sentarte<br>a la mesa?</h2><p>Sumate, completá tus preferencias y conectá con personas que también quieren jugar.</p></div>
+    <ng-container *ngIf="isAuthenticated; else guestCta"><a routerLink="/partidas" class="btn-primary">Explorar partidas <app-icon name="arrow" [size]="19"></app-icon></a></ng-container><ng-template #guestCta><a routerLink="/registrarme" class="btn-primary">Crear mi perfil <app-icon name="arrow" [size]="19"></app-icon></a></ng-template>
+  </div>
+</section>

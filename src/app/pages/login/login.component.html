@@ -1,26 +1,24 @@
-<section class="section-space">
-  <div class="page-shell grid max-w-5xl items-stretch gap-6 lg:grid-cols-2">
-    <div class="login-art rounded-3xl p-7 sm:p-10">
-      <span class="eyebrow">Volvé a la mesa</span>
-      <h1 class="mt-5 font-display text-4xl font-bold leading-tight sm:text-5xl">Tus partidas y tu comunidad, en un solo lugar.</h1>
-      <p class="mt-5 max-w-lg text-lg text-mist">Ingresá para publicar mesas, enviar solicitudes y participar en los comentarios.</p>
-      <div class="mt-10 grid gap-3 text-sm text-mist"><p>✓ Acceso con correo y contraseña</p><p>✓ Acceso rápido con Google</p><p>✓ Credenciales protegidas por Firebase</p></div>
+<section class="auth-page">
+  <div class="auth-layout">
+    <div class="login-art">
+      <div class="auth-art-copy"><span class="eyebrow">Volvé a la mesa</span><h1>Tus partidas y tu comunidad, en un solo lugar.</h1><p>Ingresá para publicar mesas, enviar solicitudes y participar en los comentarios.</p><ul><li>Acceso con correo y contraseña</li><li>Acceso rápido con Google</li><li>Credenciales protegidas por Firebase</li></ul></div>
     </div>
 
-    <div class="glass-panel rounded-3xl p-6 sm:p-9">
-      <h2 class="font-display text-3xl font-bold">Ingresar</h2>
-      <p class="mt-2 text-sm text-mist">Usá la cuenta con la que te registraste en Cumbre20.</p>
-      <button type="button" class="google-button mt-6" (click)="loginWithGoogle()" [disabled]="googleSaving || saving"><span class="google-mark">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
-      <div class="my-6 flex items-center gap-3 text-xs uppercase tracking-widest text-mist"><span class="h-px flex-1 bg-white/10"></span>o con correo<span class="h-px flex-1 bg-white/10"></span></div>
-      <form [formGroup]="form" (ngSubmit)="login()" class="space-y-5">
-        <label class="block"><span class="field-label">Correo electrónico</span><input type="email" class="input-field" formControlName="email" autocomplete="email"></label>
-        <label class="block"><span class="field-label">Contraseña</span><input type="password" class="input-field" formControlName="password" autocomplete="current-password"></label>
-        <div class="text-right"><button type="button" class="text-sm font-bold text-gold hover:text-parchment" (click)="resetPassword()" [disabled]="resetting">{{ resetting ? 'Enviando…' : 'Olvidé mi contraseña' }}</button></div>
-        <p *ngIf="errorMessage" class="feedback-error" role="alert">{{ errorMessage }}</p>
-        <p *ngIf="notice" class="feedback-success" role="status">{{ notice }}</p>
-        <button type="submit" class="btn-primary w-full" [disabled]="saving || googleSaving">{{ saving ? 'Ingresando…' : 'Ingresar' }}</button>
-      </form>
-      <p class="mt-6 text-center text-sm text-mist">¿Todavía no tenés cuenta? <a routerLink="/registrarme" class="font-bold text-gold hover:text-parchment">Registrate</a></p>
+    <div class="auth-form-column">
+      <a routerLink="/" class="auth-brand"><img src="assets/cumbre20-logo.svg" alt=""><span>Cumbre<strong>20</strong></span></a>
+      <div class="auth-form-inner">
+        <span class="eyebrow">Tu cuenta</span><h2>Ingresar</h2><p>Usá la cuenta con la que te registraste en Cumbre20.</p>
+        <button type="button" class="google-button" (click)="loginWithGoogle()" [disabled]="googleSaving || saving"><span class="google-mark">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
+        <div class="auth-divider"><span></span>o con correo<span></span></div>
+        <form [formGroup]="form" (ngSubmit)="login()" class="space-y-5">
+          <label class="block"><span class="field-label">Correo electrónico</span><input type="email" class="input-field" formControlName="email" autocomplete="email"></label>
+          <label class="block"><span class="field-label">Contraseña</span><input type="password" class="input-field" formControlName="password" autocomplete="current-password"></label>
+          <div class="text-right"><button type="button" class="text-sm font-bold text-gold hover:text-parchment" (click)="resetPassword()" [disabled]="resetting">{{ resetting ? 'Enviando…' : 'Olvidé mi contraseña' }}</button></div>
+          <p *ngIf="errorMessage" class="feedback-error" role="alert">{{ errorMessage }}</p><p *ngIf="notice" class="feedback-success" role="status">{{ notice }}</p>
+          <button type="submit" class="btn-primary w-full" [disabled]="saving || googleSaving">{{ saving ? 'Ingresando…' : 'Ingresar' }}</button>
+        </form>
+        <p class="auth-switch">¿Todavía no tenés cuenta? <a routerLink="/registrarme">Registrate</a></p>
+      </div>
     </div>
   </div>
 </section>
