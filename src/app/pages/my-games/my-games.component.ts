@@ -20,6 +20,7 @@ export class MyGamesComponent implements OnInit {
   errorMessage = '';
   notice = '';
   busyGameId = '';
+  removingUid = '';
   canCreate = false;
   requests: GameJoinRequest[] = [];
   participants: GameParticipantView[] = [];
@@ -28,7 +29,7 @@ export class MyGamesComponent implements OnInit {
     private gamesService: GameService,
     profiles: ProfileService,
     route: ActivatedRoute,
-    notifications: NotificationService,
+    private notifications: NotificationService,
     participantService: GameParticipantService,
     auth: AuthService
   ) {
@@ -101,6 +102,24 @@ export class MyGamesComponent implements OnInit {
 
   participantsFor(gameId: string): GameParticipantView[] {
     return this.participants.filter(item => item.participant.gameId === gameId);
+  }
+
+  async removePlayer(game: Game, view: GameParticipantView): Promise<void> {
+    if (this.removingUid || this.busyGameId) return;
+    const playerName = view.profile?.displayName || 'este jugador';
+    if (!window.confirm(`¿Remover a ${playerName} de “${game.title}”? Se liberará su cupo y se le avisará con una notificación.`)) return;
+    this.removingUid = view.participant.playerUid;
+    this.errorMessage = '';
+    this.notice = '';
+    try {
+      const result = await this.notifications.removeParticipant(game.id, view.participant.playerUid);
+      this.notice = result.message;
+    } catch (error) {
+      console.error('No se pudo remover al jugador.', error);
+      this.errorMessage = error instanceof Error ? error.message : 'No pudimos remover al jugador. Intentá nuevamente.';
+    } finally {
+      this.removingUid = '';
+    }
   }
 
   availableMessage(game: Game): string {

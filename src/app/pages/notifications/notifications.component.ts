@@ -30,11 +30,18 @@ export class NotificationsComponent {
 
   get unreadCount(): number { return this.notifications.filter(item => !item.read).length; }
 
-  async open(item: AppNotification): Promise<void> {
+   async open(item: AppNotification): Promise<void> {
     try { await this.notificationService.markRead(item); }
     catch (error) { console.error('No se pudo marcar la notificación como leída.', error); }
-    const target = item.type === 'JOIN_REQUEST' ? '/solicitudes' : '/mis-solicitudes';
-    await this.router.navigate([target], { queryParams: item.type === 'JOIN_REQUEST' ? { request: item.requestId } : {} });
+    if (item.type === 'JOIN_REQUEST') {
+      await this.router.navigate(['/solicitudes'], { queryParams: { request: item.requestId } });
+      return;
+    }
+    if (item.type === 'GAME_CANCELLED' && item.gameId) {
+      await this.router.navigate(['/partidas', item.gameId]);
+      return;
+    }
+    await this.router.navigate(['/mis-solicitudes']);
   }
 
   async markAll(): Promise<void> {

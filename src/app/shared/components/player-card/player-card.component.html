@@ -13,7 +13,7 @@
   <p class="mt-4 line-clamp-3 flex-1 text-sm leading-6 text-mist">{{ player.bio }}</p>
   <div class="mt-5 flex flex-wrap gap-2"><span *ngFor="let system of player.systems.slice(0, 2)" class="tag">{{ system }}</span></div>
   <div *ngIf="contact?.whatsappUrl || contact?.instagramUrl" class="player-card-contact mt-5 flex flex-wrap gap-2 pt-4">
-    <a *ngIf="contact?.whatsappUrl as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-mini"><app-icon name="whatsapp" [size]="16"></app-icon> WhatsApp</a>
+    <a *ngIf="whatsappUrl() as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-mini"><app-icon name="whatsapp" [size]="16"></app-icon> WhatsApp</a>
     <a *ngIf="contact?.instagramUrl as instagram" [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-mini"><app-icon name="instagram" [size]="16"></app-icon> Instagram</a>
   </div>
   <a [routerLink]="['/jugadores', player.id]" class="mt-5 inline-flex items-center gap-2 font-bold text-parchment transition group-hover:text-gold">Ver perfil <app-icon name="arrow" [size]="18"></app-icon></a>

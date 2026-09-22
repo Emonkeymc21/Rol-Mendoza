@@ -36,6 +36,7 @@ const API_ACTION = Object.freeze({
   deleteGame: 'deleteGame',
   joinGame: 'joinGame',
   resolveJoinRequest: 'resolveJoinRequest',
+  removeParticipant: 'removeParticipant',
   createComment: 'createComment'
 });
 
@@ -93,6 +94,10 @@ export class GoogleAppsScriptService {
 
   resolveJoinRequest(requestId: string, status: 'APPROVED' | 'REJECTED', idToken: string): Observable<ApiMutationResult> {
     return this.post<ApiMutationResult>(API_ACTION.resolveJoinRequest, { requestId, status }, idToken);
+  }
+
+  removeParticipant(gameId: string, playerUid: string, idToken: string): Observable<ApiMutationResult> {
+    return this.post<ApiMutationResult>(API_ACTION.removeParticipant, { gameId, playerUid }, idToken);
   }
 
   createComment(gameId: string, comment: string, idToken: string): Observable<ApiMutationResult> {

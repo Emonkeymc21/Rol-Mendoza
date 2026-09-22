@@ -41,7 +41,7 @@
             <div class="capacity-summary"><div><app-icon name="users" [size]="19"></app-icon><strong>{{ occupiedPlayers() }} / {{ game.totalSeats }}</strong><span>jugadores</span></div><p [class.full]="game.status === 'FULL' || game.seats === 0">{{ availableMessage() }}</p></div>
             <button type="button" class="btn-primary mt-6 w-full" (click)="join()" [disabled]="game.status === 'FULL' || !!joinRequest || (joinRoleLoaded && !canRequestJoin && !isOwnGame())">{{ joinButtonText() }} <app-icon *ngIf="game.status !== 'FULL' && !joinRequest && (!joinRoleLoaded || canRequestJoin)" name="arrow" [size]="19"></app-icon></button>
             <p *ngIf="joinNotice && !joinOpen && !joinRequest" class="feedback-success" role="status">{{ joinNotice }}</p>
-            <p *ngIf="joinRequest" class="request-state" [class.approved]="joinRequest.status === 'APPROVED'" [class.rejected]="joinRequest.status === 'REJECTED'" role="status">{{ requestMessage() }} <a routerLink="/mis-solicitudes">Ver mis solicitudes</a></p>
+            <p *ngIf="joinRequest" class="request-state" [class.approved]="joinRequest.status === 'APPROVED'" [class.rejected]="joinRequest.status === 'REJECTED' || joinRequest.status === 'REMOVED'" role="status">{{ requestMessage() }} <a routerLink="/mis-solicitudes">Ver mis solicitudes</a></p>
             <section *ngIf="joinRequest?.status === 'APPROVED' && (dmContact?.whatsappUrl || dmContact?.instagramUrl)" class="approved-contact" aria-label="Contacto con el máster">
               <strong>Coordiná con el máster</strong>
               <p>Estos datos se habilitaron porque ya formás parte de la mesa.</p>

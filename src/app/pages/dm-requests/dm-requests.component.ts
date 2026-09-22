@@ -69,7 +69,7 @@ export class DmRequestsComponent {
     }
   }
 
-  async resolve(status: Exclude<JoinRequestStatus, 'PENDING'>): Promise<void> {
+    async resolve(status: Exclude<JoinRequestStatus, 'PENDING' | 'REMOVED'>): Promise<void> {
     if (!this.selected || this.resolving) return;
     this.resolving = true;
     this.errorMessage = '';

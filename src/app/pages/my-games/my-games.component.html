@@ -35,10 +35,13 @@
         <section class="confirmed-players mt-5" *ngIf="participantsFor(game.id) as confirmed">
           <div class="flex items-center justify-between gap-3"><h3>Jugadores confirmados</h3><span>{{ confirmed.length }}</span></div>
           <div *ngIf="confirmed.length; else noConfirmed" class="confirmed-list mt-3">
-            <a *ngFor="let item of confirmed" [routerLink]="['/jugadores', item.participant.playerUid]">
-              <app-class-avatar [avatarClass]="item.profile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar>
-              <span>{{ item.profile?.displayName || 'Jugador/a de Cumbre20' }}</span>
-            </a>
+            <span *ngFor="let item of confirmed" class="confirmed-chip">
+              <a [routerLink]="['/jugadores', item.participant.playerUid]">
+                <app-class-avatar [avatarClass]="item.profile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar>
+                <span>{{ item.profile?.displayName || 'Jugador/a de Cumbre20' }}</span>
+              </a>
+              <button type="button" class="chip-remove" (click)="removePlayer(game, item)" [disabled]="removingUid === item.participant.playerUid" [title]="removingUid === item.participant.playerUid ? 'Removiendo…' : 'Remover a ' + (item.profile?.displayName || 'este jugador')" aria-label="Remover jugador">×</button>
+            </span>
           </div>
           <ng-template #noConfirmed><p class="mt-2 text-xs text-mist">Todavía no aceptaste jugadores mediante Cumbre20.</p></ng-template>
         </section>

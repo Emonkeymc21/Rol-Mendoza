@@ -20,7 +20,7 @@
         <section *ngIf="!isOwnProfile" class="contact-panel mt-7">
           <h2 class="font-display text-xl font-bold">Contacto</h2>
           <div *ngIf="contact?.whatsappUrl || contact?.instagramUrl; else protectedContact" class="mt-4 flex flex-wrap gap-3">
-            <a *ngIf="contact?.whatsappUrl as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="btn-primary"><app-icon name="whatsapp" [size]="19"></app-icon> WhatsApp</a>
+            <a *ngIf="contactWhatsappUrl() as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="btn-primary"><app-icon name="whatsapp" [size]="19"></app-icon> WhatsApp</a>
             <a *ngIf="contact?.instagramUrl as instagram" [href]="instagram" target="_blank" rel="noopener noreferrer" class="btn-secondary"><app-icon name="instagram" [size]="19"></app-icon> Instagram</a>
             <span *ngIf="contact?.alternatePhone" class="alternate-phone">Tel. alternativo: {{ contact?.alternatePhone }}</span>
           </div>

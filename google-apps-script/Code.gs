@@ -22,6 +22,7 @@ const CONFIG = Object.freeze({
     deleteGame: 5,
     joinGame: 20,
     resolveJoinRequest: 2,
+    removeParticipant: 3,
     createComment: 20
   })
 });
@@ -184,6 +185,8 @@ function doPost(e) {
         return json_({ ok: true, data: createJoinRequest_(payload, firebaseAccount_(user)) });
       case 'resolveJoinRequest':
         return json_({ ok: true, data: resolveJoinRequest_(payload, user.uid) });
+      case 'removeParticipant':
+        return json_({ ok: true, data: removeParticipant_(payload, user.uid) });
       case 'createComment':
         return json_({ ok: true, data: createComment_(payload, firebaseAccount_(user)) });
       default:
@@ -357,13 +360,153 @@ function setGameStatus_(payload, uid) {
   const status = oneOf_(String(payload.status || '').toUpperCase(), ['ACTIVE', 'PAUSED', 'CANCELLED', 'FULL'], 'estado');
   const record = findGameWithRow_(gameId);
   assertOwner_(record && record.data, uid);
+  const previousStatus = canonicalStatus_(record.data.estado);
   const next = Object.assign({}, record.data, {
     estado: status,
     publicada: status === 'ACTIVE' || status === 'FULL' ? 'Sí' : 'No',
     actualizada_el: new Date()
   });
   upsertObject_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, next, record.rowNumber);
+  if (status === 'CANCELLED' && previousStatus !== 'CANCELLED') {
+    try {
+      const notified = notifyGameCancelled_(gameId, uid, cleanText_(next.titulo, 120));
+      return {
+        id: gameId,
+        status: status,
+        notified: notified,
+        message: notified > 0
+          ? 'La partida fue cancelada y avisamos a ' + notified + (notified === 1 ? ' jugador.' : ' jugadores.')
+          : 'La partida fue cancelada. No había jugadores a quienes avisar.'
+      };
+    } catch (error) {
+      console.error('No se pudo avisar la cancelación de ' + gameId + ': ' + error);
+      return {
+        id: gameId,
+        status: status,
+        notified: 0,
+        message: 'La partida fue cancelada, pero no pudimos avisar a todos los jugadores.'
+      };
+    }
+  }
   return { id: gameId, status: status, message: statusMessage_(status) };
+}
+
+/**
+ * Avisa la cancelación de una mesa a sus confirmados y a quienes tenían la
+ * solicitud pendiente. Usa upsert para que re-cancelar no duplique avisos.
+ */
+function notifyGameCancelled_(gameId, dmUid, gameTitle) {
+  const participants = queryDocuments_('gameParticipants', 'gameId', gameId)
+    .map(function (document) { return firestoreString_(document, 'playerUid'); });
+  const pending = queryDocuments_('gameJoinRequests', 'gameId', gameId)
+    .filter(function (document) { return firestoreString_(document, 'status') === 'PENDING'; })
+    .map(function (document) { return firestoreString_(document, 'playerUid'); });
+  const notified = {};
+  participants.concat(pending).forEach(function (playerUid) {
+    if (playerUid && playerUid !== dmUid) notified[playerUid] = true;
+  });
+  const uids = Object.keys(notified);
+  if (!uids.length) return 0;
+  const now = new Date();
+  const title = gameTitle || 'la partida';
+  const writes = uids.map(function (playerUid) {
+    return firestoreSetWrite_('users/' + playerUid + '/notifications/' + gameId + '-cancelled', {
+      id: gameId + '-cancelled',
+      type: 'GAME_CANCELLED',
+      title: 'Partida cancelada',
+      message: '“' + title + '” fue cancelada por el DM.',
+      gameId: gameId,
+      gameTitle: title,
+      requestId: '',
+      actorUid: dmUid,
+      read: false,
+      createdAt: now
+    });
+  });
+  commitFirestoreWrites_(writes);
+  return uids.length;
+}
+
+/**
+ * Remueve a un jugador confirmado: borra el participante, libera el cupo,
+ * marca su solicitud como REMOVED y le avisa con una notificación.
+ */
+function removeParticipant_(payload, uid) {
+  const gameId = requiredText_(payload.gameId, 'partida', 80);
+  const playerUid = requiredText_(payload.playerUid, 'jugador', 160);
+  if (playerUid === uid) throw new Error('No podés removerte de tu propia partida.');
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    const gameRecord = findGameWithRow_(gameId);
+    assertOwner_(gameRecord && gameRecord.data, uid);
+    const game = gameRecord.data;
+    if (canonicalStatus_(game.estado) === 'CANCELLED') throw new Error('La partida está cancelada.');
+    const participantId = stableParticipantId_(gameId, playerUid);
+    const participant = getFirestoreDocument_('gameParticipants/' + participantId);
+    if (!participant) throw new Error('Este jugador ya no forma parte de la partida.');
+
+    const maxPlayers = integerBetween_(game.cupos_totales, 'cantidad máxima de jugadores', 1, 99);
+    const currentPlayers = integerBetween_(game.jugadores_actuales || 0, 'jugadores confirmados', 0, maxPlayers);
+    const gameStatus = canonicalStatus_(game.estado);
+    const updatedPlayers = Math.max(0, currentPlayers - 1);
+    const updatedStatus = gameStatus === 'FULL' ? 'ACTIVE' : gameStatus;
+    const now = new Date();
+    const gameTitle = cleanText_(game.titulo, 120) || 'la partida';
+    const updatedGame = Object.assign({}, game, {
+      jugadores_actuales: updatedPlayers,
+      cupos_libres: Math.max(0, maxPlayers - updatedPlayers),
+      estado: updatedStatus,
+      publicada: updatedStatus === 'ACTIVE' || updatedStatus === 'FULL' ? 'Sí' : 'No',
+      actualizada_el: now
+    });
+
+    const requestId = firestoreString_(participant, 'requestId');
+    const requestDocument = requestId ? getFirestoreDocument_('gameJoinRequests/' + requestId) : null;
+
+    writeObjectRow_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, updatedGame, gameRecord.rowNumber);
+    try {
+      const writes = [
+        firestoreDeleteWrite_('gameParticipants/' + participantId),
+        firestoreSetWrite_('users/' + playerUid + '/notifications/' + participantId + '-removed', {
+          id: participantId + '-removed',
+          type: 'PLAYER_REMOVED',
+          title: 'Te removieron de una mesa',
+          message: 'El DM te removió de “' + gameTitle + '” y liberó tu cupo.',
+          gameId: gameId,
+          gameTitle: gameTitle,
+          requestId: requestId,
+          actorUid: uid,
+          read: false,
+          createdAt: now
+        })
+      ];
+      if (requestDocument) {
+        writes.push(firestoreUpdateWrite_('gameJoinRequests/' + requestId, {
+          status: 'REMOVED',
+          resolvedAt: now,
+          updatedAt: now
+        }));
+      }
+      commitFirestoreWrites_(writes);
+    } catch (error) {
+      writeObjectRow_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, game, gameRecord.rowNumber);
+      throw error;
+    }
+
+    return {
+      id: participantId,
+      gameId: gameId,
+      status: 'REMOVED',
+      currentPlayers: updatedPlayers,
+      maxPlayers: maxPlayers,
+      availableSeats: Math.max(0, maxPlayers - updatedPlayers),
+      gameStatus: updatedStatus,
+      message: 'Jugador removido. Se liberó su cupo y se le avisó.'
+    };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function cancelGame_(payload, uid) {
@@ -669,6 +812,44 @@ function firestoreSetWrite_(path, data) {
   return {
     update: { name: firestoreDocumentName_(path), fields: firestoreFields_(data) }
   };
+}
+
+function firestoreDeleteWrite_(path) {
+  return { delete: firestoreDocumentName_(path) };
+}
+
+/**
+ * Lista documentos de una colección filtrados por un campo de texto.
+ * Devuelve los documentos crudos de Firestore (con .name y .fields).
+ */
+function queryDocuments_(collectionId, fieldPath, value) {
+  const response = UrlFetchApp.fetch(
+    'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(CONFIG.firebaseProjectId) +
+      '/databases/(default)/documents:runQuery',
+    {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      payload: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: collectionId }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: fieldPath },
+              op: 'EQUAL',
+              value: { stringValue: value }
+            }
+          }
+        }
+      }),
+      muteHttpExceptions: true
+    }
+  );
+  if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+    throw new Error('No pudimos consultar Firestore. Código HTTP: ' + response.getResponseCode());
+  }
+  const rows = JSON.parse(response.getContentText());
+  return rows.filter(function (row) { return Boolean(row.document); }).map(function (row) { return row.document; });
 }
 
 function commitFirestoreWrites_(writes, conflictMessage) {

@@ -63,12 +63,22 @@ export class NotificationService {
     });
   }
 
-  async resolve(request: GameJoinRequest, status: Exclude<JoinRequestStatus, 'PENDING'>): Promise<ApiMutationResult> {
+  async resolve(request: GameJoinRequest, status: Exclude<JoinRequestStatus, 'PENDING' | 'REMOVED'>): Promise<ApiMutationResult> {
     const uid = this.requireUid();
     if (request.dmUid !== uid) throw new Error('No tenés permisos para resolver esta solicitud.');
     if (request.status !== 'PENDING') throw new Error('Esta solicitud ya fue resuelta.');
     const token = await this.auth.getIdToken();
     const result = await firstValueFrom(this.api.resolveJoinRequest(request.id, status, token));
+    this.games.refresh();
+    return result;
+  }
+
+  async removeParticipant(gameId: string, playerUid: string): Promise<ApiMutationResult> {
+    const uid = this.requireUid();
+    if (!gameId || !playerUid) throw new Error('Faltan datos para remover al jugador.');
+    if (playerUid === uid) throw new Error('No podés removerte de tu propia partida.');
+    const token = await this.auth.getIdToken();
+    const result = await firstValueFrom(this.api.removeParticipant(gameId, playerUid, token));
     this.games.refresh();
     return result;
   }
@@ -135,7 +145,7 @@ export class NotificationService {
       dmUid: String(data['dmUid'] || ''),
       dmName: String(data['dmName'] || 'Dungeon Master'),
       message: String(data['message'] || ''),
-      status: data['status'] === 'APPROVED' || data['status'] === 'REJECTED' ? data['status'] : 'PENDING',
+      status: data['status'] === 'APPROVED' || data['status'] === 'REJECTED' || data['status'] === 'REMOVED' ? data['status'] : 'PENDING',
       seenByDm: data['seenByDm'] === true,
       createdAt: this.toDate(data['createdAt']),
       updatedAt: this.toDate(data['updatedAt']),
@@ -145,8 +155,10 @@ export class NotificationService {
   }
 
   private mapNotification(data: DocumentData): AppNotification {
-    const type = data['type'] === 'REQUEST_APPROVED' || data['type'] === 'REQUEST_REJECTED'
-      ? data['type'] : 'JOIN_REQUEST';
+    const rawType = String(data['type'] || 'JOIN_REQUEST');
+    const type = rawType === 'REQUEST_APPROVED' || rawType === 'REQUEST_REJECTED'
+      || rawType === 'GAME_CANCELLED' || rawType === 'PLAYER_REMOVED'
+      ? rawType : 'JOIN_REQUEST';
     return {
       id: String(data['id'] || ''), type,
       title: String(data['title'] || 'Nueva notificación'),

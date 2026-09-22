@@ -1,4 +1,4 @@
-export type JoinRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type JoinRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REMOVED';
 
 export interface GameJoinRequest {
   id: string;
@@ -17,7 +17,7 @@ export interface GameJoinRequest {
   resolvedAt?: Date;
 }
 
-export type NotificationType = 'JOIN_REQUEST' | 'REQUEST_APPROVED' | 'REQUEST_REJECTED';
+export type NotificationType = 'JOIN_REQUEST' | 'REQUEST_APPROVED' | 'REQUEST_REJECTED' | 'GAME_CANCELLED' | 'PLAYER_REMOVED';
 
 export interface AppNotification {
   id: string;
@@ -36,5 +36,6 @@ export interface AppNotification {
 export function requestStatusLabel(request: GameJoinRequest): string {
   if (request.status === 'APPROVED') return 'Aprobada';
   if (request.status === 'REJECTED') return 'No aceptada';
+  if (request.status === 'REMOVED') return 'Removido de la mesa';
   return request.seenByDm ? 'Vista por el DM' : 'Pendiente';
 }

@@ -4,6 +4,7 @@ import { Player } from '../../core/models/player.model';
 import { UserPrivateProfile, UserProfile } from '../../core/models/user-profile.model';
 import { AuthService } from '../../core/services/auth.service';
 import { CommunityService } from '../../core/services/community.service';
+import { ContactNormalizerService } from '../../core/services/contact-normalizer.service';
 import { ProfileService } from '../../core/services/profile.service';
 
 @Component({ selector: 'app-player-detail', templateUrl: './player-detail.component.html', styleUrls: ['./player-detail.component.scss'] })
@@ -11,6 +12,7 @@ export class PlayerDetailComponent {
   player?: Player;
   targetProfile?: UserProfile;
   contact?: UserPrivateProfile;
+  ownProfile?: UserProfile;
   canViewContacts = false;
   isOwnProfile = false;
   blocking = false;
@@ -21,6 +23,7 @@ export class PlayerDetailComponent {
     community: CommunityService,
     private auth: AuthService,
     private profiles: ProfileService,
+    private contacts: ContactNormalizerService,
     private router: Router
   ) {
     const id = route.snapshot.paramMap.get('id') ?? '';
@@ -42,9 +45,24 @@ export class PlayerDetailComponent {
     }
   }
 
+  dmHelloWhatsappUrl(): string {
+    if (!this.contact?.whatsappUrl || !this.canViewContacts) return '';
+    const playerName = (this.targetProfile?.firstName || this.player?.name || 'Hola').split(' ')[0];
+    const dmName = this.ownProfile?.displayName || 'un DM de Cumbre20';
+    return this.contacts.whatsappWithMessage(
+      this.contact.whatsappUrl,
+      `¡Hola ${playerName}! Soy ${dmName}, de Cumbre20. Vi tu perfil y me gustaría conversar sobre una partida. ¿Te interesa?`
+    );
+  }
+
+  contactWhatsappUrl(): string {
+    return this.dmHelloWhatsappUrl() || this.contact?.whatsappUrl || '';
+  }
+
   private async loadPrivateState(id: string): Promise<void> {
     try {
       const [own, target] = await Promise.all([this.profiles.getOwnProfile(), this.profiles.getProfile(id)]);
+      this.ownProfile = own || undefined;
       this.targetProfile = target || undefined;
       this.isOwnProfile = this.auth.currentUser?.uid === id;
       this.canViewContacts = !this.isOwnProfile && this.profiles.canViewContacts(own);
