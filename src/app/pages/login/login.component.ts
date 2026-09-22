@@ -37,8 +37,8 @@ export class LoginComponent {
     const value = this.form.getRawValue();
     this.saving = true;
     try {
-      await this.auth.signInWithEmail(value.email, value.password);
-      await this.continueAfterLogin();
+      const user = await this.auth.signInWithEmail(value.email, value.password);
+      await this.continueAfterLogin(user.emailVerified);
     } catch (error) {
       console.error('No se pudo iniciar sesión con correo.', error);
       this.errorMessage = this.auth.friendlyError(error);
@@ -52,8 +52,8 @@ export class LoginComponent {
     this.errorMessage = '';
     this.googleSaving = true;
     try {
-      await this.auth.signInWithGoogle();
-      await this.continueAfterLogin();
+      const user = await this.auth.signInWithGoogle();
+      await this.continueAfterLogin(user.emailVerified);
     } catch (error) {
       console.error('No se pudo iniciar sesión con Google.', error);
       this.errorMessage = this.auth.friendlyError(error);
@@ -81,7 +81,11 @@ export class LoginComponent {
     }
   }
 
-  private async continueAfterLogin(): Promise<void> {
+  private async continueAfterLogin(emailVerified: boolean): Promise<void> {
+    if (!emailVerified) {
+      await this.router.navigate(['/verificar-correo'], { queryParams: { returnUrl: this.returnUrl } });
+      return;
+    }
     try {
       const complete = await this.profiles.isOwnProfileComplete();
       if (!complete) {
