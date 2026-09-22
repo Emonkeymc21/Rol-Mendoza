@@ -1,6 +1,6 @@
 .register-page { min-height:calc(100svh - 76px);background:var(--bg-primary); }
 .register-layout { display:grid;min-height:calc(100svh - 76px); }
-.register-art { position:relative;min-height:420px;background:linear-gradient(180deg,rgba(13,9,11,.06),rgba(13,9,11,.9)),url('/assets/branding/community-table.webp') 48% center/cover no-repeat;color:#f1e8d5; }
+.register-art { position:relative;min-height:420px;background:linear-gradient(180deg,rgba(13,9,11,.06),rgba(13,9,11,.9)),url('/assets/branding/register-community-real.webp') 52% center/cover no-repeat;color:#f1e8d5; }
 .register-art-copy { position:absolute;right:clamp(1.5rem,6vw,6rem);bottom:clamp(2rem,7vw,6rem);left:clamp(1.5rem,6vw,6rem);max-width:700px; }
 .register-art-copy h1 { margin-top:1rem;font-family:Cinzel,Georgia,serif;font-size:clamp(2.5rem,5vw,5.3rem);font-weight:750;line-height:1;text-wrap:balance; }
 .register-art-copy > p { max-width:33rem;margin-top:1.25rem;color:#d3c7c0;font-family:Alegreya,Georgia,serif;font-size:1.17rem;line-height:1.65; }

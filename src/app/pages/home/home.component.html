@@ -1,7 +1,7 @@
 <section class="home-hero">
   <picture class="hero-media" aria-hidden="true">
-    <source media="(max-width: 639px)" srcset="assets/branding/hero-cumbre20-mobile.webp">
-    <img src="assets/branding/hero-cumbre20.webp" alt="" fetchpriority="high" decoding="async">
+    <source media="(max-width: 639px)" srcset="assets/branding/hero-home-real-mobile.webp">
+    <img src="assets/branding/hero-home-real.webp" width="1672" height="941" alt="" fetchpriority="high" decoding="async">
   </picture>
   <div class="hero-atmosphere" aria-hidden="true"></div>
   <div class="hero-topography" aria-hidden="true"></div>
@@ -46,7 +46,7 @@
         <app-icon name="search" [size]="19"></app-icon>
         <input class="input-field" formControlName="query" placeholder="Vampiro, Maipú, Cyberpunk…">
       </label>
-      <label>
+      <label class="search-mode">
         <span class="sr-only">Modalidad</span>
         <select class="input-field" formControlName="mode"><option>Cualquier modalidad</option><option>Presencial</option><option>Online</option><option>Mixto</option></select>
       </label>
@@ -63,7 +63,7 @@
   </div>
 </nav>
 
-<section class="adventures-section reveal-on-scroll">
+<section appReveal class="adventures-section">
   <div class="page-shell">
     <header class="editorial-heading">
       <div><span class="eyebrow">Mesas de la comunidad</span><h2>Aventuras abiertas</h2></div>
@@ -71,29 +71,36 @@
       <a routerLink="/partidas" class="section-link">Ver todas <app-icon name="arrow" [size]="18"></app-icon></a>
     </header>
 
-    <div *ngIf="games.length; else noRecentGames" class="home-game-layout"><app-game-card *ngFor="let game of games" [game]="game"></app-game-card></div>
-    <ng-template #noRecentGames><div class="home-empty"><span class="empty-number" aria-hidden="true">20</span><div><h3>La próxima historia puede ser la tuya</h3><p>Todavía no hay partidas activas para mostrar. Explorá nuevamente más tarde o publicá una mesa.</p></div><a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-primary">Crear partida</a></div></ng-template>
+    <ng-container *ngIf="gamesLoading$ | async; else homeGamesReady">
+      <div class="home-game-layout game-skeleton-grid" aria-label="Cargando partidas" aria-busy="true">
+        <div class="game-skeleton" *ngFor="let item of [1,2,3]"><span></span><i></i><i></i><i></i></div>
+      </div>
+    </ng-container>
+    <ng-template #homeGamesReady>
+      <div *ngIf="games.length; else noRecentGames" class="home-game-layout"><app-game-card *ngFor="let game of games; trackBy: trackGame" [game]="game"></app-game-card></div>
+      <ng-template #noRecentGames><div class="home-empty"><span class="empty-number" aria-hidden="true">20</span><div><h3>La próxima historia puede ser la tuya</h3><p>Todavía no hay partidas activas para mostrar. Explorá nuevamente más tarde o publicá una mesa.</p></div><a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-primary">Crear partida</a></div></ng-template>
+    </ng-template>
   </div>
 </section>
 
-<section *ngIf="canCreateGames()" class="dm-editorial reveal-on-scroll">
+<section *ngIf="canCreateGames()" appReveal class="dm-editorial">
   <div class="dm-image" aria-hidden="true"></div>
   <div class="page-shell dm-copy"><span class="eyebrow">Para Dungeon Masters</span><h2>Hay una historia<br>esperando mesa.</h2><p>Publicá tu propuesta, indicá los cupos y encontrá jugadores de la comunidad.</p><a routerLink="/partidas/nueva" class="btn-primary">Publicar partida <app-icon name="arrow" [size]="18"></app-icon></a></div>
 </section>
 
-<section class="community-story reveal-on-scroll">
+<section appReveal class="community-story">
   <div class="community-image">
-    <picture><source media="(max-width: 767px)" srcset="assets/branding/community-table-720.webp"><img src="assets/branding/community-table.webp" alt="Grupo compartiendo una partida de rol alrededor de una mesa" loading="lazy" decoding="async"></picture>
+    <picture><source media="(max-width: 767px)" srcset="assets/branding/community-table-real-720.webp"><img src="assets/branding/community-table-real.webp" width="1440" height="960" alt="Grupo de amistades compartiendo una partida de rol en Mendoza" loading="lazy" decoding="async"></picture>
     <div class="community-dice"><app-dice-roller></app-dice-roller></div>
   </div>
   <div class="community-copy"><span class="eyebrow">Personas antes que personajes</span><h2>Las historias empiezan cuando alguien se sienta a la mesa.</h2><p>Conocé jugadores y Dungeon Masters por localidad, sistemas favoritos, modalidad y disponibilidad. Sin importar qué juego elijan.</p><a routerLink="/jugadores" class="btn-secondary"><app-icon name="users" [size]="19"></app-icon> Explorar la comunidad</a></div>
 </section>
 
-<section *ngIf="players.length" class="roster-section reveal-on-scroll">
-  <div class="page-shell"><header class="roster-heading"><span>Perfiles de la comunidad</span><a routerLink="/jugadores">Ver todas las personas <app-icon name="arrow" [size]="17"></app-icon></a></header><div class="home-player-layout"><app-player-card *ngFor="let player of players" [player]="player"></app-player-card></div></div>
+<section *ngIf="players.length" appReveal class="roster-section">
+  <div class="page-shell"><header class="roster-heading"><span>Perfiles de la comunidad</span><a routerLink="/jugadores">Ver todas las personas <app-icon name="arrow" [size]="17"></app-icon></a></header><div class="home-player-layout"><app-player-card *ngFor="let player of players; trackBy: trackPlayer" [player]="player"></app-player-card></div></div>
 </section>
 
-<section class="journey-section reveal-on-scroll">
+<section appReveal class="journey-section">
   <div class="page-shell journey-layout">
     <div class="journey-intro"><span class="eyebrow">De buscar grupo a compartir mesa</span><h2>Tres pasos.<br>Una nueva historia.</h2><p>El perfil reúne lo importante para que coordinar sea más fácil.</p></div>
     <div class="journey-list">
@@ -104,11 +111,11 @@
   </div>
 </section>
 
-<section class="about-editorial reveal-on-scroll">
+<section appReveal class="about-editorial">
   <div class="page-shell about-layout"><img src="assets/branding/map-mendoza.svg" alt="" aria-hidden="true" loading="lazy"><div><span class="eyebrow">Sobre Cumbre20</span><h2>Una comunidad para que ninguna aventura quede sin mesa.</h2></div><div><p>Cumbre20 nació para acercar jugadores, másters y personas que quieren empezar a jugar rol en Mendoza. Todos los sistemas y niveles de experiencia tienen lugar.</p><a routerLink="/nosotros" class="hero-link">Conocé el proyecto <app-icon name="arrow" [size]="18"></app-icon></a></div></div>
 </section>
 
-<section class="final-cta reveal-on-scroll">
+<section appReveal class="final-cta">
   <div class="page-shell final-cta-inner">
     <div><span class="eyebrow">Comunidad rolera mendocina</span><h2>¿Listo para sentarte<br>a la mesa?</h2><p>Sumate, completá tus preferencias y conectá con personas que también quieren jugar.</p></div>
     <ng-container *ngIf="isAuthenticated; else guestCta"><a routerLink="/partidas" class="btn-primary">Explorar partidas <app-icon name="arrow" [size]="19"></app-icon></a></ng-container><ng-template #guestCta><a routerLink="/registrarme" class="btn-primary">Crear mi perfil <app-icon name="arrow" [size]="19"></app-icon></a></ng-template>

@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { GameJoinRequest, JoinRequestStatus, requestStatusLabel } from '../../core/models/join-request.model';
 import { UserPrivateProfile, UserProfile } from '../../core/models/user-profile.model';
@@ -8,6 +9,7 @@ import { ContactNormalizerService } from '../../core/services/contact-normalizer
 
 @Component({ selector: 'app-dm-requests', templateUrl: './dm-requests.component.html', styleUrls: ['./dm-requests.component.scss'] })
 export class DmRequestsComponent {
+  private readonly destroyRef = inject(DestroyRef);
   requests: GameJoinRequest[] = [];
   selected?: GameJoinRequest;
   playerProfile?: UserProfile;
@@ -28,7 +30,7 @@ export class DmRequestsComponent {
   ) {
     this.gameFilter = route.snapshot.queryParamMap.get('gameId') || '';
     this.requestedId = route.snapshot.queryParamMap.get('request') || '';
-    notifications.watchDmRequests().subscribe({
+    notifications.watchDmRequests().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: requests => {
         this.requests = this.gameFilter ? requests.filter(item => item.gameId === this.gameFilter) : requests;
         if (this.selected) {
@@ -86,6 +88,7 @@ export class DmRequestsComponent {
   }
 
   statusLabel(request: GameJoinRequest): string { return requestStatusLabel(request); }
+  trackRequest(_index: number, request: GameJoinRequest): string { return request.id; }
 
   playerWhatsappUrl(): string {
     if (!this.playerContact?.whatsappUrl || !this.selected) return '';

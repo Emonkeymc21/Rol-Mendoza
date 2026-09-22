@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { matchesLocation, MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
@@ -8,6 +9,7 @@ import { ProfileService } from '../../core/services/profile.service';
 
 @Component({ selector: 'app-games', templateUrl: './games.component.html', styleUrls: ['./games.component.scss'] })
 export class GamesComponent {
+  private readonly destroyRef = inject(DestroyRef);
   readonly locations = MENDOZA_LOCATIONS;
   readonly loading$ = this.gameService.loading$;
   readonly error$ = this.gameService.error$;
@@ -17,17 +19,18 @@ export class GamesComponent {
   filters = this.fb.nonNullable.group({ q: '', city: 'Todas', mode: 'Todas', frequency: 'Todas', level: 'Todos' });
 
   constructor(private fb: FormBuilder, private gameService: GameService, profiles: ProfileService, route: ActivatedRoute) {
-    gameService.getGames().subscribe(games => { this.allGames = games; this.applyFilters(); });
+    gameService.getGames().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(games => { this.allGames = games; this.applyFilters(); });
     void profiles.getOwnProfile().then(profile => this.canCreate = profile?.role === 'DM' || profile?.role === 'BOTH');
-    route.queryParamMap.subscribe(params => {
+    route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       this.filters.patchValue({ q: params.get('q') ?? '', mode: params.get('mode') ?? 'Todas' }, { emitEvent: false });
       this.applyFilters();
     });
-    this.filters.valueChanges.subscribe(() => this.applyFilters());
+    this.filters.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.applyFilters());
   }
 
   reset(): void { this.filters.reset({ q: '', city: 'Todas', mode: 'Todas', frequency: 'Todas', level: 'Todos' }); }
   retry(): void { this.gameService.refresh(); }
+  trackGame(_index: number, game: Game): string { return game.id; }
   private applyFilters(): void {
     const { q, city, mode, frequency, level } = this.filters.getRawValue();
     const term = q.trim().toLowerCase();

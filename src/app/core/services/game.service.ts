@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, catchError, defer, from, map, Observable, of, ReplaySubject, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, catchError, defer, finalize, from, map, Observable, of, ReplaySubject, Subscription, switchMap, tap } from 'rxjs';
 import { ApiMutationResult, PublicGameRow } from '../models/community-api.model';
 import { Game } from '../models/game.model';
 import { AuthService } from './auth.service';
@@ -10,23 +10,27 @@ export class GameService {
   private readonly gamesState = new ReplaySubject<Game[]>(1);
   private readonly loadingState = new BehaviorSubject<boolean>(false);
   private readonly errorState = new BehaviorSubject<string>('');
+  private gamesCache: Game[] = [];
+  private loaded = false;
+  private refreshSubscription?: Subscription;
 
   readonly loading$ = this.loadingState.asObservable();
   readonly error$ = this.errorState.asObservable();
 
-  constructor(private api: GoogleAppsScriptService, private auth: AuthService) {
-    this.refresh();
-  }
+  constructor(private api: GoogleAppsScriptService, private auth: AuthService) {}
 
   get enabled(): boolean {
     return this.api.enabled;
   }
 
   getGames(): Observable<Game[]> {
+    if (!this.loaded && !this.refreshSubscription) this.refresh();
     return this.gamesState.asObservable();
   }
 
   getGame(id: string): Observable<Game | undefined> {
+    const cached = this.gamesCache.find(game => game.id === id);
+    if (cached) return of(cached);
     return defer(() => this.api.getGame(id)).pipe(
       map(row => this.mapGame(row)),
       catchError(error => {
@@ -81,21 +85,29 @@ export class GameService {
   refresh(): void {
     if (!this.api.enabled) {
       this.gamesState.next([]);
+      this.gamesCache = [];
+      this.loaded = true;
       this.errorState.next('El servicio de partidas no está configurado.');
       return;
     }
+    if (this.refreshSubscription && !this.refreshSubscription.closed) return;
     this.loadingState.next(true);
     this.errorState.next('');
-    defer(() => this.api.getGames()).pipe(
+    this.refreshSubscription = defer(() => this.api.getGames()).pipe(
       map(rows => rows.map(row => this.mapGame(row))),
       catchError(error => {
         console.error('No se pudo actualizar el listado de partidas.', error);
         this.errorState.next('No pudimos cargar las partidas. Intentá nuevamente.');
         return of([]);
+      }),
+      finalize(() => {
+        this.loadingState.next(false);
+        this.refreshSubscription = undefined;
       })
     ).subscribe(games => {
+      this.gamesCache = games;
+      this.loaded = true;
       this.gamesState.next(games);
-      this.loadingState.next(false);
     });
   }
 

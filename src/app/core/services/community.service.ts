@@ -15,6 +15,7 @@ import { GameService } from './game.service';
 @Injectable({ providedIn: 'root' })
 export class CommunityService {
   private readonly playersSubject = new ReplaySubject<Player[]>(1);
+  readonly gamesLoading$ = this.games.loading$;
 
   constructor(
     private api: GoogleAppsScriptService,

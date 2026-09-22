@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { matchesLocation, MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
@@ -7,21 +8,23 @@ import { CommunityService } from '../../core/services/community.service';
 
 @Component({ selector: 'app-players', templateUrl: './players.component.html', styleUrls: ['./players.component.scss'] })
 export class PlayersComponent {
+  private readonly destroyRef = inject(DestroyRef);
   allPlayers: Player[] = [];
   players: Player[] = [];
   filters = this.fb.nonNullable.group({ q: '', role: 'Todos', mode: 'Todas', city: 'Todas' });
   readonly cities = ['Todas', ...MENDOZA_LOCATIONS];
 
   constructor(private fb: FormBuilder, private community: CommunityService, route: ActivatedRoute) {
-    this.community.getPlayers().subscribe(players => { this.allPlayers = players; this.applyFilters(); });
-    route.queryParamMap.subscribe(params => {
+    this.community.getPlayers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(players => { this.allPlayers = players; this.applyFilters(); });
+    route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       this.filters.patchValue({ q: params.get('q') ?? '', mode: params.get('mode') ?? 'Todas' }, { emitEvent: false });
       this.applyFilters();
     });
-    this.filters.valueChanges.subscribe(() => this.applyFilters());
+    this.filters.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.applyFilters());
   }
 
   reset(): void { this.filters.reset({ q: '', role: 'Todos', mode: 'Todas', city: 'Todas' }); }
+  trackPlayer(_index: number, player: Player): string { return player.id; }
   private applyFilters(): void {
     const { q, role, mode, city } = this.filters.getRawValue();
     const term = q.trim().toLowerCase();

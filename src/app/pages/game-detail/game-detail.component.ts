@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PublicComment } from '../../core/models/community-api.model';
@@ -15,6 +16,7 @@ import { ContactNormalizerService } from '../../core/services/contact-normalizer
 
 @Component({ selector: 'app-game-detail', templateUrl: './game-detail.component.html', styleUrls: ['./game-detail.component.scss'] })
 export class GameDetailComponent {
+  private readonly destroyRef = inject(DestroyRef);
   game?: Game;
   comments: PublicComment[] = [];
   notice = '';
@@ -55,7 +57,7 @@ export class GameDetailComponent {
     this.gameId = route.snapshot.paramMap.get('id') ?? '';
     this.apiConnected = community.isConnected();
     this.loadGame();
-    participants.watchGame(this.gameId).subscribe({
+    participants.watchGame(this.gameId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: items => this.participants = items,
       error: error => console.error('No se pudieron cargar los jugadores confirmados.', error)
     });
@@ -66,7 +68,7 @@ export class GameDetailComponent {
         this.joinRoleLoaded = true;
         void this.loadApprovedDmContact();
       }).catch(() => this.joinRoleLoaded = true);
-      notifications.watchMyRequests().subscribe({
+      notifications.watchMyRequests().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: requests => {
           const previous = this.joinRequest?.status;
           this.joinRequest = requests.find(item => item.gameId === this.gameId);
@@ -119,7 +121,7 @@ export class GameDetailComponent {
     const { message } = this.joinForm.getRawValue();
     this.sendingJoin = true;
     this.joinError = '';
-    this.community.requestJoin(this.gameId, message).subscribe({
+    this.community.requestJoin(this.gameId, message).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: result => {
         this.sendingJoin = false;
         this.joinNotice = result.message;
@@ -187,7 +189,7 @@ export class GameDetailComponent {
     const { comment } = this.commentForm.getRawValue();
     this.sendingComment = true;
     this.commentError = '';
-    this.community.addComment(this.gameId, comment).subscribe({
+    this.community.addComment(this.gameId, comment).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: result => {
         this.sendingComment = false;
         this.commentNotice = result.message;
@@ -202,14 +204,14 @@ export class GameDetailComponent {
   }
 
   private loadComments(): void {
-    this.community.getComments(this.gameId).subscribe({
+    this.community.getComments(this.gameId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: comments => this.comments = comments,
       error: () => this.comments = []
     });
   }
 
   private loadGame(): void {
-    this.community.getGame(this.gameId).subscribe(game => {
+    this.community.getGame(this.gameId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(game => {
       this.game = game;
       if (game?.masterUserId) {
         void this.profiles.getProfile(game.masterUserId).then(profile => this.dmProfile = profile || undefined).catch(() => this.dmProfile = undefined);

@@ -3,6 +3,7 @@
   <main class="flex-1"><router-outlet></router-outlet></main>
   <app-footer></app-footer>
 </div>
+<app-custom-cursor></app-custom-cursor>
 
 <div *ngIf="authLoading$ | async" class="auth-loading fixed inset-0 z-[100] grid place-items-center" role="status" aria-live="polite">
   <div class="glass-panel px-8 py-7 text-center">

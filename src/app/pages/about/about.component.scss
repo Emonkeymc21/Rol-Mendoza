@@ -1,4 +1,4 @@
-.about-hero { position:relative;overflow:hidden;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(19,14,16,.46),rgba(19,14,16,.94)),url('/assets/branding/community-table.webp') center 40%/cover no-repeat;color:#f1e8d5; }
+.about-hero { position:relative;overflow:hidden;border-bottom:1px solid var(--border);background:radial-gradient(circle at 76% 34%,rgba(111,29,42,.42),transparent 34%),linear-gradient(120deg,#130e10,#1d1518 58%,#35131d);color:#f1e8d5; }
 .about-hero::after { content:'';position:absolute;inset:0;background:url('/assets/branding/map-mendoza.svg') right center/min(52rem,70vw) auto no-repeat;opacity:.16;pointer-events:none; }
 .about-hero > * { position:relative;z-index:1; }
 .about-hero .display-title { color:#f1e8d5; }

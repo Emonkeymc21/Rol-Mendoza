@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { Game, GameStatus } from '../../core/models/game.model';
 import { GameService } from '../../core/services/game.service';
@@ -15,6 +16,7 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./my-games.component.scss']
 })
 export class MyGamesComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
   games: Game[] = [];
   loading = true;
   errorMessage = '';
@@ -39,11 +41,11 @@ export class MyGamesComponent implements OnInit {
         : 'Los cambios de la partida se guardaron correctamente.';
     }
     void profiles.getOwnProfile().then(profile => this.canCreate = profile?.role === 'DM' || profile?.role === 'BOTH');
-    notifications.watchDmRequests().subscribe({
+    notifications.watchDmRequests().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: requests => this.requests = requests,
       error: error => console.error('No se pudieron contar las solicitudes de partidas.', error)
     });
-    if (auth.currentUser) participantService.watchOwned(auth.currentUser.uid).subscribe({
+    if (auth.currentUser) participantService.watchOwned(auth.currentUser.uid).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: participants => this.participants = participants,
       error: error => console.error('No se pudieron cargar los participantes de tus partidas.', error)
     });
@@ -56,7 +58,7 @@ export class MyGamesComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.errorMessage = '';
-    this.gamesService.getMyGames().subscribe({
+    this.gamesService.getMyGames().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: games => {
         this.games = games;
         this.loading = false;
@@ -75,7 +77,7 @@ export class MyGamesComponent implements OnInit {
     this.busyGameId = game.id;
     this.errorMessage = '';
     this.notice = '';
-    this.gamesService.setStatus(game.id, status).subscribe({
+    this.gamesService.setStatus(game.id, status).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: result => {
         game.status = status;
         this.notice = result.message;
@@ -103,6 +105,9 @@ export class MyGamesComponent implements OnInit {
   participantsFor(gameId: string): GameParticipantView[] {
     return this.participants.filter(item => item.participant.gameId === gameId);
   }
+
+  trackGame(_index: number, game: Game): string { return game.id; }
+  trackParticipant(_index: number, item: GameParticipantView): string { return item.participant.id; }
 
   async removePlayer(game: Game, view: GameParticipantView): Promise<void> {
     if (this.removingUid || this.busyGameId) return;

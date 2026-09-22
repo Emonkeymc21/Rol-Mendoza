@@ -81,7 +81,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .dnd-divider::before { background:linear-gradient(90deg,transparent,var(--brand-primary)); }
   .dnd-divider::after { background:linear-gradient(90deg,var(--brand-primary),transparent); }
   .dnd-divider > span { width:18px;height:1px;background:var(--brand-primary);opacity:.72;flex:0 0 auto; }
-  .page-hero-dnd { position:relative;overflow:hidden;border-bottom:1px solid var(--border);background:linear-gradient(90deg,rgba(19,14,16,.98) 0%,rgba(19,14,16,.9) 52%,rgba(19,14,16,.55)),url('/assets/branding/tabletop-detail.webp') 70% 54%/cover no-repeat; }
+  .page-hero-dnd { position:relative;overflow:hidden;border-bottom:1px solid var(--border);background:radial-gradient(circle at 82% 30%,rgba(111,29,42,.42),transparent 34%),linear-gradient(110deg,#130e10 0%,#1d1518 60%,#2c151d 100%); }
   .page-hero-dnd::before { content:'';position:absolute;inset:0;pointer-events:none;background:url('/assets/branding/map-mendoza.svg') 100% 45%/min(52rem,65vw) auto no-repeat;opacity:.34; }
   .page-hero-dnd::after { content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.2)); }
   .page-hero-dnd .section-title { color:#f1e8d5; }
@@ -103,9 +103,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .feedback-success { @apply mt-4 p-3 text-sm; border:1px solid var(--success-border);border-radius:var(--radius-sm);background:var(--success-soft);color:var(--success); }
   .feedback-error { @apply mt-4 p-3 text-sm; border:1px solid var(--danger-border);border-radius:var(--radius-sm);background:var(--danger-soft);color:var(--danger); }
   .loading-panel { @apply p-8 text-center text-sm; border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);color:var(--text-secondary);box-shadow:var(--shadow-raised); }
+  .game-results-skeleton { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.25rem; }
+  .game-skeleton { display:grid;min-height:330px;align-content:end;gap:.8rem;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);padding:1.25rem; }
+  .game-skeleton::before { content:'';height:140px;margin:-1.25rem -1.25rem 1rem;background:linear-gradient(105deg,var(--surface-raised) 18%,var(--surface-hover) 36%,var(--surface-raised) 54%);background-size:220% 100%;animation:skeleton-drift 1.25s ease-in-out infinite; }
+  .game-skeleton span,.game-skeleton i { display:block;height:.72rem;border-radius:2px;background:var(--surface-raised); }
+  .game-skeleton span { width:58%;height:1.15rem; }
+  .game-skeleton i:nth-of-type(1) { width:84%; }
+  .game-skeleton i:nth-of-type(2) { width:72%; }
+  .game-skeleton i:nth-of-type(3) { width:44%; }
   .editorial-rule { width:min(9rem,28vw);height:1px;background:linear-gradient(90deg,var(--brand-primary),transparent);opacity:.7; }
   .narrative-copy { font-family:Alegreya,Georgia,serif;font-size:clamp(1.08rem,1.7vw,1.3rem);line-height:1.75; }
-  .reveal-on-scroll { animation:reveal-up .64s cubic-bezier(.22,1,.36,1) both; }
+  .reveal-on-scroll { opacity:0;transform:translateY(24px);transition:opacity .62s cubic-bezier(.22,1,.36,1),transform .62s cubic-bezier(.22,1,.36,1); }
+  .reveal-on-scroll.is-visible { opacity:1;transform:none; }
 }
 
 ::-webkit-scrollbar { width:11px;height:11px; }
@@ -120,14 +129,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .section-space { padding-top:3.5rem;padding-bottom:3.5rem; }
   .display-title { letter-spacing:-.025em; }
   .btn-primary,.btn-secondary { padding-right:1.1rem;padding-left:1.1rem; }
+  .game-results-skeleton { grid-template-columns:1fr; }
 }
 
-@keyframes reveal-up { from { opacity:0;transform:translateY(22px); } to { opacity:1;transform:none; } }
+@keyframes skeleton-drift { from { background-position:100% 0; } to { background-position:-120% 0; } }
 
-@supports (animation-timeline:view()) {
-  .reveal-on-scroll { animation-name:reveal-up;animation-fill-mode:both;animation-timeline:view();animation-range:entry 8% cover 30%; }
+@media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
+  html.cursor-enhanced,html.cursor-enhanced a,html.cursor-enhanced button,html.cursor-enhanced [role='button'] { cursor:none; }
+  html.cursor-enhanced input,html.cursor-enhanced textarea { cursor:text; }
+  html.cursor-enhanced select { cursor:default; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .reveal-on-scroll { opacity:1;transform:none; }
 }

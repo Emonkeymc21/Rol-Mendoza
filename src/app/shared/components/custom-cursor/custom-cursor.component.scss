@@ -1,0 +1,7 @@
+:host { pointer-events:none; }
+.cursor-dot,.cursor-ring { position:fixed;z-index:200;top:0;left:0;pointer-events:none;opacity:0;will-change:transform;transition:opacity 120ms ease; }
+.cursor-dot { width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:#d8ad57;box-shadow:0 0 0 1px rgba(19,14,16,.35); }
+.cursor-ring { width:28px;height:28px;margin:-14px 0 0 -14px;border:1px solid rgba(216,173,87,.62);border-radius:50%;transition:width 180ms ease,height 180ms ease,margin 180ms ease,opacity 120ms ease,border-color 180ms ease,background 180ms ease; }
+.cursor-dot.is-visible,.cursor-ring.is-visible { opacity:1; }
+.cursor-ring.is-interactive { width:42px;height:42px;margin:-21px 0 0 -21px;border-color:rgba(216,173,87,.82);background:rgba(216,173,87,.08); }
+@media (hover:none),(pointer:coarse),(prefers-reduced-motion:reduce) { :host { display:none; } }
