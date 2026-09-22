@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import type { DocumentData } from 'firebase/firestore';
-import { BehaviorSubject, filter, Observable } from 'rxjs';
+import { BehaviorSubject, filter, Observable, shareReplay, tap } from 'rxjs';
 import { isAvatarClass, migrateLegacyAvatar } from '../data/avatar-classes';
 import { BlockedUser, ProfileInput, UserPrivateProfile, UserProfile } from '../models/user-profile.model';
 import { AuthService } from './auth.service';
@@ -10,6 +10,10 @@ import { FirebaseService } from './firebase.service';
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
   private readonly ownProfileState = new BehaviorSubject<UserProfile | null | undefined>(undefined);
+  private readonly publicProfileCache = new Map<string, Promise<UserProfile | null>>();
+  private readonly privateProfileCache = new Map<string, Promise<UserPrivateProfile | null>>();
+  private ownProfileWatch$?: Observable<UserProfile | null>;
+  private activeUid = '';
   readonly ownProfile$ = this.ownProfileState.pipe(
     filter((profile): profile is UserProfile | null => profile !== undefined)
   );
@@ -20,19 +24,60 @@ export class ProfileService {
     private contacts: ContactNormalizerService
   ) {
     this.auth.user$.subscribe(user => {
-      if (!user) this.ownProfileState.next(null);
+      const nextUid = user?.uid || '';
+      if (nextUid !== this.activeUid) {
+        this.activeUid = nextUid;
+        this.ownProfileWatch$ = undefined;
+      }
+      if (!user) {
+        this.publicProfileCache.clear();
+        this.privateProfileCache.clear();
+        this.ownProfileState.next(null);
+      }
     });
   }
 
   async getOwnProfile(): Promise<UserProfile | null> {
     const user = this.requireUser();
+    const cached = this.publicProfileCache.get(user.uid);
+    if (cached) {
+      const profile = await cached;
+      this.ownProfileState.next(profile);
+      return profile;
+    }
+    const request = this.fetchProfile(user.uid, true);
+    this.publicProfileCache.set(user.uid, request);
+    try {
+      const profile = await request;
+      this.ownProfileState.next(profile);
+      return profile;
+    } catch (error) {
+      this.publicProfileCache.delete(user.uid);
+      throw error;
+    }
+  }
+
+  async getProfile(uid: string): Promise<UserProfile | null> {
+    const cached = this.publicProfileCache.get(uid);
+    if (cached) return cached;
+    const request = this.fetchProfile(uid, false);
+    this.publicProfileCache.set(uid, request);
+    try {
+      return await request;
+    } catch (error) {
+      this.publicProfileCache.delete(uid);
+      throw error;
+    }
+  }
+
+  private async fetchProfile(uid: string, migrateAvatar: boolean): Promise<UserProfile | null> {
     const { api, database } = await this.loadFirestore();
-    const snapshot = await api.getDoc(api.doc(database, 'users', user.uid));
+    const snapshot = await api.getDoc(api.doc(database, 'users', uid));
     const data = snapshot.exists() ? snapshot.data() : null;
     const profile = data ? this.mapPublic(data) : null;
-    if (data && profile && !isAvatarClass(data['avatarClass'])) {
+    if (migrateAvatar && data && profile && !isAvatarClass(data['avatarClass'])) {
       try {
-        await api.setDoc(api.doc(database, 'users', user.uid), {
+        await api.setDoc(api.doc(database, 'users', uid), {
           avatarClass: profile.avatarClass,
           updatedAt: api.serverTimestamp()
         }, { merge: true });
@@ -43,27 +88,26 @@ export class ProfileService {
         console.warn('El emblema legado se guardará al completar el perfil.', error);
       }
     }
-    this.ownProfileState.next(profile);
     return profile;
   }
 
-  async getProfile(uid: string): Promise<UserProfile | null> {
-    const { api, database } = await this.loadFirestore();
-    const snapshot = await api.getDoc(api.doc(database, 'users', uid));
-    return snapshot.exists() ? this.mapPublic(snapshot.data()) : null;
-  }
-
   async getOwnPrivateProfile(): Promise<UserPrivateProfile | null> {
-    const user = this.requireUser();
-    const { api, database } = await this.loadFirestore();
-    const snapshot = await api.getDoc(api.doc(database, 'userPrivate', user.uid));
-    return snapshot.exists() ? this.mapPrivate(snapshot.data()) : null;
+    return this.getContact(this.requireUser().uid);
   }
 
   async getContact(uid: string): Promise<UserPrivateProfile | null> {
-    const { api, database } = await this.loadFirestore();
-    const snapshot = await api.getDoc(api.doc(database, 'userPrivate', uid));
-    return snapshot.exists() ? this.mapPrivate(snapshot.data()) : null;
+    const cached = this.privateProfileCache.get(uid);
+    if (cached) return cached;
+    const request = this.loadFirestore().then(({ api, database }) =>
+      api.getDoc(api.doc(database, 'userPrivate', uid)).then(snapshot => snapshot.exists() ? this.mapPrivate(snapshot.data()) : null)
+    );
+    this.privateProfileCache.set(uid, request);
+    try {
+      return await request;
+    } catch (error) {
+      this.privateProfileCache.delete(uid);
+      throw error;
+    }
   }
 
   async isOwnProfileComplete(): Promise<boolean> {
@@ -88,7 +132,9 @@ export class ProfileService {
           api.where('profileCompleted', '==', true)
         );
         unsubscribe = api.onSnapshot(profilesQuery, snapshot => {
-          subscriber.next(snapshot.docs.map(item => this.mapPublic(item.data())));
+          const profiles = snapshot.docs.map(item => this.mapPublic(item.data()));
+          profiles.forEach(profile => this.publicProfileCache.set(profile.uid, Promise.resolve(profile)));
+          subscriber.next(profiles);
         }, error => subscriber.error(error));
       }).catch(error => subscriber.error(error));
       return () => { stopped = true; unsubscribe?.(); };
@@ -96,18 +142,25 @@ export class ProfileService {
   }
 
   watchOwnProfile(): Observable<UserProfile | null> {
-    return new Observable(subscriber => {
+    if (this.ownProfileWatch$) return this.ownProfileWatch$;
+    this.ownProfileWatch$ = new Observable<UserProfile | null>(subscriber => {
       let stopped = false;
       let unsubscribe: (() => void) | undefined;
       void this.loadFirestore().then(({ api, database }) => {
         if (stopped) return;
         const user = this.requireUser();
         unsubscribe = api.onSnapshot(api.doc(database, 'users', user.uid), snapshot => {
-          subscriber.next(snapshot.exists() ? this.mapPublic(snapshot.data()) : null);
+          const profile = snapshot.exists() ? this.mapPublic(snapshot.data()) : null;
+          this.publicProfileCache.set(user.uid, Promise.resolve(profile));
+          subscriber.next(profile);
         }, error => subscriber.error(error));
       }).catch(error => subscriber.error(error));
       return () => { stopped = true; unsubscribe?.(); };
-    });
+    }).pipe(
+      tap(profile => this.ownProfileState.next(profile)),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+    return this.ownProfileWatch$;
   }
 
   watchExcludedUserIds(): Observable<Set<string>> {
@@ -192,6 +245,8 @@ export class ProfileService {
     });
 
     await batch.commit();
+    this.publicProfileCache.delete(user.uid);
+    this.privateProfileCache.delete(user.uid);
     await this.getOwnProfile();
     if (user.displayName !== displayName) {
       try {
@@ -248,6 +303,8 @@ export class ProfileService {
       updatedAt: api.serverTimestamp()
     }, { merge: true });
     await batch.commit();
+    this.publicProfileCache.delete(user.uid);
+    this.privateProfileCache.delete(user.uid);
     this.ownProfileState.next(null);
   }
 

@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable, shareReplay, switchMap } from 'rxjs';
+import { forkJoin, map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Game } from '../models/game.model';
 import {
@@ -44,6 +44,7 @@ const API_ACTION = Object.freeze({
 export class GoogleAppsScriptService {
   private readonly webAppUrl = environment.appsScript.webAppUrl.trim().replace(/\/$/, '');
   private readonly clientId = this.getClientId();
+  private readonly compatibilityKey = `cumbre20-api-${API_VERSION}`;
   private compatibilityCheck$?: Observable<void>;
 
   constructor(private http: HttpClient) {}
@@ -53,11 +54,11 @@ export class GoogleAppsScriptService {
   }
 
   getGames(): Observable<PublicGameRow[]> {
-    return this.compatibleRequest(() => this.get<PublicGameRow[]>(API_ACTION.games));
+    return this.compatibleRead(this.get<PublicGameRow[]>(API_ACTION.games));
   }
 
   getGame(gameId: string): Observable<PublicGameRow> {
-    return this.compatibleRequest(() => this.get<PublicGameRow>(API_ACTION.game, { gameId }));
+    return this.compatibleRead(this.get<PublicGameRow>(API_ACTION.game, { gameId }));
   }
 
   getMyGames(idToken: string): Observable<PublicGameRow[]> {
@@ -69,7 +70,7 @@ export class GoogleAppsScriptService {
   }
 
   getComments(gameId: string): Observable<PublicComment[]> {
-    return this.compatibleRequest(() => this.get<PublicComment[]>(API_ACTION.comments, { gameId }));
+    return this.compatibleRead(this.get<PublicComment[]>(API_ACTION.comments, { gameId }));
   }
 
   createGame(game: Game, idToken: string): Observable<ApiMutationResult> {
@@ -115,16 +116,18 @@ export class GoogleAppsScriptService {
     this.assertEnabled();
     const headers = new HttpHeaders({ 'Content-Type': 'text/plain;charset=utf-8' });
     const body = JSON.stringify({ apiVersion: API_VERSION, action, payload, idToken, clientId: this.clientId });
-    return this.compatibleRequest(() =>
-      this.http.post<ApiResponse<T>>(this.webAppUrl, body, { headers }).pipe(map(response => this.unwrap(response, action)))
+    return this.ensureCompatible().pipe(
+      switchMap(() => this.http.post<ApiResponse<T>>(this.webAppUrl, body, { headers })),
+      map(response => this.unwrap(response, action))
     );
   }
 
-  private compatibleRequest<T>(request: () => Observable<T>): Observable<T> {
-    return this.ensureCompatible().pipe(switchMap(request));
+  private compatibleRead<T>(request: Observable<T>): Observable<T> {
+    return forkJoin([this.ensureCompatible(), request]).pipe(map(([, data]) => data));
   }
 
   private ensureCompatible(): Observable<void> {
+    if (sessionStorage.getItem(this.compatibilityKey) === 'ok') return of(undefined);
     if (!this.compatibilityCheck$) {
       this.compatibilityCheck$ = this.get<ApiHealth>(API_ACTION.health).pipe(
         map(health => {
@@ -136,6 +139,7 @@ export class GoogleAppsScriptService {
             throw new Error('El servicio de partidas se está actualizando. Intentá nuevamente en unos minutos.');
           }
         }),
+        tap(() => sessionStorage.setItem(this.compatibilityKey, 'ok')),
         shareReplay({ bufferSize: 1, refCount: false })
       );
     }

@@ -29,6 +29,8 @@ import { AboutComponent } from './pages/about/about.component';
 import { MyRequestsComponent } from './pages/my-requests/my-requests.component';
 import { DmRequestsComponent } from './pages/dm-requests/dm-requests.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
+import { CustomCursorComponent } from './shared/components/custom-cursor/custom-cursor.component';
+import { RevealDirective } from './shared/directives/reveal.directive';
 
 @NgModule({
   declarations: [
@@ -55,7 +57,9 @@ import { NotificationsComponent } from './pages/notifications/notifications.comp
     AboutComponent,
     MyRequestsComponent,
     DmRequestsComponent,
-    NotificationsComponent
+    NotificationsComponent,
+    CustomCursorComponent,
+    RevealDirective
   ],
   imports: [
     BrowserModule,

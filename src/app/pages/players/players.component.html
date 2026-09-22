@@ -9,6 +9,6 @@
     <button type="button" class="btn-secondary !min-h-[48px] !px-4" (click)="reset()">Limpiar</button>
   </form>
   <div class="results-ledger mt-8 flex items-center justify-between"><p class="text-sm text-mist"><strong class="text-parchment">{{ players.length }}</strong> perfiles encontrados</p><span class="inline-flex items-center gap-2 text-sm text-mist"><app-icon name="filter" [size]="17"></app-icon> Filtros activos</span></div>
-  <div *ngIf="players.length; else noResults" class="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3"><app-player-card *ngFor="let player of players" [player]="player"></app-player-card></div>
+  <div *ngIf="players.length; else noResults" class="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3"><app-player-card *ngFor="let player of players; trackBy: trackPlayer" [player]="player"></app-player-card></div>
   <ng-template #noResults><div class="glass-panel mt-5 rounded-2xl p-10 text-center"><div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white/[.05] text-gold"><app-icon name="search" [size]="26"></app-icon></div><h2 class="mt-5 font-display text-2xl font-bold">No encontramos coincidencias</h2><p class="mt-2 text-mist">Probá con menos filtros o una zona cercana.</p><button type="button" class="btn-secondary mt-5" (click)="reset()">Restablecer filtros</button></div></ng-template>
 </div></section>

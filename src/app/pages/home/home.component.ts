@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { take } from 'rxjs';
@@ -11,6 +12,7 @@ import { ProfileService } from '../../core/services/profile.service';
 
 @Component({ selector: 'app-home', templateUrl: './home.component.html', styleUrls: ['./home.component.scss'] })
 export class HomeComponent {
+  private readonly destroyRef = inject(DestroyRef);
   players: Player[] = [];
   games: Game[] = [];
   playerCount = 0;
@@ -20,6 +22,7 @@ export class HomeComponent {
   isAuthenticated = false;
   private allPlayers: Player[] = [];
   private allGames: Game[] = [];
+  readonly gamesLoading$ = this.community.gamesLoading$;
   searchForm = this.fb.nonNullable.group({ type: 'partidas', query: '', mode: 'Cualquier modalidad' });
 
   constructor(
@@ -29,22 +32,25 @@ export class HomeComponent {
     auth: AuthService,
     profiles: ProfileService
   ) {
-    this.community.getPlayers().subscribe(players => {
+    this.community.getPlayers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(players => {
       this.allPlayers = players;
       this.playerCount = players.length;
       this.players = players.slice(0, 3);
       this.updateSystemCount();
     });
-    this.community.getGames().subscribe(games => {
+    this.community.getGames().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(games => {
       this.allGames = games;
       this.gameCount = games.length;
       this.games = games.slice(0, 3);
       this.updateSystemCount();
     });
-    auth.user$.pipe(take(1)).subscribe(user => {
+    auth.user$.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       this.isAuthenticated = Boolean(user);
       if (user) {
-        void profiles.getOwnProfile().then(profile => this.profile = profile).catch(() => this.profile = null);
+        profiles.watchOwnProfile().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
+          next: profile => this.profile = profile,
+          error: () => this.profile = null
+        });
       }
     });
   }
@@ -57,6 +63,9 @@ export class HomeComponent {
     const { type, query, mode } = this.searchForm.getRawValue();
     this.router.navigate([type === 'personas' ? '/jugadores' : '/partidas'], { queryParams: { q: query || null, mode: mode === 'Cualquier modalidad' ? null : mode } });
   }
+
+  trackGame(_index: number, game: Game): string { return game.id; }
+  trackPlayer(_index: number, player: Player): string { return player.id; }
 
   private updateSystemCount(): void {
     const systems = [

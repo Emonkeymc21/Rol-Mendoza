@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GameJoinRequest, requestStatusLabel } from '../../core/models/join-request.model';
 import { NotificationService } from '../../core/services/notification.service';
 import { UserPrivateProfile, UserProfile } from '../../core/models/user-profile.model';
@@ -7,6 +8,7 @@ import { ContactNormalizerService } from '../../core/services/contact-normalizer
 
 @Component({ selector: 'app-my-requests', templateUrl: './my-requests.component.html', styleUrls: ['./my-requests.component.scss'] })
 export class MyRequestsComponent {
+  private readonly destroyRef = inject(DestroyRef);
   requests: GameJoinRequest[] = [];
   loading = true;
   errorMessage = '';
@@ -19,7 +21,7 @@ export class MyRequestsComponent {
     private profiles: ProfileService,
     private contacts: ContactNormalizerService
   ) {
-    notifications.watchMyRequests().subscribe({
+    notifications.watchMyRequests().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: requests => {
         this.requests = requests;
         this.loading = false;
@@ -35,6 +37,7 @@ export class MyRequestsComponent {
   }
 
   statusLabel(request: GameJoinRequest): string { return requestStatusLabel(request); }
+  trackRequest(_index: number, request: GameJoinRequest): string { return request.id; }
 
   dmWhatsappUrl(request: GameJoinRequest): string {
     const contact = this.dmContacts[request.dmUid];

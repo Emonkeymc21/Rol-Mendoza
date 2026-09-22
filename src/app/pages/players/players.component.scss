@@ -1,4 +1,5 @@
 :host { display:block;min-width:0; }
+.page-hero-dnd { background:linear-gradient(90deg,rgba(19,14,16,.97) 0%,rgba(19,14,16,.88) 44%,rgba(19,14,16,.35)),url('/assets/branding/players-section-real.webp') 68% 45%/cover no-repeat; }
 .character-filters { position:relative;border-right:0;border-left:0;box-shadow:none; }
 .character-filters::before { content:none; }
 .results-ledger { border-bottom:1px solid var(--border);padding-bottom:.75rem; }

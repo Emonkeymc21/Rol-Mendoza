@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AppNotification } from '../../core/models/join-request.model';
 import { NotificationService } from '../../core/services/notification.service';
@@ -7,6 +8,7 @@ import { ProfileService } from '../../core/services/profile.service';
 
 @Component({ selector: 'app-notifications', templateUrl: './notifications.component.html', styleUrls: ['./notifications.component.scss'] })
 export class NotificationsComponent {
+  private readonly destroyRef = inject(DestroyRef);
   notifications: AppNotification[] = [];
   loading = true;
   markingAll = false;
@@ -14,7 +16,7 @@ export class NotificationsComponent {
   actorProfiles: Record<string, UserProfile | null> = {};
 
   constructor(private notificationService: NotificationService, private router: Router, private profiles: ProfileService) {
-    notificationService.notifications$.subscribe({
+    notificationService.notifications$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: notifications => {
         this.notifications = notifications;
         this.loading = false;
@@ -29,6 +31,7 @@ export class NotificationsComponent {
   }
 
   get unreadCount(): number { return this.notifications.filter(item => !item.read).length; }
+  trackNotification(_index: number, item: AppNotification): string { return item.id; }
 
    async open(item: AppNotification): Promise<void> {
     try { await this.notificationService.markRead(item); }

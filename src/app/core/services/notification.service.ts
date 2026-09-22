@@ -12,6 +12,9 @@ import { ApiMutationResult } from '../models/community-api.model';
 export class NotificationService {
   readonly notifications$: Observable<AppNotification[]>;
   readonly unreadCount$: Observable<number>;
+  private myRequests$?: Observable<GameJoinRequest[]>;
+  private dmRequests$?: Observable<GameJoinRequest[]>;
+  private activeUid = '';
 
   constructor(
     private auth: AuthService,
@@ -21,14 +24,27 @@ export class NotificationService {
   ) {
     this.notifications$ = this.watchNotifications().pipe(shareReplay({ bufferSize: 1, refCount: true }));
     this.unreadCount$ = this.notifications$.pipe(map(items => items.filter(item => !item.read).length));
+    this.auth.user$.subscribe(user => {
+      const nextUid = user?.uid || '';
+      if (nextUid === this.activeUid) return;
+      this.activeUid = nextUid;
+      this.myRequests$ = undefined;
+      this.dmRequests$ = undefined;
+    });
   }
 
   watchMyRequests(): Observable<GameJoinRequest[]> {
-    return this.watchRequests('playerUid');
+    if (!this.myRequests$) {
+      this.myRequests$ = this.watchRequests('playerUid').pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    }
+    return this.myRequests$;
   }
 
   watchDmRequests(): Observable<GameJoinRequest[]> {
-    return this.watchRequests('dmUid');
+    if (!this.dmRequests$) {
+      this.dmRequests$ = this.watchRequests('dmUid').pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    }
+    return this.dmRequests$;
   }
 
   watchNotifications(): Observable<AppNotification[]> {

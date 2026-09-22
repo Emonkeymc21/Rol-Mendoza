@@ -1,6 +1,6 @@
 .auth-page { min-height:calc(100svh - 76px);background:var(--bg-primary); }
 .auth-layout { display:grid;min-height:calc(100svh - 76px); }
-.login-art { position:relative;min-height:380px;background:linear-gradient(180deg,rgba(13,9,11,.08),rgba(13,9,11,.86)),url('/assets/branding/tabletop-detail.webp') center/cover no-repeat;color:#f1e8d5; }
+.login-art { position:relative;min-height:380px;background:linear-gradient(180deg,rgba(13,9,11,.08),rgba(13,9,11,.86)),url('/assets/branding/login-table-real.webp') center/cover no-repeat;color:#f1e8d5; }
 .auth-art-copy { position:absolute;right:clamp(1.5rem,6vw,6rem);bottom:clamp(2rem,7vw,6rem);left:clamp(1.5rem,6vw,6rem);max-width:650px; }
 .auth-art-copy h1 { margin-top:1rem;font-family:Cinzel,Georgia,serif;font-size:clamp(2.3rem,4.6vw,5rem);font-weight:750;line-height:1.02;text-wrap:balance; }
 .auth-art-copy p { max-width:34rem;margin-top:1.2rem;color:#d1c5be;font-family:Alegreya,Georgia,serif;font-size:1.15rem;line-height:1.65; }
