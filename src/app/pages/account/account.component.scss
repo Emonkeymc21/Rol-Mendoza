@@ -1,5 +1,5 @@
-.account-head { position:relative;border-bottom:1px solid var(--brand-border);background:linear-gradient(120deg,var(--surface-brand),var(--surface)); }
-.account-head::after { content:'20';position:absolute;right:3%;top:50%;transform:translateY(-50%);font-family:Cinzel,Georgia,serif;font-size:8rem;font-weight:900;color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--brand-primary) 18%,transparent);pointer-events:none; }
+.account-head { position:relative;border-bottom:1px solid var(--border);background:linear-gradient(100deg,color-mix(in srgb,var(--surface-brand) 72%,var(--surface)),var(--surface) 72%),url('/assets/branding/map-mendoza.svg') right center/min(46rem,70vw) auto no-repeat; }
+.account-head::after { content:none; }
 .account-head > * { position:relative;z-index:1; }
 .account-identity { display:flex;min-width:0;flex-direction:column;align-items:center;gap:1rem;text-align:center; }
 .account-identity-copy,.account-name-row { min-width:0;max-width:100%; }
@@ -11,8 +11,8 @@
 .account-tile strong { @apply mt-2 block text-parchment; }
 .profile-role { @apply border border-gold/25 bg-gold/10 px-3 py-1 text-xs font-bold text-gold; border-radius:var(--radius-xs); }
 .profile-bio { margin-top:1rem;white-space:pre-line;overflow-wrap:anywhere;border-left:2px solid var(--brand-primary);background:var(--surface-muted);padding:1rem 1.15rem;color:var(--text-secondary);font-family:Alegreya,Georgia,serif;font-size:1.04rem;line-height:1.72; }
-.account-section { border-top:1px solid var(--border);background:var(--surface-muted);padding:1rem; }
+.account-section { border-top:1px solid var(--border);background:transparent;padding:1rem 0; }
 .account-actions { align-self:start;width:100%; }
 .account-section button.text-red-200 { color:var(--danger); }
-@media(min-width:1024px){.account-actions{position:sticky;top:7.5rem;border:1px solid var(--brand-border);border-radius:var(--radius-sm)}}
+@media(min-width:1024px){.account-actions{position:sticky;top:7.5rem;border-left:1px solid var(--border);padding:0 0 0 1.5rem}}
 @media(min-width:640px){.account-identity{flex-direction:row;text-align:left}.account-name-row{flex-direction:row;align-items:center}.account-location{justify-content:flex-start}.profile-bio,.account-section{padding:1.25rem}}

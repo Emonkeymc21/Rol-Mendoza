@@ -1,41 +1,27 @@
-<section class="section-space">
-  <div class="page-shell max-w-6xl">
-    <div class="mx-auto max-w-3xl text-center">
-      <span class="eyebrow">Sumate a la comunidad</span>
-      <h1 class="display-title mt-4">Primero creá tu cuenta</h1>
-      <p class="mt-5 text-lg text-mist">Después del registro vas a completar tu perfil dentro de Cumbre20, sin formularios externos.</p>
-    </div>
+<section class="register-page">
+  <div class="register-layout">
+    <aside class="register-art">
+      <div class="register-art-copy"><span class="eyebrow">Sumate a la comunidad</span><h1>Las historias necesitan personas.</h1><p>Después del registro vas a completar tu perfil dentro de Cumbre20, sin formularios externos.</p><div class="next-step"><span>02</span><div><strong>Completá tu perfil</strong><small>Rol, sistemas, modalidad, horarios y medios de contacto.</small></div></div></div>
+    </aside>
 
-    <div class="mt-10 grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
-      <div class="glass-panel rounded-3xl p-6 sm:p-8">
-        <div class="flex items-start gap-4"><span class="step-number">1</span><div><h2 class="font-display text-3xl font-bold">Creá tu cuenta</h2><p class="mt-1 text-sm text-mist">Tus credenciales y tu perfil son administrados de forma segura con Firebase.</p></div></div>
-        <button type="button" class="google-button mt-6" (click)="registerWithGoogle()" [disabled]="googleSaving || saving"><span class="google-mark" aria-hidden="true">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
-        <div class="my-6 flex items-center gap-3 text-xs uppercase tracking-widest text-mist"><span class="h-px flex-1 bg-white/10"></span>o con correo<span class="h-px flex-1 bg-white/10"></span></div>
+    <div class="register-form-column">
+      <a routerLink="/" class="auth-brand"><img src="assets/cumbre20-logo.svg" alt=""><span>Cumbre<strong>20</strong></span></a>
+      <div class="register-form-inner">
+        <div class="register-heading"><span class="step-number">01</span><div><span class="eyebrow">Primero, tu cuenta</span><h2>Creá tu acceso</h2><p>Tus credenciales y tu perfil son administrados de forma segura con Firebase.</p></div></div>
+        <button type="button" class="google-button" (click)="registerWithGoogle()" [disabled]="googleSaving || saving"><span class="google-mark" aria-hidden="true">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
+        <div class="auth-divider"><span></span>o con correo<span></span></div>
 
         <form [formGroup]="form" (ngSubmit)="register()" class="grid gap-5 sm:grid-cols-2">
           <label class="sm:col-span-2"><span class="field-label">Nombre o apodo público *</span><input class="input-field" formControlName="displayName" autocomplete="nickname" placeholder="Ej: Pedro L."><span *ngIf="invalid('displayName')" class="error-text">Ingresá entre 2 y 80 caracteres.</span></label>
           <label class="sm:col-span-2"><span class="field-label">Correo electrónico *</span><input type="email" class="input-field" formControlName="email" autocomplete="email" placeholder="tu@email.com"><span *ngIf="invalid('email')" class="error-text">Ingresá un correo válido.</span></label>
           <label><span class="field-label">Contraseña *</span><input type="password" class="input-field" formControlName="password" autocomplete="new-password"><span *ngIf="invalid('password')" class="error-text">Mínimo 6 caracteres.</span></label>
           <label><span class="field-label">Repetir contraseña *</span><input type="password" class="input-field" formControlName="confirmPassword" autocomplete="new-password"><span *ngIf="invalid('confirmPassword')" class="error-text">Repetí la contraseña.</span></label>
-          <label class="sm:col-span-2 flex cursor-pointer items-start gap-3 rounded-xl p-4 text-sm text-mist" style="border:1px solid var(--border);background:var(--surface-muted)"><input type="checkbox" formControlName="terms" class="mt-1 h-4 w-4 accent-[#d8ad57]"><span>Acepto las reglas de convivencia y entiendo que el equipo puede intervenir ante denuncias o conductas que afecten a la comunidad.</span></label>
-          <p *ngIf="errorMessage" class="sm:col-span-2 feedback-error" role="alert">{{ errorMessage }}</p>
-          <p *ngIf="successMessage" class="sm:col-span-2 feedback-success" role="status">{{ successMessage }}</p>
+          <label class="terms-field sm:col-span-2"><input type="checkbox" formControlName="terms"><span>Acepto las reglas de convivencia y entiendo que el equipo puede intervenir ante denuncias o conductas que afecten a la comunidad.</span></label>
+          <p *ngIf="errorMessage" class="sm:col-span-2 feedback-error" role="alert">{{ errorMessage }}</p><p *ngIf="successMessage" class="sm:col-span-2 feedback-success" role="status">{{ successMessage }}</p>
           <button type="submit" class="btn-primary sm:col-span-2" [disabled]="saving || googleSaving">{{ saving ? 'Creando cuenta…' : 'Crear cuenta y completar perfil' }}</button>
         </form>
-        <p class="mt-6 text-center text-sm text-mist">¿Ya tenés una cuenta? <a routerLink="/ingresar" class="font-bold text-gold hover:text-parchment">Ingresá acá</a></p>
+        <p class="auth-switch">¿Ya tenés una cuenta? <a routerLink="/ingresar">Ingresá acá</a></p>
       </div>
-
-      <aside class="glass-panel rounded-3xl p-6 sm:p-8">
-        <span class="step-number">2</span>
-        <h2 class="mt-5 font-display text-3xl font-bold">Completá tu perfil</h2>
-        <p class="mt-3 text-mist">Al terminar el registro vas a configurar tu perfil en cuatro pasos simples.</p>
-        <ul class="mt-7 space-y-3 text-sm text-mist">
-          <li class="flex gap-3"><span class="text-gold">✓</span><span>Rol, experiencia, sistemas, modalidad y horarios.</span></li>
-          <li class="flex gap-3"><span class="text-gold">✓</span><span>Contacto por WhatsApp o Instagram con controles de privacidad.</span></li>
-          <li class="flex gap-3"><span class="text-gold">✓</span><span>La creación de perfiles no requiere aprobación manual.</span></li>
-        </ul>
-        <a routerLink="/ingresar" class="btn-secondary mt-6 w-full">Ya tengo cuenta: ingresar <app-icon name="arrow" [size]="18"></app-icon></a>
-      </aside>
     </div>
   </div>
 </section>
