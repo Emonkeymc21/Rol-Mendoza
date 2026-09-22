@@ -18,7 +18,7 @@
           <label><span class="field-label">Repetir contraseña *</span><input type="password" class="input-field" formControlName="confirmPassword" autocomplete="new-password"><span *ngIf="invalid('confirmPassword')" class="error-text">Repetí la contraseña.</span></label>
           <label class="terms-field sm:col-span-2"><input type="checkbox" formControlName="terms"><span>Acepto las reglas de convivencia y entiendo que el equipo puede intervenir ante denuncias o conductas que afecten a la comunidad.</span></label>
           <p *ngIf="errorMessage" class="sm:col-span-2 feedback-error" role="alert">{{ errorMessage }}</p><p *ngIf="successMessage" class="sm:col-span-2 feedback-success" role="status">{{ successMessage }}</p>
-          <button type="submit" class="btn-primary sm:col-span-2" [disabled]="saving || googleSaving">{{ saving ? 'Creando cuenta…' : 'Crear cuenta y completar perfil' }}</button>
+          <button type="submit" class="btn-primary sm:col-span-2" [disabled]="saving || googleSaving">{{ saving ? 'Creando cuenta…' : 'Crear cuenta' }}</button>
         </form>
         <p class="auth-switch">¿Ya tenés una cuenta? <a routerLink="/ingresar">Ingresá acá</a></p>
       </div>
