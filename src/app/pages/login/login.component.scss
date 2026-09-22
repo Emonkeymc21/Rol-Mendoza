@@ -1,4 +1,6 @@
-.login-art { background:radial-gradient(circle at 80% 10%,var(--brand-soft),transparent 16rem),linear-gradient(145deg,var(--surface-brand),var(--surface));border:1px solid var(--border); }
-.google-button { @apply flex min-h-[50px] w-full items-center justify-center gap-3 rounded-xl px-5 font-bold transition disabled:cursor-not-allowed disabled:opacity-50; border:1px solid var(--border-strong);background:var(--surface-muted);color:var(--text-primary); }
+.login-art { position:relative;border:1px solid var(--brand-border);border-radius:var(--radius-md) !important;background:linear-gradient(145deg,var(--surface-brand),var(--surface));overflow:hidden; }
+.login-art::after { content:'20';position:absolute;right:-1rem;bottom:-2rem;font-family:Cinzel,Georgia,serif;font-size:10rem;font-weight:900;color:transparent;-webkit-text-stroke:1px color-mix(in srgb,var(--brand-primary) 20%,transparent);pointer-events:none; }
+.login-art > * { position:relative;z-index:1; }
+.google-button { @apply flex min-h-[50px] w-full items-center justify-center gap-3 px-5 font-bold transition disabled:cursor-not-allowed disabled:opacity-50; border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--surface-muted);color:var(--text-primary); }
 .google-button:hover { border-color:var(--brand-border);background:var(--surface-hover); }
 .google-mark { @apply grid h-7 w-7 place-items-center rounded-full bg-white font-bold text-[#4285f4]; }

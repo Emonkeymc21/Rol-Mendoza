@@ -1,1 +1,5 @@
 :host { display:block;min-width:0; }
+.adventure-filters { position:relative;border-top:2px solid var(--brand-primary);box-shadow:var(--shadow-raised); }
+.adventure-filters::before { content:'FILTROS DE EXPEDICIÓN';position:absolute;top:-.7rem;left:1rem;background:var(--bg-primary);padding:0 .55rem;color:var(--brand-secondary);font-family:Cinzel,Georgia,serif;font-size:.6rem;font-weight:800;letter-spacing:.16em; }
+.results-ledger { border-bottom:1px solid var(--border);padding-bottom:.75rem; }
+@media(max-width:639px){.results-ledger{align-items:flex-start;gap:.75rem}.results-ledger>span{font-size:.7rem;text-align:right}}

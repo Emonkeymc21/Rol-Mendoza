@@ -11,7 +11,7 @@
 
 <section class="section-space">
   <div class="page-shell">
-    <form [formGroup]="filters" class="glass-panel grid gap-4 rounded-2xl p-4 sm:p-5 lg:grid-cols-3 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] xl:items-end">
+    <form [formGroup]="filters" class="adventure-filters glass-panel grid gap-4 p-4 sm:p-5 lg:grid-cols-3 xl:grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] xl:items-end">
       <label><span class="field-label">Buscar</span><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-mist"><app-icon name="search" [size]="18"></app-icon></span><input formControlName="q" class="input-field !pl-11" placeholder="Sistema, título o zona"></div></label>
       <label><span class="field-label">Localidad</span><select formControlName="city" class="input-field"><option>Todas</option><option *ngFor="let location of locations" [value]="location">{{ location }}</option></select></label>
       <label><span class="field-label">Modalidad</span><select formControlName="mode" class="input-field"><option>Todas</option><option>Presencial</option><option>Online</option><option>Mixto</option></select></label>
@@ -24,7 +24,7 @@
     <div *ngIf="error$ | async as error" class="feedback-error mt-6" role="alert">{{ error }} <button type="button" class="ml-2 font-bold underline" (click)="retry()">Reintentar</button></div>
 
     <ng-container *ngIf="!(loading$ | async)">
-      <div class="mt-8 flex items-center justify-between"><p class="text-sm text-mist"><strong class="text-parchment">{{ games.length }}</strong> partidas disponibles</p><span class="inline-flex items-center gap-2 text-sm text-mist"><app-icon name="check" [size]="17"></app-icon> Información actualizada</span></div>
+      <div class="results-ledger mt-8 flex items-center justify-between"><p class="text-sm text-mist"><strong class="text-parchment">{{ games.length }}</strong> partidas disponibles</p><span class="inline-flex items-center gap-2 text-sm text-mist"><app-icon name="check" [size]="17"></app-icon> Información actualizada</span></div>
       <div *ngIf="games.length; else noResults" class="mt-5 grid gap-5 lg:grid-cols-2"><app-game-card *ngFor="let game of games" [game]="game"></app-game-card></div>
       <ng-template #noResults>
         <div class="glass-panel mt-5 rounded-2xl p-10 text-center">

@@ -1,17 +1,18 @@
-.status-pill { @apply shrink-0 rounded-full px-3 py-1 text-xs font-bold; border:1px solid var(--border);background:var(--surface-muted);color:var(--text-secondary); }
-.status-active { @apply border-emerald-400/25 bg-emerald-400/10 text-emerald-200; }
-.status-full { @apply border-gold/30 bg-gold/10 text-gold; }
-.status-cancelled { @apply border-red-300/25 bg-red-950/30 text-red-200; }
-.action-button { @apply min-h-[40px] rounded-xl px-4 text-sm font-bold transition disabled:cursor-wait disabled:opacity-50; border:1px solid var(--border);color:var(--text-secondary); }
+.status-pill { @apply shrink-0 px-3 py-1 text-xs font-bold; border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--surface-muted);color:var(--text-secondary); }
+.status-active { border-color:var(--success-border);background:var(--success-soft);color:var(--success); }
+.status-full { border-color:var(--warning-border);background:var(--warning-soft);color:var(--warning); }
+.status-cancelled { border-color:var(--danger-border);background:var(--danger-soft);color:var(--danger); }
+.action-button { @apply min-h-[40px] px-4 text-sm font-bold transition disabled:cursor-wait disabled:opacity-50; border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-secondary); }
 .action-button:hover { border-color:var(--brand-border);color:var(--text-primary); }
-.request-button { display:inline-flex;min-height:40px;align-items:center;gap:.45rem;border:1px solid var(--brand-border);border-radius:.75rem;background:var(--brand-soft);padding:.45rem .85rem;color:var(--brand-secondary);font-size:.82rem;font-weight:800; }
+.action-button.text-red-200 { color:var(--danger); }
+.request-button { display:inline-flex;min-height:40px;align-items:center;gap:.45rem;border:1px solid var(--brand-border);border-radius:var(--radius-sm);background:var(--brand-soft);padding:.45rem .85rem;color:var(--brand-secondary);font-size:.82rem;font-weight:800; }
 .request-button span { display:grid;min-width:1.25rem;height:1.25rem;place-items:center;border-radius:999px;background:var(--brand-secondary);color:var(--button-primary-text);font-size:.65rem; }
 .game-admin-actions { border-top:1px solid var(--border); }
 .confirmed-players { border-top:1px solid var(--border);padding-top:1rem; }
 .confirmed-players h3 { font-size:.82rem;font-weight:800; }
 .confirmed-players>div>span { border-radius:999px;background:var(--brand-soft);padding:.18rem .5rem;color:var(--brand-secondary);font-size:.7rem;font-weight:800; }
 .confirmed-list { display:flex;flex-wrap:wrap;gap:.55rem; }
-.confirmed-chip { display:inline-flex;max-width:100%;align-items:center;gap:.15rem;border:1px solid var(--border);border-radius:.8rem;background:var(--surface-muted);padding:.35rem .35rem .35rem .35rem;font-size:.76rem;font-weight:700; }
+.confirmed-chip { display:inline-flex;max-width:100%;align-items:center;gap:.15rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-muted);padding:.35rem;font-size:.76rem;font-weight:700; }
 .confirmed-chip a { display:inline-flex;max-width:100%;align-items:center;gap:.45rem;color:var(--text-primary);text-decoration:none; }
 .confirmed-chip a>span { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 .chip-remove { display:grid;width:26px;height:26px;flex:0 0 auto;place-items:center;border:1px solid transparent;border-radius:50%;background:transparent;color:var(--text-muted);font-size:1rem;line-height:1;cursor:pointer;transition:.2s ease; }
