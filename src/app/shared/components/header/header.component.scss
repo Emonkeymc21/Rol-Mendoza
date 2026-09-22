@@ -19,7 +19,7 @@
 .account-dropdown { position:absolute;right:0;top:calc(100% + .75rem);z-index:50;min-width:290px;overflow:hidden;border:1px solid var(--border);border-radius:1rem;background:var(--bg-secondary);padding:.5rem;box-shadow:0 24px 70px rgba(0,0,0,.35); }
 .account-summary { @apply m-1 flex flex-col rounded-xl border border-white/[.07] bg-white/[.035] px-4 py-3; }
 .account-summary strong { @apply text-sm text-parchment; }
-.account-summary span { @apply mt-0.5 max-w-[220px] truncate text-xs text-mist; }
+.account-summary span { display:block;max-width:220px;margin-top:.125rem;overflow:hidden;color:var(--text-muted);font-size:.75rem;white-space:nowrap;text-overflow:ellipsis; }
 .account-summary small { @apply mt-2 w-fit rounded-full bg-gold/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gold; }
 .account-links { @apply mt-1; }
 .account-dropdown a, .account-dropdown button { @apply flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-mist transition hover:bg-white/[.06] hover:text-parchment disabled:opacity-50; }
@@ -31,6 +31,7 @@
 .notification-trigger:hover { border-color:var(--brand-border);color:var(--brand-secondary); }
 .notification-trigger span { position:absolute;top:-4px;right:-4px;display:grid;min-width:19px;height:19px;place-items:center;border:2px solid var(--bg-primary);border-radius:999px;background:var(--brand-secondary);padding:0 4px;color:var(--button-primary-text);font-size:9px;font-weight:900; }
 .mobile-header-actions { display:flex;align-items:center;gap:.5rem; }
+@media(min-width:1024px){.mobile-header-actions{display:none}}
 .mobile-menu { border-top:1px solid var(--border);background:var(--bg-primary); }
 .mobile-divider { border-top:1px solid var(--border); }
 .menu-trigger { display:grid;width:44px;height:44px;place-items:center;border:1px solid var(--border);border-radius:50%;background:var(--surface-muted); }
