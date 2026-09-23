@@ -39,7 +39,7 @@
             <div class="mt-5 grid gap-5 sm:grid-cols-2">
               <label><span class="field-label">Ciudad *</span><select class="input-field" formControlName="city"><option value="">Seleccionar</option><option *ngFor="let location of locations" [value]="location">{{ location }}</option></select><span *ngIf="invalid('city')" class="error-text">Seleccioná una localidad.</span></label>
               <label *ngIf="form.controls.city.value === otherLocation"><span class="field-label">¿En qué localidad? *</span><input class="input-field" formControlName="otherCity" placeholder="Ej: Las Heras"><span *ngIf="invalid('otherCity')" class="error-text">Ingresá la localidad.</span></label>
-              <label><span class="field-label">Zona o plataforma *</span><input class="input-field" formControlName="location" placeholder="Godoy Cruz centro o Discord"><span *ngIf="invalid('location')" class="error-text">Indicá una zona aproximada o plataforma.</span></label>
+              <label><span class="field-label">Zona o plataforma *</span><select class="input-field" formControlName="location"><option value="">Seleccioná una opción</option><option *ngIf="legacyGameLocation" [value]="legacyGameLocation">{{ legacyGameLocation }} (valor actual)</option><option *ngFor="let gameLocation of gameLocations" [value]="gameLocation">{{ gameLocation }}</option></select><span *ngIf="invalid('location')" class="error-text">Seleccioná una zona o plataforma.</span></label>
               <label><span class="field-label">Modalidad *</span><select class="input-field" formControlName="mode"><option>Presencial</option><option>Online</option><option>Mixto</option></select></label>
               <label><span class="field-label">Fecha *</span><input type="date" class="input-field" formControlName="date"><span *ngIf="invalid('date')" class="error-text">Seleccioná una fecha.</span></label>
               <label><span class="field-label">Hora *</span><input type="time" class="input-field" formControlName="time"><span *ngIf="invalid('time')" class="error-text">Seleccioná un horario.</span></label>
@@ -74,7 +74,7 @@
           <div class="grid h-11 w-11 place-items-center rounded-xl bg-wine text-gold"><app-icon name="shield" [size]="22"></app-icon></div>
           <h2 class="mt-4 font-display text-xl font-bold">{{ editing ? 'Guardar cambios' : 'Publicación inmediata' }}</h2>
           <ul class="mt-4 space-y-3 text-sm text-mist">
-            <li class="flex gap-2"><span class="text-gold">✓</span> Indicá una zona aproximada, nunca un domicilio.</li>
+            <li class="flex gap-2"><span class="text-gold">✓</span> Elegí la plataforma o el punto de encuentro previsto.</li>
             <li class="flex gap-2"><span class="text-gold">✓</span> Aclará el tono y los temas de la partida.</li>
             <li class="flex gap-2"><span class="text-gold">✓</span> Podrás pausarla o cancelarla desde Mis partidas.</li>
           </ul>
