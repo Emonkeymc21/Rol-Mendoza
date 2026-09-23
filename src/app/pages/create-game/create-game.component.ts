@@ -11,7 +11,7 @@ import { ProfileService } from '../../core/services/profile.service';
 export class CreateGameComponent implements OnInit {
   readonly locations = MENDOZA_LOCATIONS;
   readonly otherLocation = OTHER_LOCATION;
-  readonly gameLocations = ['Discord', 'A definir', 'Aquí hay Dragones'];
+  readonly gameLocations = ['Discord', 'A definir', 'Otro espacio'];
   readonly safetyOptions = [
     'Lo hablaremos en la sesión cero',
     'Lo conversaremos en el grupo',
