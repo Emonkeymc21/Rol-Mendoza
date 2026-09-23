@@ -8,13 +8,13 @@
 
   <div class="page-shell hero-stage">
     <div class="hero-copy">
-      <span class="hero-kicker">Comunidad rolera · Mendoza</span>
-      <h1>Tu próxima<br><span>aventura</span><br>empieza acá.</h1>
-      <p>Conectá con jugadores y Dungeon Masters de Mendoza, descubrí nuevas partidas y empezá una historia con tu próximo grupo.</p>
+      <span class="hero-kicker">Herramienta para la comunidad rolera · Mendoza</span>
+      <h1>Encontrá y organizá<br><span>mesas de rol</span><br>en Mendoza.</h1>
+      <p>Cumbre20 conecta jugadores, másters y partidas. No reemplaza los grupos y espacios que ya existen: ayuda a que se encuentren.</p>
       <div class="hero-actions">
-        <a routerLink="/partidas" class="btn-primary">Buscar partidas <app-icon name="arrow" [size]="19"></app-icon></a>
-        <a routerLink="/jugadores" class="hero-link"><span>Encontrar jugadores</span><app-icon name="arrow" [size]="18"></app-icon></a>
-        <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="hero-link"><span>Crear partida</span><app-icon name="plus" [size]="18"></app-icon></a>
+        <a routerLink="/partidas" class="btn-primary">Busco una partida <app-icon name="arrow" [size]="19"></app-icon></a>
+        <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-secondary hero-publish">Quiero publicar una partida <app-icon name="plus" [size]="18"></app-icon></a>
+        <a routerLink="/como-funciona" class="hero-link"><span>Nunca jugué, quiero empezar</span><app-icon name="arrow" [size]="18"></app-icon></a>
       </div>
     </div>
 
@@ -57,9 +57,9 @@
 
 <nav class="path-strip" aria-label="Elegí tu camino">
   <div class="page-shell path-grid">
-    <a routerLink="/partidas"><span>01</span><strong>Explorá partidas</strong><small>One-shots y campañas</small><app-icon name="arrow" [size]="18"></app-icon></a>
-    <a routerLink="/jugadores"><span>02</span><strong>Encontrá tu grupo</strong><small>Jugadores y DMs</small><app-icon name="arrow" [size]="18"></app-icon></a>
-    <a routerLink="/como-funciona"><span>03</span><strong>Empezá a jugar</strong><small>Cómo funciona</small><app-icon name="arrow" [size]="18"></app-icon></a>
+    <a routerLink="/partidas"><span>01</span><strong>Para jugadores</strong><small>Encontrá una mesa</small><app-icon name="arrow" [size]="18"></app-icon></a>
+    <a routerLink="/jugadores"><span>02</span><strong>Para másters</strong><small>Encontrá jugadores para tu partida</small><app-icon name="arrow" [size]="18"></app-icon></a>
+    <a routerLink="/como-funciona"><span>03</span><strong>Para principiantes</strong><small>Descubrí cómo empezar</small><app-icon name="arrow" [size]="18"></app-icon></a>
   </div>
 </nav>
 
@@ -82,14 +82,14 @@
     </ng-container>
     <ng-template #homeGamesReady>
       <div *ngIf="games.length; else noRecentGames" class="home-game-layout"><app-game-card *ngFor="let game of games; trackBy: trackGame" [game]="game"></app-game-card></div>
-      <ng-template #noRecentGames><div class="home-empty"><span class="empty-number" aria-hidden="true">20</span><div><h3>La próxima historia puede ser la tuya</h3><p>Todavía no hay partidas activas para mostrar. Explorá nuevamente más tarde o publicá una mesa.</p></div><a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-primary">Crear partida</a></div></ng-template>
+      <ng-template #noRecentGames><div class="home-empty"><span class="empty-number" aria-hidden="true">20</span><div><h3>La próxima mesa puede empezar acá</h3><p>Todavía no hay partidas activas para mostrar. Cumbre20 está empezando y cada nuevo perfil ayuda a que más personas puedan encontrarse.</p></div><a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-primary">Publicar la primera partida</a><a *ngIf="isAuthenticated && !canCreateGames()" routerLink="/perfil/editar" class="btn-secondary">Actualizar mi perfil</a><a *ngIf="!isAuthenticated" routerLink="/registrarme" class="btn-secondary">Crear mi perfil</a></div></ng-template>
     </ng-template>
   </div>
 </section>
 
 <section *ngIf="canCreateGames()" appReveal class="dm-editorial">
   <div class="dm-image" aria-hidden="true"></div>
-  <div class="page-shell dm-copy"><span class="eyebrow">Para Dungeon Masters</span><h2>Hay una historia<br>esperando mesa.</h2><p>Publicá tu propuesta, indicá los cupos y encontrá jugadores de la comunidad.</p><a routerLink="/partidas/nueva" class="btn-primary">Publicar partida <app-icon name="arrow" [size]="18"></app-icon></a></div>
+  <div class="page-shell dm-copy"><span class="eyebrow">Para Dungeon Masters</span><h2>Hay una historia<br>esperando mesa.</h2><p>¿Tenés una campaña, un one-shot o una mesa con un lugar disponible? Publicala, indicá los cupos y encontrá jugadores.</p><a routerLink="/partidas/nueva" class="btn-primary">Publicar partida <app-icon name="arrow" [size]="18"></app-icon></a></div>
 </section>
 
 <section appReveal class="community-story">
@@ -119,7 +119,7 @@
 </section>
 
 <section appReveal class="about-editorial">
-  <div class="page-shell about-layout"><img src="assets/branding/map-mendoza.svg" alt="" aria-hidden="true" loading="lazy"><div><span class="eyebrow">Sobre Cumbre20</span><h2>No buscamos crear otra comunidad separada. Buscamos conectar la que ya existe.</h2></div><div><p>Jugadores, másters, grupos, tiendas, cafés y clubes ya hacen crecer el rol en Mendoza. Cumbre20 quiere ayudar a que sea más fácil encontrarlos.</p><a routerLink="/nosotros" class="hero-link">Conocé nuestro enfoque <app-icon name="arrow" [size]="18"></app-icon></a></div></div>
+  <div class="page-shell about-layout"><img src="assets/branding/map-mendoza.svg" alt="" aria-hidden="true" loading="lazy"><div><span class="eyebrow">Sobre Cumbre20</span><h2>La comunidad ya existe. Cumbre20 ayuda a conectarla.</h2></div><div><p>Jugadores, másters, grupos, tiendas, cafés y clubes ya hacen crecer el rol en Mendoza. Cumbre20 quiere ayudar a que sea más fácil encontrarlos.</p><p><strong>Cumbre20 está empezando.</strong> Estamos construyendo esta herramienta junto a la comunidad rolera de Mendoza.</p><a routerLink="/nosotros" class="hero-link">Conocé nuestro enfoque <app-icon name="arrow" [size]="18"></app-icon></a></div></div>
 </section>
 
 <section appReveal class="final-cta">
