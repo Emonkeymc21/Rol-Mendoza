@@ -6,8 +6,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function verifiedUser() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
     function ownDocument(userId) {
       return signedIn() && request.auth.uid == userId;
+    }
+
+    function verifiedOwner(userId) {
+      return verifiedUser() && request.auth.uid == userId;
     }
 
     function validRole(role) {
@@ -30,7 +38,7 @@ service cloud.firestore {
     }
 
     function completedViewer() {
-      return signedIn()
+      return verifiedUser()
         && currentUserData().active == true
         && currentUserData().profileCompleted == true;
     }
@@ -116,7 +124,7 @@ service cloud.firestore {
     }
 
     function viewerCanSeeContact(targetUid) {
-      return signedIn()
+      return verifiedUser()
         && request.auth.uid != targetUid
         && currentUserData().active == true
         && currentUserData().profileCompleted == true
@@ -136,7 +144,7 @@ service cloud.firestore {
         && validPublicProfile(userId)
         && request.resource.data.active == true
         && request.resource.data.createdAt == request.time;
-      allow update: if ownDocument(userId)
+      allow update: if verifiedOwner(userId)
         && validPublicProfile(userId)
         && (!('uid' in resource.data) || request.resource.data.uid == resource.data.uid)
         && ((!('active' in resource.data) && request.resource.data.active == true)
@@ -146,52 +154,52 @@ service cloud.firestore {
       allow delete: if false;
 
       match /blockedUsers/{blockedUid} {
-        allow get, list: if ownDocument(userId);
-        allow create: if ownDocument(userId)
+        allow get, list: if verifiedOwner(userId);
+        allow create: if verifiedOwner(userId)
           && request.resource.data.keys().hasOnly(['uid', 'displayName', 'createdAt'])
           && request.resource.data.uid == blockedUid
           && request.resource.data.displayName is string
           && request.resource.data.createdAt == request.time;
         allow update: if false;
-        allow delete: if ownDocument(userId);
+        allow delete: if verifiedOwner(userId);
       }
 
       match /blockedBy/{blockerUid} {
-        allow get, list: if ownDocument(userId);
-        allow create: if signedIn()
+        allow get, list: if verifiedOwner(userId);
+        allow create: if verifiedUser()
           && request.auth.uid == blockerUid
           && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
           && request.resource.data.uid == blockerUid
           && request.resource.data.createdAt == request.time;
         allow update: if false;
-        allow delete: if signedIn() && request.auth.uid == blockerUid;
+        allow delete: if verifiedUser() && request.auth.uid == blockerUid;
       }
     }
 
     match /userPrivate/{userId} {
       allow get: if ownDocument(userId) || viewerCanSeeContact(userId);
       allow list: if false;
-      allow create: if ownDocument(userId)
+      allow create: if verifiedOwner(userId)
         && validPrivateProfile(userId)
         && request.resource.data.createdAt == request.time
         && request.resource.data.privacyConsentAt == request.time;
-      allow update: if ownDocument(userId)
+      allow update: if verifiedOwner(userId)
         && validPrivateProfile(userId)
         && (!('uid' in resource.data) || request.resource.data.uid == resource.data.uid)
         && ((!('createdAt' in resource.data) && request.resource.data.createdAt == request.time)
           || request.resource.data.createdAt == resource.data.createdAt)
         && ((!('privacyConsentAt' in resource.data) && request.resource.data.privacyConsentAt == request.time)
           || request.resource.data.privacyConsentAt == resource.data.privacyConsentAt);
-      allow delete: if ownDocument(userId);
+      allow delete: if verifiedOwner(userId);
     }
 
     match /gameJoinRequests/{requestId} {
-      allow get, list: if signedIn()
+      allow get, list: if verifiedUser()
         && (resource.data.playerUid == request.auth.uid || resource.data.dmUid == request.auth.uid);
       // Las solicitudes se crean en Apps Script después de validar el token y
       // obtener el creatorUid directamente desde la partida en Sheets.
       allow create, delete: if false;
-      allow update: if signedIn()
+      allow update: if verifiedUser()
         && resource.data.dmUid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'seenByDm', 'seenAt', 'updatedAt'
@@ -223,15 +231,15 @@ service cloud.firestore {
     }
 
     match /users/{userId}/notifications/{notificationId} {
-      allow get, list: if ownDocument(userId);
+      allow get, list: if verifiedOwner(userId);
       // Las notificaciones de negocio se crean en el backend junto con el
       // cambio de solicitud. El navegador solamente puede marcarlas como leídas.
       allow create: if false;
-      allow update: if ownDocument(userId)
+      allow update: if verifiedOwner(userId)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt'])
         && request.resource.data.read == true
         && request.resource.data.readAt == request.time;
-      allow delete: if ownDocument(userId);
+      allow delete: if verifiedOwner(userId);
     }
 
     match /conversations/{document=**} {

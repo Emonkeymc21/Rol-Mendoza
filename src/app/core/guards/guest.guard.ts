@@ -12,7 +12,9 @@ export class GuestGuard implements CanActivate {
     return this.auth.user$.pipe(
       take(1),
       switchMap(user => user
-        ? from(this.profiles.isOwnProfileComplete()).pipe(
+        ? !user.emailVerified
+          ? of(this.router.createUrlTree(['/verificar-correo']))
+          : from(this.profiles.isOwnProfileComplete()).pipe(
             map(complete => this.router.createUrlTree([
               complete ? '/perfil' : '/completar-perfil'
             ])),

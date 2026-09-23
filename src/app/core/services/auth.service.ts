@@ -77,9 +77,10 @@ export class AuthService {
     }
     if (!credential.user.emailVerified) {
       try {
-        await sendEmailVerification(credential.user);
+        await this.sendVerificationEmail(credential.user);
       } catch (error) {
-        // La verificación es informativa por ahora y no forma parte de los guards.
+        // La pantalla de verificación permite reenviar el correo si el primer
+        // intento falla, sin dejar al usuario atrapado con una cuenta creada.
         console.error('No se pudo enviar el correo de verificación.', error);
       }
     }
@@ -112,10 +113,30 @@ export class AuthService {
     await sendPasswordResetEmail(this.requireAuth(), email.trim());
   }
 
-  async getIdToken(): Promise<string> {
+  async sendVerificationEmail(user: User | null = this.currentUser): Promise<void> {
+    if (!user) throw new Error('Necesitás iniciar sesión para continuar.');
+    if (user.emailVerified) return;
+    const auth = this.requireAuth();
+    auth.languageCode = 'es';
+    await sendEmailVerification(user, {
+      url: `${window.location.origin}/verificar-correo`,
+      handleCodeInApp: false
+    });
+  }
+
+  async refreshCurrentUser(): Promise<User> {
     const user = this.currentUser;
     if (!user) throw new Error('Necesitás iniciar sesión para continuar.');
-    return user.getIdToken();
+    await user.reload();
+    if (user.emailVerified) await user.getIdToken(true);
+    this.state.next(user);
+    return user;
+  }
+
+  async getIdToken(forceRefresh = false): Promise<string> {
+    const user = this.currentUser;
+    if (!user) throw new Error('Necesitás iniciar sesión para continuar.');
+    return user.getIdToken(forceRefresh);
   }
 
   async logout(): Promise<void> {
