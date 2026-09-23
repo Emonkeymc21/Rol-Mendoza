@@ -11,6 +11,8 @@ import { ProfileService } from '../../core/services/profile.service';
 export class CreateGameComponent implements OnInit {
   readonly locations = MENDOZA_LOCATIONS;
   readonly otherLocation = OTHER_LOCATION;
+  readonly gameLocations = ['Discord', 'A definir', 'Aquí hay Dragones'];
+  legacyGameLocation = '';
   submitted = false;
   saving = false;
   loading = false;
@@ -62,6 +64,9 @@ export class CreateGameComponent implements OnInit {
       this.games.getOwnedGame(this.gameId).subscribe({
         next: game => {
           const selectedLocation = splitLocation(game.city);
+          this.legacyGameLocation = game.location && !this.gameLocations.includes(game.location)
+            ? game.location
+            : '';
           this.form.patchValue({
             title: game.title, system: game.system, city: selectedLocation.city, otherCity: selectedLocation.otherCity, location: game.location,
             mode: game.mode, date: game.date, time: game.time, schedule: game.schedule,
