@@ -12,6 +12,11 @@ export class CreateGameComponent implements OnInit {
   readonly locations = MENDOZA_LOCATIONS;
   readonly otherLocation = OTHER_LOCATION;
   readonly gameLocations = ['Discord', 'A definir', 'Aquí hay Dragones'];
+  readonly safetyOptions = [
+    'Lo hablaremos en la sesión cero',
+    'Lo conversaremos en el grupo',
+    'Otro'
+  ];
   legacyGameLocation = '';
   submitted = false;
   saving = false;
@@ -39,7 +44,8 @@ export class CreateGameComponent implements OnInit {
     contactMethod: ['Perfil del máster', Validators.required],
     summary: ['', [Validators.required, Validators.minLength(30), Validators.maxLength(420)]],
     tone: ['', Validators.required],
-    safety: ['Líneas y velos + tarjeta X', Validators.required],
+    safety: ['Lo hablaremos en la sesión cero', Validators.required],
+    otherSafety: ['', Validators.maxLength(180)],
     tags: ['Narrativa, Aventura']
   });
 
@@ -54,6 +60,7 @@ export class CreateGameComponent implements OnInit {
     this.gameId = route.snapshot.paramMap.get('id') || '';
     this.editing = Boolean(this.gameId);
     this.form.controls.city.valueChanges.subscribe(() => this.updateOtherCityValidation());
+    this.form.controls.safety.valueChanges.subscribe(() => this.updateOtherSafetyValidation());
     this.form.controls.totalSeats.valueChanges.subscribe(() => this.syncAvailableSeats());
     this.form.controls.currentPlayers.valueChanges.subscribe(() => this.syncAvailableSeats());
   }
@@ -67,16 +74,20 @@ export class CreateGameComponent implements OnInit {
           this.legacyGameLocation = game.location && !this.gameLocations.includes(game.location)
             ? game.location
             : '';
+          const knownSafety = this.safetyOptions.includes(game.safety);
           this.form.patchValue({
             title: game.title, system: game.system, city: selectedLocation.city, otherCity: selectedLocation.otherCity, location: game.location,
             mode: game.mode, date: game.date, time: game.time, schedule: game.schedule,
             frequency: game.frequency, seats: game.seats, totalSeats: game.totalSeats,
             currentPlayers: game.currentPlayers, level: game.level,
             ageRequirement: game.ageRequirement, contactMethod: game.contactMethod,
-            summary: game.summary, tone: game.tone, safety: game.safety,
+            summary: game.summary, tone: game.tone,
+            safety: knownSafety ? game.safety : 'Otro',
+            otherSafety: knownSafety ? '' : game.safety,
             tags: game.tags.join(', ')
           });
           this.updateOtherCityValidation();
+          this.updateOtherSafetyValidation();
           this.syncAvailableSeats();
           this.loading = false;
         },
@@ -93,6 +104,7 @@ export class CreateGameComponent implements OnInit {
       const profile = await this.profiles.getOwnProfile();
       if (profile?.city) this.form.patchValue(splitLocation(profile.city));
       this.updateOtherCityValidation();
+      this.updateOtherSafetyValidation();
       this.syncAvailableSeats();
     } catch (error) {
       console.error('No se pudo precargar la ciudad del perfil.', error);
@@ -120,10 +132,11 @@ export class CreateGameComponent implements OnInit {
     }
 
     this.saving = true;
-    const { otherCity, ...gameValues } = value;
+    const { otherCity, otherSafety, ...gameValues } = value;
     const game: Game = {
       ...gameValues,
       city: resolveLocation(value.city, otherCity),
+      safety: value.safety === 'Otro' ? otherSafety.trim() : value.safety,
       id: this.gameId,
       gm: user.displayName || user.email?.split('@')[0] || 'Máster de la comunidad',
       masterUserId: user.uid,
@@ -160,6 +173,14 @@ export class CreateGameComponent implements OnInit {
     control.setValidators(this.form.controls.city.value === OTHER_LOCATION
       ? [Validators.required, Validators.minLength(2), Validators.maxLength(80)]
       : [Validators.maxLength(80)]);
+    control.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private updateOtherSafetyValidation(): void {
+    const control = this.form.controls.otherSafety;
+    control.setValidators(this.form.controls.safety.value === 'Otro'
+      ? [Validators.required, Validators.minLength(2), Validators.maxLength(180)]
+      : [Validators.maxLength(180)]);
     control.updateValueAndValidity({ emitEvent: false });
   }
 
