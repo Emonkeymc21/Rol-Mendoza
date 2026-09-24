@@ -7,7 +7,7 @@
         <header class="profile-header">
           <app-class-avatar [avatarClass]="player.avatarClass" size="lg"></app-class-avatar>
           <div class="profile-heading">
-            <div class="profile-name-row"><h1>{{ player.name }}</h1><span *ngIf="player.verified" class="verified-mark" title="Perfil completo"><app-icon name="shield" [size]="20"></app-icon></span></div>
+            <div class="profile-name-row"><h1>{{ player.name }}</h1><span *ngIf="player.verified" class="verified-mark" role="img" aria-label="Perfil completo" title="Perfil completo"><app-icon name="shield" [size]="20"></app-icon></span></div>
             <p class="profile-role">{{ player.role }}</p>
             <p class="profile-location"><app-icon name="map" [size]="17"></app-icon>{{ player.city }}</p>
           </div>
