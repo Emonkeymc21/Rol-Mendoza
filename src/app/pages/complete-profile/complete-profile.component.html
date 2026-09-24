@@ -36,12 +36,12 @@
         </section>
 
         <section *ngIf="step === 2" class="step-content">
-          <div><span class="eyebrow">Paso 3</span><h2 class="mt-2 font-display text-3xl font-bold">Datos de contacto</h2><p class="mt-2 text-sm text-mist">Elegí WhatsApp o Instagram. Se mantendrán privados y sólo se habilitarán entre vos y el máster cuando seas aceptado en una partida.</p></div>
+          <div><span class="eyebrow">Paso 3</span><h2 class="mt-2 font-display text-3xl font-bold">Datos de contacto</h2><p class="mt-2 text-sm text-mist">Elegí WhatsApp o Instagram. No se mostrarán en tu perfil público ni en los resultados de búsqueda. Sólo se habilitarán entre vos y el máster cuando una solicitud para una partida sea aceptada.</p></div>
           <div class="mt-7 grid gap-5">
             <label><span class="field-label">WhatsApp / celular <span class="text-mist">(opcional si usás Instagram)</span></span><input class="input-field" formControlName="whatsapp" inputmode="tel" autocomplete="tel" placeholder="Ej: 261 555 1234"><span *ngIf="invalid('whatsapp')" class="error-text">Usá un número argentino de 10 dígitos con código de área.</span><small *ngIf="whatsappPreview" class="preview-link">Se guardará como {{ whatsappPreview }}</small></label>
             <label><span class="field-label">Instagram <span class="text-mist">(opcional si usás WhatsApp)</span></span><input class="input-field" formControlName="instagram" autocomplete="off" placeholder="Ej: @nombre.usuario"><span *ngIf="invalid('instagram')" class="error-text">Ingresá un usuario o enlace válido de Instagram.</span><small *ngIf="instagramPreview" class="preview-link">Se guardará como {{ instagramPreview }}</small></label>
             <span *ngIf="contactMethodMissing" class="error-text">Elegí al menos un medio de contacto: WhatsApp o Instagram.</span>
-            <label><span class="field-label">Teléfono alternativo <span class="text-mist">(opcional)</span></span><input class="input-field" formControlName="alternatePhone" inputmode="tel" autocomplete="tel-national"></label>
+            <label><span class="field-label">Teléfono alternativo <span class="text-mist">(opcional y privado)</span></span><input class="input-field" formControlName="alternatePhone" inputmode="tel" autocomplete="tel-national"></label>
           </div>
         </section>
 
