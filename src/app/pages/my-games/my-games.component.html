@@ -40,7 +40,7 @@
                 <app-class-avatar [avatarClass]="item.profile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar>
                 <span>{{ item.profile?.displayName || 'Jugador/a de Cumbre20' }}</span>
               </a>
-              <button type="button" class="chip-remove" (click)="removePlayer(game, item)" [disabled]="removingUid === item.participant.playerUid" [title]="removingUid === item.participant.playerUid ? 'Removiendo…' : 'Remover a ' + (item.profile?.displayName || 'este jugador')" aria-label="Remover jugador">×</button>
+              <button type="button" class="chip-remove" (click)="removePlayer(game, item)" [disabled]="removingUid === item.participant.playerUid" [title]="removingUid === item.participant.playerUid ? 'Removiendo…' : 'Remover a ' + (item.profile?.displayName || 'este jugador')" [attr.aria-label]="removingUid === item.participant.playerUid ? 'Removiendo jugador' : 'Remover a ' + (item.profile?.displayName || 'este jugador')">×</button>
             </span>
           </div>
           <ng-template #noConfirmed><p class="mt-2 text-xs text-mist">Todavía no aceptaste jugadores mediante Cumbre20.</p></ng-template>
