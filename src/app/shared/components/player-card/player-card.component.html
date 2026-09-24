@@ -3,7 +3,7 @@
   <div class="player-card-head flex min-w-0 items-start gap-3 sm:gap-4">
     <app-class-avatar [avatarClass]="player.avatarClass"></app-class-avatar>
     <div class="min-w-0 flex-1">
-      <div class="flex min-w-0 items-start gap-2"><h3 class="player-card-name font-display text-xl font-bold text-parchment">{{ player.name }}</h3><span *ngIf="player.verified" class="shrink-0 text-gold" title="Perfil completo"><app-icon name="shield" [size]="17"></app-icon></span></div>
+      <div class="flex min-w-0 items-start gap-2"><h3 class="player-card-name font-display text-xl font-bold text-parchment">{{ player.name }}</h3><span *ngIf="player.verified" class="shrink-0 text-gold" role="img" aria-label="Perfil completo" title="Perfil completo"><app-icon name="shield" [size]="17"></app-icon></span></div>
       <p class="mt-1 text-sm font-semibold text-gold">{{ player.role }}</p>
     </div>
     <span *ngIf="player.matchScore" class="match-badge">{{ player.matchScore }}% afín</span>
