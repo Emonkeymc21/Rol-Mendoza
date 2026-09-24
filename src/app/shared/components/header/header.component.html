@@ -17,12 +17,12 @@
         <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="create-game-link"><app-icon name="plus" [size]="17"></app-icon> Crear partida</a>
         <a routerLink="/notificaciones" class="notification-trigger" aria-label="Notificaciones"><app-icon name="bell" [size]="21"></app-icon><span *ngIf="unreadCount$ | async as unread">{{ unread > 99 ? '99+' : unread }}</span></a>
         <div class="relative">
-          <button type="button" class="account-trigger" (click)="toggleAccountMenu($event)" [attr.aria-expanded]="accountMenuOpen" aria-haspopup="menu">
+          <button type="button" class="account-trigger" (click)="toggleAccountMenu($event)" [attr.aria-expanded]="accountMenuOpen" aria-haspopup="menu" aria-controls="account-menu" [attr.aria-label]="accountMenuOpen ? 'Cerrar menú de usuario' : 'Abrir menú de usuario'">
             <app-class-avatar [avatarClass]="profile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar>
             <span class="hidden text-left xl:block"><strong class="block leading-tight">{{ profile?.firstName || user.displayName || 'Mi cuenta' }}</strong><small class="block text-[11px] text-mist">{{ roleText() }}</small></span>
             <app-icon name="chevron" [size]="16"></app-icon>
           </button>
-          <div *ngIf="accountMenuOpen" class="account-dropdown" role="menu" (click)="$event.stopPropagation()">
+          <div *ngIf="accountMenuOpen" id="account-menu" class="account-dropdown" role="menu" (click)="$event.stopPropagation()">
             <div class="account-summary"><strong>{{ profile?.displayName || user.displayName || 'Mi cuenta' }}</strong><span>{{ user.email }}</span><small>{{ roleText() }}</small></div>
             <div class="account-links">
               <a routerLink="/perfil" role="menuitem"><app-icon name="user" [size]="18"></app-icon> Mi perfil</a>
@@ -32,7 +32,7 @@
               <a *ngIf="canCreateGames()" routerLink="/solicitudes" role="menuitem"><app-icon name="users" [size]="18"></app-icon> Solicitudes de jugadores</a>
               <a routerLink="/notificaciones" role="menuitem"><app-icon name="bell" [size]="18"></app-icon> Notificaciones</a>
               <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" role="menuitem"><app-icon name="plus" [size]="18"></app-icon> Crear partida</a>
-              <div class="theme-picker" aria-label="Tema visual"><span>Tema</span><div><button type="button" [class.active]="themePreference === 'system'" (click)="setTheme('system')" title="Usar tema del sistema"><app-icon name="monitor" [size]="16"></app-icon></button><button type="button" [class.active]="themePreference === 'light'" (click)="setTheme('light')" title="Tema claro"><app-icon name="sun" [size]="16"></app-icon></button><button type="button" [class.active]="themePreference === 'dark'" (click)="setTheme('dark')" title="Tema oscuro"><app-icon name="moon" [size]="16"></app-icon></button></div></div>
+              <div class="theme-picker" aria-label="Tema visual"><span>Tema</span><div><button type="button" [class.active]="themePreference === 'system'" [attr.aria-pressed]="themePreference === 'system'" (click)="setTheme('system')" aria-label="Usar tema del sistema" title="Usar tema del sistema"><app-icon name="monitor" [size]="16"></app-icon></button><button type="button" [class.active]="themePreference === 'light'" [attr.aria-pressed]="themePreference === 'light'" (click)="setTheme('light')" aria-label="Usar tema claro" title="Tema claro"><app-icon name="sun" [size]="16"></app-icon></button><button type="button" [class.active]="themePreference === 'dark'" [attr.aria-pressed]="themePreference === 'dark'" (click)="setTheme('dark')" aria-label="Usar tema oscuro" title="Tema oscuro"><app-icon name="moon" [size]="16"></app-icon></button></div></div>
               <button type="button" role="menuitem" (click)="logout()" [disabled]="loggingOut"><app-icon name="logout" [size]="18"></app-icon> {{ loggingOut ? 'Cerrando…' : 'Cerrar sesión' }}</button>
             </div>
           </div>
@@ -41,10 +41,10 @@
       <ng-template #desktopGuest><a routerLink="/ingresar" class="nav-link">Ingresar</a><a routerLink="/registrarme" class="btn-primary !min-h-[42px] !px-5">Registrarme</a></ng-template>
     </div>
 
-    <div class="mobile-header-actions lg:hidden"><a *ngIf="user$ | async" routerLink="/notificaciones" class="notification-trigger" aria-label="Notificaciones"><app-icon name="bell" [size]="21"></app-icon><span *ngIf="unreadCount$ | async as unread">{{ unread > 99 ? '99+' : unread }}</span></a><button type="button" class="menu-trigger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen" aria-label="Abrir menú"><app-icon [name]="menuOpen ? 'close' : 'menu'" [size]="23"></app-icon></button></div>
+    <div class="mobile-header-actions lg:hidden"><a *ngIf="user$ | async" routerLink="/notificaciones" class="notification-trigger" aria-label="Notificaciones"><app-icon name="bell" [size]="21"></app-icon><span *ngIf="unreadCount$ | async as unread">{{ unread > 99 ? '99+' : unread }}</span></a><button type="button" class="menu-trigger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen" aria-controls="mobile-navigation" [attr.aria-label]="menuOpen ? 'Cerrar menú' : 'Abrir menú'"><app-icon [name]="menuOpen ? 'close' : 'menu'" [size]="23"></app-icon></button></div>
   </div>
 
-  <div *ngIf="menuOpen" class="mobile-menu px-4 pb-5 pt-3 lg:hidden">
+  <div *ngIf="menuOpen" id="mobile-navigation" class="mobile-menu px-4 pb-5 pt-3 lg:hidden">
     <nav class="mx-auto flex max-w-7xl flex-col gap-1" aria-label="Navegación móvil">
       <a routerLink="/" class="mobile-link"><app-icon name="home" [size]="19"></app-icon> Inicio</a>
       <a routerLink="/partidas" class="mobile-link">Partidas</a>
@@ -64,7 +64,7 @@
         <a *ngIf="canCreateGames()" routerLink="/solicitudes" class="mobile-link"><app-icon name="users" [size]="19"></app-icon> Solicitudes de jugadores</a>
         <a routerLink="/notificaciones" class="mobile-link"><app-icon name="bell" [size]="19"></app-icon> Notificaciones</a>
         <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="mobile-link">Crear partida</a>
-        <div class="mobile-theme-picker"><span>Tema</span><div><button type="button" [class.active]="themePreference === 'system'" (click)="setTheme('system')"><app-icon name="monitor" [size]="17"></app-icon> Sistema</button><button type="button" [class.active]="themePreference === 'light'" (click)="setTheme('light')"><app-icon name="sun" [size]="17"></app-icon> Claro</button><button type="button" [class.active]="themePreference === 'dark'" (click)="setTheme('dark')"><app-icon name="moon" [size]="17"></app-icon> Oscuro</button></div></div>
+        <div class="mobile-theme-picker"><span>Tema</span><div><button type="button" [class.active]="themePreference === 'system'" [attr.aria-pressed]="themePreference === 'system'" (click)="setTheme('system')"><app-icon name="monitor" [size]="17"></app-icon> Sistema</button><button type="button" [class.active]="themePreference === 'light'" [attr.aria-pressed]="themePreference === 'light'" (click)="setTheme('light')"><app-icon name="sun" [size]="17"></app-icon> Claro</button><button type="button" [class.active]="themePreference === 'dark'" [attr.aria-pressed]="themePreference === 'dark'" (click)="setTheme('dark')"><app-icon name="moon" [size]="17"></app-icon> Oscuro</button></div></div>
         <button type="button" class="mobile-link text-left" (click)="logout()" [disabled]="loggingOut">{{ loggingOut ? 'Cerrando…' : 'Cerrar sesión' }}</button>
       </ng-container>
       <ng-template #mobileGuest><a routerLink="/ingresar" class="mobile-link">Ingresar</a><a routerLink="/registrarme" class="btn-primary mt-3">Registrarme</a></ng-template>

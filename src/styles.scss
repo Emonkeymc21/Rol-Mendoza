@@ -61,6 +61,8 @@ select option { background:var(--surface);color:var(--text-primary); }
 input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus,textarea:-webkit-autofill,select:-webkit-autofill { -webkit-text-fill-color:var(--text-primary);-webkit-box-shadow:0 0 0 1000px var(--surface-raised) inset;caret-color:var(--text-primary);transition:background-color 9999s ease-out; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible { outline:2px solid var(--brand-primary);outline-offset:3px; }
+.skip-link { position:fixed;top:.75rem;left:.75rem;z-index:200;transform:translateY(-160%);border:1px solid var(--brand-primary);border-radius:var(--radius-xs);background:var(--bg-primary);padding:.7rem 1rem;color:var(--text-primary);font-weight:800;transition:transform var(--transition-fast); }
+.skip-link:focus { transform:translateY(0); }
 ::selection { background: rgba(216, 173, 87, .35); color: #fff; }
 
 @layer components {

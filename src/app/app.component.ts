@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { AuthService } from './core/services/auth.service';
+import { SeoService } from './core/services/seo.service';
 
 @Component({
   selector: 'app-root',
@@ -10,5 +11,7 @@ export class AppComponent {
   title = 'Cumbre20';
   readonly authLoading$ = this.auth.loading$;
 
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService, seo: SeoService) {
+    seo.start();
+  }
 }

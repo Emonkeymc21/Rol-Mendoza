@@ -5,7 +5,7 @@
     </aside>
 
     <div class="register-form-column">
-      <a routerLink="/" class="auth-brand"><img src="assets/cumbre20-logo.svg" alt=""><span>Cumbre<strong>20</strong></span></a>
+      <a routerLink="/" class="auth-brand"><img src="assets/cumbre20-logo.svg" alt="" aria-hidden="true"><span>Cumbre<strong>20</strong></span></a>
       <div class="register-form-inner">
         <div class="register-heading"><span class="step-number">01</span><div><span class="eyebrow">Primero, tu cuenta</span><h2>Creá tu acceso</h2><p>Tus credenciales y tu perfil son administrados de forma segura con Firebase.</p></div></div>
         <button type="button" class="google-button" (click)="registerWithGoogle()" [disabled]="googleSaving || saving"><span class="google-mark" aria-hidden="true">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>

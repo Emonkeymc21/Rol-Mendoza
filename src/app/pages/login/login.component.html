@@ -5,10 +5,10 @@
     </div>
 
     <div class="auth-form-column">
-      <a routerLink="/" class="auth-brand"><img src="assets/cumbre20-logo.svg" alt=""><span>Cumbre<strong>20</strong></span></a>
+      <a routerLink="/" class="auth-brand"><img src="assets/cumbre20-logo.svg" alt="" aria-hidden="true"><span>Cumbre<strong>20</strong></span></a>
       <div class="auth-form-inner">
         <span class="eyebrow">Tu cuenta</span><h2>Ingresar</h2><p>Usá la cuenta con la que te registraste en Cumbre20.</p>
-        <button type="button" class="google-button" (click)="loginWithGoogle()" [disabled]="googleSaving || saving"><span class="google-mark">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
+        <button type="button" class="google-button" (click)="loginWithGoogle()" [disabled]="googleSaving || saving"><span class="google-mark" aria-hidden="true">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
         <div class="auth-divider"><span></span>o con correo<span></span></div>
         <form [formGroup]="form" (ngSubmit)="login()" class="space-y-5">
           <label class="block"><span class="field-label">Correo electrónico</span><input type="email" class="input-field" formControlName="email" autocomplete="email"></label>
