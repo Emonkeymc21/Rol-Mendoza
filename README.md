@@ -20,7 +20,7 @@ No se utiliza Google Forms ni existe chat interno.
 - Contacto privado en `userPrivate/{uid}`.
 - WhatsApp normalizado al formato argentino `549 + código de área + número`.
 - Instagram normalizado a un username limpio.
-- Contactos visibles únicamente para usuarios autenticados con rol `DM` o `BOTH`.
+- Contactos privados y visibles únicamente entre el jugador y el DM después de aceptar una solicitud; el rol `DM` o `BOTH` por sí solo no concede acceso.
 - Bloqueo reversible que oculta mutuamente los perfiles en la aplicación y protege los contactos en Firestore.
 - Matching por ciudad, sistemas, modalidad y frecuencia.
 - Migración progresiva: un usuario anterior sin `profileCompleted` vuelve al onboarding.

@@ -1,7 +1,7 @@
 <section class="register-page">
   <div class="register-layout">
     <aside class="register-art">
-      <div class="register-art-copy"><span class="eyebrow">Sumate a la comunidad</span><h1>Las historias necesitan personas.</h1><p>Después del registro vas a completar tu perfil dentro de Cumbre20, sin formularios externos.</p><div class="next-step"><span>02</span><div><strong>Completá tu perfil</strong><small>Rol, sistemas, modalidad, horarios y medios de contacto.</small></div></div></div>
+      <div class="register-art-copy"><span class="eyebrow">Sumate a la comunidad</span><h1>Las historias necesitan personas.</h1><p>Después del registro vas a completar tu perfil dentro de Cumbre20, sin formularios externos.</p><div class="next-step"><span>02</span><div><strong>Completá tu perfil</strong><small>Rol, sistemas, modalidad, horarios y un medio de contacto privado.</small></div></div></div>
     </aside>
 
     <div class="register-form-column">
@@ -17,6 +17,7 @@
           <label class="sm:col-span-2"><span class="field-label">Correo electrónico *</span><input type="email" class="input-field" formControlName="email" autocomplete="email" placeholder="tu@email.com"><span *ngIf="invalid('email')" class="error-text">Ingresá un correo válido.</span></label>
           <label><span class="field-label">Contraseña *</span><input type="password" class="input-field" formControlName="password" autocomplete="new-password"><span *ngIf="invalid('password')" class="error-text">Mínimo 6 caracteres.</span></label>
           <label><span class="field-label">Repetir contraseña *</span><input type="password" class="input-field" formControlName="confirmPassword" autocomplete="new-password"><span *ngIf="invalid('confirmPassword')" class="error-text">Repetí la contraseña.</span></label>
+          <div class="sm:col-span-2 border-l-2 border-gold/50 bg-black/15 p-4 text-sm leading-6 text-mist"><strong class="text-parchment">Tu teléfono no será público.</strong> Al completar tu perfil podrás elegir WhatsApp o Instagram. Ese dato no aparece en búsquedas ni perfiles y sólo se habilita entre un jugador y el DM cuando la solicitud para una partida fue aceptada.</div>
           <label class="terms-field sm:col-span-2"><input type="checkbox" formControlName="terms"><span>Acepto los <a routerLink="/terminos" target="_blank" (click)="$event.stopPropagation()">Términos y Condiciones</a> y la <a routerLink="/privacidad" target="_blank" (click)="$event.stopPropagation()">Política de Privacidad</a>, incluidas las reglas de convivencia de Cumbre20.</span></label>
           <p *ngIf="errorMessage" class="sm:col-span-2 feedback-error" role="alert">{{ errorMessage }}</p><p *ngIf="successMessage" class="sm:col-span-2 feedback-success" role="status">{{ successMessage }}</p>
           <button type="submit" class="btn-primary sm:col-span-2" [disabled]="saving || googleSaving">{{ saving ? 'Creando cuenta…' : 'Crear cuenta y completar perfil' }}</button>
