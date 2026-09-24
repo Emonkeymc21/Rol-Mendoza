@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Disallow: /completar-perfil
+Disallow: /editar-perfil
+Disallow: /ingresar
+Disallow: /jugadores
+Disallow: /mi-cuenta
+Disallow: /mis-partidas
+Disallow: /mis-solicitudes
+Disallow: /notificaciones
+Disallow: /partidas
+Disallow: /perfil
+Disallow: /registrarme
+Disallow: /registro
+Disallow: /solicitudes
+
+Sitemap: https://rol-mendoza-2026.vercel.app/sitemap.xml
