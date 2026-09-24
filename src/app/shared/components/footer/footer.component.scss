@@ -16,4 +16,5 @@ a { color:var(--text-secondary);transition:color .2s ease; } a:hover { color:var
 .social-coming small { color:var(--text-muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em; }
 .footer-bottom { border-top:1px solid var(--border); }
 .footer-bottom > div { display:flex;flex-direction:column;gap:.2rem;padding-top:1.15rem;padding-bottom:1.15rem;color:var(--text-muted);font-size:.78rem; }
+.footer-bottom nav { display:flex;flex-direction:row;gap:1rem; }
 @media(min-width:640px){.footer-grid{grid-template-columns:1.5fr 1fr 1fr 1fr}.footer-bottom>div{flex-direction:row;justify-content:space-between;}}

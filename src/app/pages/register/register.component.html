@@ -9,6 +9,7 @@
       <div class="register-form-inner">
         <div class="register-heading"><span class="step-number">01</span><div><span class="eyebrow">Primero, tu cuenta</span><h2>Creá tu acceso</h2><p>Tus credenciales y tu perfil son administrados de forma segura con Firebase.</p></div></div>
         <button type="button" class="google-button" (click)="registerWithGoogle()" [disabled]="googleSaving || saving"><span class="google-mark" aria-hidden="true">G</span>{{ googleSaving ? 'Conectando…' : 'Continuar con Google' }}</button>
+        <p class="provider-terms">Al continuar con Google aceptás los <a routerLink="/terminos" target="_blank">Términos y Condiciones</a> y la <a routerLink="/privacidad" target="_blank">Política de Privacidad</a>.</p>
         <div class="auth-divider"><span></span>o con correo<span></span></div>
 
         <form [formGroup]="form" (ngSubmit)="register()" class="grid gap-5 sm:grid-cols-2">
@@ -16,7 +17,7 @@
           <label class="sm:col-span-2"><span class="field-label">Correo electrónico *</span><input type="email" class="input-field" formControlName="email" autocomplete="email" placeholder="tu@email.com"><span *ngIf="invalid('email')" class="error-text">Ingresá un correo válido.</span></label>
           <label><span class="field-label">Contraseña *</span><input type="password" class="input-field" formControlName="password" autocomplete="new-password"><span *ngIf="invalid('password')" class="error-text">Mínimo 6 caracteres.</span></label>
           <label><span class="field-label">Repetir contraseña *</span><input type="password" class="input-field" formControlName="confirmPassword" autocomplete="new-password"><span *ngIf="invalid('confirmPassword')" class="error-text">Repetí la contraseña.</span></label>
-          <label class="terms-field sm:col-span-2"><input type="checkbox" formControlName="terms"><span>Acepto las reglas de convivencia y entiendo que el equipo puede intervenir ante denuncias o conductas que afecten a la comunidad.</span></label>
+          <label class="terms-field sm:col-span-2"><input type="checkbox" formControlName="terms"><span>Acepto los <a routerLink="/terminos" target="_blank" (click)="$event.stopPropagation()">Términos y Condiciones</a> y la <a routerLink="/privacidad" target="_blank" (click)="$event.stopPropagation()">Política de Privacidad</a>, incluidas las reglas de convivencia de Cumbre20.</span></label>
           <p *ngIf="errorMessage" class="sm:col-span-2 feedback-error" role="alert">{{ errorMessage }}</p><p *ngIf="successMessage" class="sm:col-span-2 feedback-success" role="status">{{ successMessage }}</p>
           <button type="submit" class="btn-primary sm:col-span-2" [disabled]="saving || googleSaving">{{ saving ? 'Creando cuenta…' : 'Crear cuenta y completar perfil' }}</button>
         </form>

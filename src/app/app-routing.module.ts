@@ -22,6 +22,7 @@ import { AboutComponent } from './pages/about/about.component';
 import { MyRequestsComponent } from './pages/my-requests/my-requests.component';
 import { DmRequestsComponent } from './pages/dm-requests/dm-requests.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
+import { LegalComponent } from './pages/legal/legal.component';
 
 const privatePage = { robots: 'noindex,nofollow' };
 
@@ -39,6 +40,8 @@ const routes: Routes = [
   { path: 'partidas/:id', component: GameDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Detalle de partida | Cumbre20', data: privatePage },
   { path: 'como-funciona', component: HowItWorksComponent, title: 'Cómo funciona | Cumbre20', data: { description: 'Descubrí cómo crear tu perfil, encontrar una mesa de rol o publicar una partida en Cumbre20.' } },
   { path: 'nosotros', component: AboutComponent, title: 'Nosotros | Cumbre20', data: { description: 'Cumbre20 es una herramienta que ayuda a conectar jugadores, másters, partidas y espacios de rol que ya existen en Mendoza.' } },
+  { path: 'privacidad', component: LegalComponent, title: 'Política de Privacidad | Cumbre20', data: { legalDocument: 'privacy', description: 'Conocé qué datos utiliza Cumbre20, para qué los necesita y cómo protegemos tu privacidad.' } },
+  { path: 'terminos', component: LegalComponent, title: 'Términos y Condiciones | Cumbre20', data: { legalDocument: 'terms', description: 'Condiciones de uso de Cumbre20 para jugadores, másters y personas que buscan una mesa de rol en Mendoza.' } },
   { path: 'registrarme', component: RegisterComponent, canActivate: [GuestGuard], title: 'Sumate | Cumbre20', data: privatePage },
   { path: 'registro', redirectTo: 'registrarme', pathMatch: 'full' },
   { path: 'ingresar', component: LoginComponent, canActivate: [GuestGuard], title: 'Ingresar | Cumbre20', data: privatePage },

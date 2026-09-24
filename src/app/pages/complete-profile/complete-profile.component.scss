@@ -24,6 +24,7 @@
 .consent-box input { width:1.15rem;height:1.15rem;margin-top:.2rem;flex:0 0 auto;accent-color:var(--brand-primary); }
 .consent-box strong, .consent-box small { display:block; }
 .consent-box small { margin-top:.45rem;color:var(--text-secondary);line-height:1.55; }
+.consent-box a { color:var(--brand-secondary);font-weight:750;text-decoration:underline;text-underline-offset:2px; }
 @keyframes step-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 @media(max-width:639px){.stepper small{display:none}.stepper button{min-height:60px;padding:.5rem}.stepper span{width:1.7rem;height:1.7rem}}
 @media(min-width:640px){.avatar-picker{grid-template-columns:repeat(4,minmax(0,1fr));gap:.7rem}.avatar-picker label>span{min-height:136px;padding:.7rem}.avatar-picker strong{font-size:.78rem}.avatar-picker small{display:block}}

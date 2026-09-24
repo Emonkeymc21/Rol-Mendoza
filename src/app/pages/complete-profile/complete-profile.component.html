@@ -64,7 +64,7 @@
             </label>
           </div>
 
-          <label class="consent-box mt-6"><input type="checkbox" formControlName="privacyConsent"><span><strong>Acepto compartir mis datos de contacto con usuarios autorizados.</strong><small>Acepto que WhatsApp y, si lo proporciono, Instagram o teléfono alternativo puedan ser visualizados por usuarios registrados con rol DM o Ambos para organizar partidas. Instagram nunca es obligatorio. Podré bloquear usuarios y modificar o eliminar estos datos desde mi perfil.</small></span></label>
+          <label class="consent-box mt-6"><input type="checkbox" formControlName="privacyConsent"><span><strong>Acepto compartir mis datos de contacto con usuarios autorizados.</strong><small>Acepto que WhatsApp y, si lo proporciono, Instagram o teléfono alternativo puedan ser visualizados por usuarios registrados con rol DM o Ambos para organizar partidas. Instagram nunca es obligatorio. Podré bloquear usuarios y modificar o eliminar estos datos desde mi perfil. <a routerLink="/privacidad" target="_blank" (click)="$event.stopPropagation()">Ver Política de Privacidad</a>.</small></span></label>
           <span *ngIf="invalid('privacyConsent')" class="error-text">Necesitamos tu consentimiento para completar el perfil.</span>
         </section>
 

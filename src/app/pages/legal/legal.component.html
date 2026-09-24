@@ -1,0 +1,106 @@
+<header class="legal-hero">
+  <div class="page-shell legal-hero__inner">
+    <span class="eyebrow">Información de Cumbre20</span>
+    <h1 class="section-title">{{ document === 'privacy' ? 'Política de Privacidad' : 'Términos y Condiciones' }}</h1>
+    <p>{{ document === 'privacy' ? 'Qué datos usamos, por qué los necesitamos y quién puede verlos.' : 'Las reglas básicas para usar Cumbre20 de forma clara, segura y responsable.' }}</p>
+    <small>Última actualización: 24 de septiembre de 2026</small>
+  </div>
+</header>
+
+<main class="section-space legal-page">
+  <div class="page-shell legal-layout">
+    <nav class="legal-index" aria-label="Documentos legales">
+      <span>Documentos</span>
+      <a routerLink="/privacidad" routerLinkActive="active">Privacidad</a>
+      <a routerLink="/terminos" routerLinkActive="active">Términos y condiciones</a>
+    </nav>
+
+    <article *ngIf="document === 'privacy'; else termsDocument" class="legal-content">
+      <section>
+        <h2>1. Alcance</h2>
+        <p>Cumbre20 es una herramienta para conectar jugadores, másters y partidas de rol en Mendoza. Esta política explica el tratamiento de los datos que proporcionás al crear una cuenta, completar tu perfil y utilizar las funciones del sitio.</p>
+      </section>
+      <section>
+        <h2>2. Datos que utilizamos</h2>
+        <ul>
+          <li><strong>Cuenta:</strong> identificador de Firebase, correo electrónico y método de acceso.</li>
+          <li><strong>Perfil público:</strong> nombre, emblema, rol, localidad, experiencia, preferencias, disponibilidad y descripción.</li>
+          <li><strong>Contacto privado:</strong> WhatsApp y, si decidís agregarlos, Instagram o teléfono alternativo.</li>
+          <li><strong>Actividad:</strong> partidas publicadas, solicitudes, participantes, notificaciones, bloqueos y estados necesarios para operar la plataforma.</li>
+          <li><strong>Datos técnicos esenciales:</strong> preferencia de tema, sesión autenticada y datos temporales de compatibilidad o rendimiento guardados por el navegador.</li>
+        </ul>
+        <p>Cumbre20 no solicita ni almacena contraseñas fuera de Firebase Authentication.</p>
+      </section>
+      <section>
+        <h2>3. Para qué usamos los datos</h2>
+        <p>Los usamos para autenticar tu cuenta, mostrar tu perfil a la comunidad registrada, ayudarte a encontrar personas y partidas, administrar solicitudes y cupos, habilitar contactos autorizados, prevenir abusos y mantener el funcionamiento técnico del sitio.</p>
+      </section>
+      <section>
+        <h2>4. Visibilidad y contacto</h2>
+        <p>Tu perfil comunitario puede ser consultado por personas registradas con perfil completo. Los datos de contacto se guardan por separado y sólo se entregan cuando las reglas de acceso vigentes lo permiten, por ejemplo a perfiles DM/Ambos o entre participantes y másters vinculados a una solicitud aceptada. Los bloqueos y el consentimiento vigente también se respetan.</p>
+        <p>No vendemos datos personales ni los utilizamos para publicidad comportamental.</p>
+      </section>
+      <section>
+        <h2>5. Servicios utilizados</h2>
+        <p>Cumbre20 utiliza Firebase Authentication y Firestore para cuentas, perfiles e interacciones; Google Sheets y Google Apps Script para administrar partidas; y Vercel para publicar la aplicación. Cada proveedor puede procesar información técnica necesaria para prestar su servicio conforme a sus propias políticas.</p>
+      </section>
+      <section>
+        <h2>6. Almacenamiento local y cookies</h2>
+        <p>El sitio utiliza almacenamiento del navegador para conservar la sesión administrada por Firebase, recordar el tema visual y evitar comprobaciones técnicas repetidas. Actualmente no utilizamos cookies publicitarias ni herramientas de analítica propias con fines de seguimiento. Si esto cambia, actualizaremos esta política y aplicaremos el mecanismo de consentimiento que corresponda.</p>
+      </section>
+      <section>
+        <h2>7. Tus opciones</h2>
+        <p>Podés editar tu perfil, cambiar su información, bloquear personas y eliminar tus datos de contacto desde las opciones disponibles. Para solicitar acceso, corrección o eliminación de otros datos de tu cuenta, podés comunicarte mediante el canal oficial de Cumbre20 publicado en este sitio.</p>
+      </section>
+      <section>
+        <h2>8. Seguridad y conservación</h2>
+        <p>Aplicamos autenticación, reglas de acceso y separación entre información pública y privada. Conservamos los datos mientras sean necesarios para prestar el servicio, cumplir obligaciones aplicables o resolver incidentes. Ningún sistema es infalible: si detectás un acceso indebido, te pedimos que lo informes por el canal oficial.</p>
+      </section>
+      <section>
+        <h2>9. Cambios y contacto</h2>
+        <p>Podemos actualizar esta política cuando cambien las funciones o los proveedores. Indicaremos la fecha de la última modificación. Para consultas sobre privacidad, escribinos por el <a href="https://www.instagram.com/cumbre20.mza/" target="_blank" rel="noopener noreferrer">Instagram oficial de Cumbre20</a>.</p>
+      </section>
+    </article>
+
+    <ng-template #termsDocument>
+      <article class="legal-content">
+        <section>
+          <h2>1. Propósito del servicio</h2>
+          <p>Cumbre20 conecta personas, partidas y espacios de rol que ya existen en Mendoza. No organiza ni dirige las mesas publicadas y no reemplaza los acuerdos particulares entre jugadores, másters, grupos o lugares de juego.</p>
+        </section>
+        <section>
+          <h2>2. Cuenta y perfil</h2>
+          <p>Debés proporcionar información auténtica y mantenerla actualizada. Sos responsable de proteger el acceso a tu cuenta y de informar cualquier uso no autorizado. No podés suplantar personas, crear perfiles engañosos ni utilizar datos de terceros sin autorización.</p>
+        </section>
+        <section>
+          <h2>3. Convivencia</h2>
+          <p>Al usar Cumbre20 te comprometés a tratar a las demás personas con respeto. No se permite acoso, discriminación, amenazas, contenido ilegal, spam, fraude ni el uso de la plataforma para fines ajenos a la búsqueda y organización legítima de partidas de rol.</p>
+        </section>
+        <section>
+          <h2>4. Partidas y solicitudes</h2>
+          <p>Las partidas se publican automáticamente bajo responsabilidad de quien las crea. El máster debe mantener correctos sus datos, cupos y estado. Enviar una solicitud no garantiza ingreso: la incorporación ocurre cuando el máster la acepta. Cada mesa define sus propios acuerdos, horarios, sistema, expectativas y herramientas de cuidado.</p>
+        </section>
+        <section>
+          <h2>5. Contacto y encuentros</h2>
+          <p>Los medios de contacto se habilitan según los permisos de la plataforma. No debés copiar, difundir ni utilizar esos datos fuera del propósito de coordinar partidas. Cada persona es responsable de evaluar sus interacciones y de tomar precauciones razonables al encontrarse presencialmente o utilizar servicios externos.</p>
+        </section>
+        <section>
+          <h2>6. Contenido</h2>
+          <p>Conservás la responsabilidad sobre el contenido que publicás. Debés contar con derecho para compartirlo y evitar material que infrinja propiedad intelectual, privacidad u otras normas. Al publicarlo, autorizás su visualización dentro de Cumbre20 en la medida necesaria para prestar el servicio.</p>
+        </section>
+        <section>
+          <h2>7. Moderación</h2>
+          <p>Cumbre20 puede limitar, ocultar o retirar contenido y restringir cuentas cuando resulte necesario para proteger a las personas, cumplir la ley o preservar el funcionamiento de la plataforma. Esto no convierte a Cumbre20 en responsable de supervisar previamente cada perfil, partida o interacción.</p>
+        </section>
+        <section>
+          <h2>8. Disponibilidad</h2>
+          <p>Trabajamos para mantener el sitio disponible y seguro, pero no garantizamos funcionamiento ininterrumpido ni que siempre haya partidas compatibles. Podemos realizar mantenimiento o modificar aspectos técnicos sin alterar injustificadamente los derechos de las personas usuarias.</p>
+        </section>
+        <section>
+          <h2>9. Cambios y contacto</h2>
+          <p>Podemos actualizar estos términos cuando evolucione Cumbre20. La versión vigente se publicará en esta página con su fecha. Si no estás de acuerdo, podés dejar de utilizar el servicio. Para consultas, escribinos por el <a href="https://www.instagram.com/cumbre20.mza/" target="_blank" rel="noopener noreferrer">Instagram oficial de Cumbre20</a>.</p>
+        </section>
+      </article>
+    </ng-template>
+  </div>
+</main>
