@@ -1,0 +1,67 @@
+.legal-hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(112deg, #130e10 0%, #1d1518 62%, #35131d 100%);
+  color: #f1e8d5;
+}
+
+.legal-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: url('/assets/branding/map-mendoza.svg') right 38%/min(48rem, 68vw) auto no-repeat;
+  opacity: .13;
+}
+
+.legal-hero__inner {
+  position: relative;
+  z-index: 1;
+  padding-top: clamp(4rem, 8vw, 7rem);
+  padding-bottom: clamp(3rem, 6vw, 5rem);
+}
+
+.legal-hero h1 {
+  margin-top: 1rem;
+  color: #f1e8d5;
+  font-size: clamp(2.2rem, 5vw, 4.8rem);
+}
+
+.legal-hero p {
+  max-width: 43rem;
+  margin-top: 1rem;
+  color: #c8bcba;
+  font-family: Alegreya, Georgia, serif;
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+}
+
+.legal-hero small { display: block; margin-top: 1.25rem; color: #92878a; }
+.legal-layout { display: grid; gap: clamp(2.5rem, 7vw, 6rem); align-items: start; }
+
+.legal-index {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  border-top: 1px solid var(--brand-border);
+  padding-top: 1rem;
+}
+
+.legal-index span { margin-bottom: .5rem; color: var(--text-muted); font-size: .7rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.legal-index a { border-left: 2px solid transparent; padding: .55rem .75rem; color: var(--text-secondary); font-weight: 700; transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast); }
+.legal-index a:hover { color: var(--text-primary); }
+.legal-index a.active { border-left-color: var(--brand-primary); background: var(--brand-soft); color: var(--brand-secondary); }
+.legal-content { max-width: 48rem; }
+.legal-content section { padding: 0 0 2rem; }
+.legal-content section + section { border-top: 1px solid var(--border); padding-top: 2rem; }
+.legal-content h2 { color: var(--text-primary); font-family: Cinzel, Georgia, serif; font-size: clamp(1.15rem, 2vw, 1.45rem); font-weight: 700; line-height: 1.35; }
+.legal-content p, .legal-content li { color: var(--text-secondary); line-height: 1.8; }
+.legal-content p { margin-top: .8rem; }
+.legal-content ul { display: grid; gap: .6rem; margin-top: .9rem; padding-left: 1.25rem; list-style: disc; }
+.legal-content strong { color: var(--text-primary); }
+.legal-content a { color: var(--brand-secondary); text-decoration: underline; text-underline-offset: 3px; }
+
+@media (min-width: 820px) {
+  .legal-layout { grid-template-columns: minmax(11rem, 14rem) minmax(0, 1fr); }
+  .legal-index { position: sticky; top: 7rem; }
+}
