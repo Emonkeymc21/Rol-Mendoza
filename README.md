@@ -91,7 +91,7 @@ contactGrants/{uid}/viewers/{uid}      acceso de contacto entre integrantes acep
 users/{uid}/notifications/{id}      notificaciones privadas del usuario
 ```
 
-`userPrivate` no admite consultas de lista. Un tercero solo puede leer un documento concreto si posee un perfil completo con rol `DM` o `BOTH`, o si Apps Script creó un permiso por participación aceptada. También deben existir consentimiento y ausencia de bloqueo en ambas direcciones.
+`userPrivate` no admite consultas de lista. Un tercero sólo puede leer un documento concreto si Apps Script creó un permiso recíproco en `contactGrants` después de aceptar una solicitud. El rol `DM` o `BOTH` por sí solo no permite ver contactos. También deben existir consentimiento vigente, perfiles completos y ausencia de bloqueo en ambas direcciones.
 
 Los documentos antiguos del chat quedan completamente denegados por las reglas. Si la colección remota `conversations` no contiene información necesaria, puede eliminarse manualmente desde Firebase Console.
 

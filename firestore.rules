@@ -89,7 +89,10 @@ service cloud.firestore {
           && data.lastName.size() >= 2
           && data.city.size() >= 2
           && getAfter(/databases/$(database)/documents/userPrivate/$(userId)).data.privacyConsent == true
-          && getAfter(/databases/$(database)/documents/userPrivate/$(userId)).data.whatsappNumber is string
+          && (
+            getAfter(/databases/$(database)/documents/userPrivate/$(userId)).data.whatsappNumber.size() > 0
+            || getAfter(/databases/$(database)/documents/userPrivate/$(userId)).data.instagramUsername.size() > 0
+          )
         ));
     }
 
@@ -102,13 +105,16 @@ service cloud.firestore {
         ])
         && data.uid == userId
         && data.whatsappNumber is string
-        && data.whatsappNumber.matches('^549[0-9]{10}$')
-        && data.whatsappUrl == 'https://wa.me/' + data.whatsappNumber
+        && data.whatsappUrl is string
+        && ((data.whatsappNumber == '' && data.whatsappUrl == '')
+          || (data.whatsappNumber.matches('^549[0-9]{10}$')
+            && data.whatsappUrl == 'https://wa.me/' + data.whatsappNumber))
         && data.instagramUsername is string
         && data.instagramUsername.size() <= 30
         && data.instagramUrl is string
         && ((data.instagramUsername == '' && data.instagramUrl == '')
           || data.instagramUrl == 'https://www.instagram.com/' + data.instagramUsername + '/')
+        && (data.whatsappNumber != '' || data.instagramUsername != '')
         && data.alternatePhone is string
         && data.alternatePhone.size() <= 15
         && data.privacyConsent == true
@@ -120,8 +126,7 @@ service cloud.firestore {
         && request.auth.uid != targetUid
         && currentUserData().active == true
         && currentUserData().profileCompleted == true
-        && ((currentUserData().role == 'DM' || currentUserData().role == 'BOTH')
-          || exists(/databases/$(database)/documents/contactGrants/$(targetUid)/viewers/$(request.auth.uid)))
+        && exists(/databases/$(database)/documents/contactGrants/$(targetUid)/viewers/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(targetUid)).data.active == true
         && get(/databases/$(database)/documents/users/$(targetUid)).data.profileCompleted == true
         && resource.data.privacyConsent == true

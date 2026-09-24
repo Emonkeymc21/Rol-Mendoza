@@ -5,13 +5,10 @@
 .player-card:hover::before { opacity:.8; }
 .player-card-name { display:-webkit-box;min-width:0;overflow:hidden;overflow-wrap:anywhere;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.14; }
 .match-badge { flex:0 0 auto;border-left:1px solid var(--brand-border);padding:.2rem 0 .2rem .55rem;color:var(--brand-secondary);font-size:.66rem;font-weight:850; }
-.player-card-contact { border-top:1px solid var(--border); }
 .bio-toggle { display:inline-flex;min-height:32px;align-items:center;gap:.3rem;align-self:flex-start;margin-top:.5rem;color:var(--brand-secondary);font-size:.75rem;font-weight:800;transition:color .2s ease; }
 .bio-toggle:hover { color:var(--brand-primary); }
 .bio-toggle app-icon { transition:transform .2s ease; }
 .bio-toggle[aria-expanded='true'] app-icon { transform:rotate(180deg); }
-.contact-mini { display:inline-flex;min-height:38px;align-items:center;gap:.4rem;border-bottom:1px solid var(--border);padding:.5rem .1rem;color:var(--text-primary);font-size:.72rem;font-weight:800;transition:border-color .2s ease,color .2s ease; }
-.contact-mini:hover { border-color:var(--brand-primary);color:var(--brand-secondary); }
 .player-card-action { display:flex;min-height:44px;align-items:center;justify-content:space-between;margin-top:1.2rem;border-top:1px solid var(--border);padding-top:1rem;color:var(--text-primary);font-size:.75rem;font-weight:850;letter-spacing:.07em;text-transform:uppercase;transition:color .2s ease; }
 .player-card-action:hover { color:var(--brand-secondary); }
 .player-card-action app-icon { transition:transform .2s ease; }

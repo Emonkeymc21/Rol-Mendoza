@@ -117,7 +117,7 @@ export class ProfileService {
     ]);
     return this.isComplete(profile)
       && privateProfile?.privacyConsent === true
-      && Boolean(privateProfile.whatsappNumber);
+      && Boolean(privateProfile.whatsappNumber || privateProfile.instagramUsername);
   }
 
   watchProfiles(): Observable<UserProfile[]> {
@@ -190,10 +190,11 @@ export class ProfileService {
   async saveProfile(input: ProfileInput): Promise<void> {
     const user = this.requireUser();
     const { api, database } = await this.loadFirestore();
-    const whatsapp = this.contacts.normalizeWhatsapp(input.whatsapp);
+    const whatsapp = input.whatsapp ? this.contacts.normalizeWhatsapp(input.whatsapp) : null;
     const instagram = input.instagram ? this.contacts.normalizeInstagram(input.instagram) : null;
-    if (!whatsapp) throw new Error('Ingresá un WhatsApp válido de Argentina con código de área.');
+    if (input.whatsapp && !whatsapp) throw new Error('Ingresá un WhatsApp válido de Argentina con código de área.');
     if (input.instagram && !instagram) throw new Error('Ingresá un usuario de Instagram válido.');
+    if (!whatsapp && !instagram) throw new Error('Elegí al menos un medio de contacto: WhatsApp o Instagram.');
     if (!input.privacyConsent) throw new Error('Debés aceptar las condiciones de privacidad.');
     const bio = input.preferences.bio.trim();
     if (bio.length < 50) throw new Error('Contanos un poco más sobre vos. La descripción debe tener al menos 50 caracteres.');
@@ -233,8 +234,8 @@ export class ProfileService {
 
     batch.set(privateRef, {
       uid: user.uid,
-      whatsappNumber: whatsapp.value,
-      whatsappUrl: whatsapp.url,
+      whatsappNumber: whatsapp?.value || '',
+      whatsappUrl: whatsapp?.url || '',
       instagramUsername: instagram?.value || '',
       instagramUrl: instagram?.url || '',
       alternatePhone: this.contacts.normalizeAlternatePhone(input.alternatePhone),
@@ -323,10 +324,6 @@ export class ProfileService {
       && profile.preferences.bio.trim().length >= 50
       && profile.preferences.bio.length <= 500
     );
-  }
-
-  canViewContacts(profile: UserProfile | null): boolean {
-    return profile?.role === 'DM' || profile?.role === 'BOTH';
   }
 
   private mapPublic(data: DocumentData): UserProfile {

@@ -56,7 +56,7 @@ export class AccountComponent implements OnInit {
   }
 
   async deleteContactData(): Promise<void> {
-    if (!window.confirm('¿Eliminar tus datos de contacto? Tu perfil quedará incompleto hasta que vuelvas a cargar un WhatsApp y aceptar las condiciones.')) return;
+    if (!window.confirm('¿Eliminar tus datos de contacto? Tu perfil quedará incompleto hasta que vuelvas a cargar WhatsApp o Instagram y aceptar las condiciones.')) return;
     this.deletingContact = true;
     try {
       await this.profiles.deleteOwnContactData();

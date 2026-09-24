@@ -26,7 +26,7 @@
           <section class="account-section mt-7">
             <h2 class="font-display text-xl font-bold">Contacto guardado</h2>
             <dl class="mt-4 space-y-3 text-sm"><div><dt class="text-mist">WhatsApp</dt><dd class="font-semibold">{{ privateProfile?.whatsappNumber || 'Sin cargar' }}</dd></div><div *ngIf="privateProfile?.instagramUsername"><dt class="text-mist">Instagram</dt><dd class="font-semibold">@{{ privateProfile?.instagramUsername }}</dd></div><div *ngIf="privateProfile?.alternatePhone"><dt class="text-mist">Teléfono alternativo</dt><dd class="font-semibold">{{ privateProfile?.alternatePhone }}</dd></div></dl>
-            <p class="mt-4 text-xs leading-5 text-mist">Estos datos solamente pueden ser consultados por usuarios autenticados con rol DM o Ambos que no estén bloqueados.</p>
+            <p class="mt-4 text-xs leading-5 text-mist">Estos datos permanecen privados. Sólo se habilitan entre vos y el máster cuando una solicitud para una partida fue aceptada, siempre que no exista un bloqueo.</p>
             <button type="button" class="mt-4 text-sm font-bold text-red-200 hover:text-red-100" (click)="deleteContactData()" [disabled]="deletingContact">{{ deletingContact ? 'Eliminando…' : 'Eliminar mis datos de contacto' }}</button>
           </section>
           <section class="account-section mt-7">
