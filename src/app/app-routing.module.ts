@@ -23,29 +23,31 @@ import { MyRequestsComponent } from './pages/my-requests/my-requests.component';
 import { DmRequestsComponent } from './pages/dm-requests/dm-requests.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
 
+const privatePage = { robots: 'noindex,nofollow' };
+
 const routes: Routes = [
-  { path: '', component: HomeComponent, title: 'Cumbre20 | Encontrá tu próxima mesa' },
-  { path: 'jugadores', component: PlayersComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Jugadores y másters | Cumbre20' },
-  { path: 'jugadores/:id', component: PlayerDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Perfil | Cumbre20' },
-  { path: 'partidas', component: GamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Partidas disponibles | Cumbre20' },
-  { path: 'partidas/nueva', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Crear una partida | Cumbre20' },
-  { path: 'mis-partidas', component: MyGamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis partidas | Cumbre20' },
-  { path: 'mis-solicitudes', component: MyRequestsComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis solicitudes | Cumbre20' },
-  { path: 'solicitudes', component: DmRequestsComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Solicitudes de jugadores | Cumbre20' },
-  { path: 'notificaciones', component: NotificationsComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Notificaciones | Cumbre20' },
-  { path: 'mis-partidas/:id/editar', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar partida | Cumbre20' },
-  { path: 'partidas/:id', component: GameDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Detalle de partida | Cumbre20' },
-  { path: 'como-funciona', component: HowItWorksComponent, title: 'Cómo funciona | Cumbre20' },
-  { path: 'nosotros', component: AboutComponent, title: 'Nosotros | Cumbre20' },
-  { path: 'registrarme', component: RegisterComponent, canActivate: [GuestGuard], title: 'Sumate | Cumbre20' },
+  { path: '', component: HomeComponent, title: 'Cumbre20 | Encontrá tu próxima mesa', data: { description: 'Encontrá y organizá mesas de rol en Mendoza. Cumbre20 conecta jugadores, másters y partidas sin reemplazar los espacios que ya existen.' } },
+  { path: 'jugadores', component: PlayersComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Jugadores y másters | Cumbre20', data: privatePage },
+  { path: 'jugadores/:id', component: PlayerDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Perfil | Cumbre20', data: privatePage },
+  { path: 'partidas', component: GamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Partidas disponibles | Cumbre20', data: privatePage },
+  { path: 'partidas/nueva', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Crear una partida | Cumbre20', data: privatePage },
+  { path: 'mis-partidas', component: MyGamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis partidas | Cumbre20', data: privatePage },
+  { path: 'mis-solicitudes', component: MyRequestsComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis solicitudes | Cumbre20', data: privatePage },
+  { path: 'solicitudes', component: DmRequestsComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Solicitudes de jugadores | Cumbre20', data: privatePage },
+  { path: 'notificaciones', component: NotificationsComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Notificaciones | Cumbre20', data: privatePage },
+  { path: 'mis-partidas/:id/editar', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar partida | Cumbre20', data: privatePage },
+  { path: 'partidas/:id', component: GameDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Detalle de partida | Cumbre20', data: privatePage },
+  { path: 'como-funciona', component: HowItWorksComponent, title: 'Cómo funciona | Cumbre20', data: { description: 'Descubrí cómo crear tu perfil, encontrar una mesa de rol o publicar una partida en Cumbre20.' } },
+  { path: 'nosotros', component: AboutComponent, title: 'Nosotros | Cumbre20', data: { description: 'Cumbre20 es una herramienta que ayuda a conectar jugadores, másters, partidas y espacios de rol que ya existen en Mendoza.' } },
+  { path: 'registrarme', component: RegisterComponent, canActivate: [GuestGuard], title: 'Sumate | Cumbre20', data: privatePage },
   { path: 'registro', redirectTo: 'registrarme', pathMatch: 'full' },
-  { path: 'ingresar', component: LoginComponent, canActivate: [GuestGuard], title: 'Ingresar | Cumbre20' },
-  { path: 'completar-perfil', component: CompleteProfileComponent, canActivate: [AuthGuard, IncompleteProfileGuard], title: 'Completar perfil | Cumbre20' },
-  { path: 'perfil/editar', component: CompleteProfileComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar perfil | Cumbre20' },
+  { path: 'ingresar', component: LoginComponent, canActivate: [GuestGuard], title: 'Ingresar | Cumbre20', data: privatePage },
+  { path: 'completar-perfil', component: CompleteProfileComponent, canActivate: [AuthGuard, IncompleteProfileGuard], title: 'Completar perfil | Cumbre20', data: privatePage },
+  { path: 'perfil/editar', component: CompleteProfileComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar perfil | Cumbre20', data: privatePage },
   { path: 'editar-perfil', redirectTo: 'perfil/editar', pathMatch: 'full' },
-  { path: 'perfil', component: AccountComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mi perfil | Cumbre20' },
+  { path: 'perfil', component: AccountComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mi perfil | Cumbre20', data: privatePage },
   { path: 'mi-cuenta', redirectTo: 'perfil', pathMatch: 'full' },
-  { path: '404', component: NotFoundComponent, title: 'Página no encontrada | Cumbre20' },
+  { path: '404', component: NotFoundComponent, title: 'Página no encontrada | Cumbre20', data: { description: 'La página que buscás no existe o cambió de ubicación.', robots: 'noindex,nofollow' } },
   { path: '**', redirectTo: '404' }
 ];
 
