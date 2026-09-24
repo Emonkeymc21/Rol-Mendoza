@@ -40,7 +40,7 @@ export class CompleteProfileComponent implements OnInit {
     otherCity: ['', Validators.maxLength(80)],
     role: ['' as CommunityRole | '', Validators.required],
     avatarClass: ['FIGHTER' as AvatarClass, Validators.required],
-    whatsapp: ['', [Validators.required, this.whatsappValidator()]],
+    whatsapp: ['', this.whatsappValidator()],
     alternatePhone: ['', Validators.maxLength(30)],
     instagram: ['', this.instagramValidator()],
     systems: ['', [Validators.required, Validators.maxLength(240)]],
@@ -51,7 +51,7 @@ export class CompleteProfileComponent implements OnInit {
     atmosphere: ['Me adapto al grupo', Validators.required],
     bio: ['', [Validators.required, Validators.minLength(50), Validators.maxLength(500)]],
     privacyConsent: [false, Validators.requiredTrue]
-  });
+  }, { validators: [this.contactMethodValidator()] });
 
   constructor(
     private fb: FormBuilder,
@@ -115,10 +115,15 @@ export class CompleteProfileComponent implements OnInit {
     return this.form.controls.bio.value.length;
   }
 
+  get contactMethodMissing(): boolean {
+    return this.form.hasError('contactMethod')
+      && (this.form.controls.whatsapp.touched || this.form.controls.instagram.touched);
+  }
+
   next(): void {
     const controls = this.controlsForStep(this.step);
     controls.forEach(control => control.markAsTouched());
-    if (controls.some(control => control.invalid)) return;
+    if (controls.some(control => control.invalid) || (this.step === 2 && this.form.hasError('contactMethod'))) return;
     this.step = Math.min(this.step + 1, this.steps.length - 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -197,10 +202,16 @@ export class CompleteProfileComponent implements OnInit {
   }
 
   private firstInvalidStep(): number {
-    return [0, 1, 2, 3].find(index => this.controlsForStep(index).some(control => control.invalid)) ?? 0;
+    return [0, 1, 2, 3].find(index =>
+      this.controlsForStep(index).some(control => control.invalid)
+      || (index === 2 && this.form.hasError('contactMethod'))
+    ) ?? 0;
   }
 
   private invalidFormMessage(): string {
+    if (this.form.hasError('contactMethod')) {
+      return 'Elegí al menos un medio de contacto: WhatsApp o Instagram.';
+    }
     const labels: Partial<Record<keyof typeof this.form.controls, string>> = {
       firstName: 'el nombre', lastName: 'el apellido', city: 'la localidad', otherCity: 'tu localidad', role: 'el rol', avatarClass: 'el emblema',
       whatsapp: 'el WhatsApp', instagram: 'Instagram', systems: 'los sistemas preferidos',
@@ -224,6 +235,14 @@ export class CompleteProfileComponent implements OnInit {
   private instagramValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null =>
       !control.value || this.contacts.normalizeInstagram(String(control.value)) ? null : { instagram: true };
+  }
+
+  private contactMethodValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const whatsapp = String(control.get('whatsapp')?.value || '').trim();
+      const instagram = String(control.get('instagram')?.value || '').trim();
+      return whatsapp || instagram ? null : { contactMethod: true };
+    };
   }
 
   private updateOtherCityValidation(): void {

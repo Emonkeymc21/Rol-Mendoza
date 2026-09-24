@@ -19,12 +19,7 @@
         </div>
         <section *ngIf="!isOwnProfile" class="contact-panel mt-7">
           <h2 class="font-display text-xl font-bold">Contacto</h2>
-          <div *ngIf="contact?.whatsappUrl || contact?.instagramUrl; else protectedContact" class="mt-4 flex flex-wrap gap-3">
-            <a *ngIf="contactWhatsappUrl() as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="btn-primary"><app-icon name="whatsapp" [size]="19"></app-icon> WhatsApp</a>
-            <a *ngIf="contact?.instagramUrl as instagram" [href]="instagram" target="_blank" rel="noopener noreferrer" class="btn-secondary"><app-icon name="instagram" [size]="19"></app-icon> Instagram</a>
-            <span *ngIf="contact?.alternatePhone" class="alternate-phone">Tel. alternativo: {{ contact?.alternatePhone }}</span>
-          </div>
-          <ng-template #protectedContact><p class="mt-3 text-sm text-mist">{{ canViewContacts ? 'Esta persona no tiene otros medios disponibles o el contacto está restringido por un bloqueo.' : 'Por privacidad, los datos de contacto solamente son visibles para cuentas con rol DM o Ambos.' }}</p></ng-template>
+          <p class="mt-3 text-sm text-mist">Los datos de contacto son privados. Se habilitan entre el jugador y el máster únicamente después de aceptar una solicitud para una partida.</p>
           <button type="button" class="mt-5 text-sm font-bold text-red-200 hover:text-red-100" (click)="block()" [disabled]="blocking">{{ blocking ? 'Bloqueando…' : 'Bloquear usuario' }}</button>
         </section>
         <p *ngIf="notice" class="feedback-error" role="alert">{{ notice }}</p>

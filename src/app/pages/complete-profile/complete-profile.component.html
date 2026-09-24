@@ -36,10 +36,11 @@
         </section>
 
         <section *ngIf="step === 2" class="step-content">
-          <div><span class="eyebrow">Paso 3</span><h2 class="mt-2 font-display text-3xl font-bold">Datos de contacto</h2><p class="mt-2 text-sm text-mist">Solo los usuarios DM o Ambos podrán solicitar estos datos.</p></div>
+          <div><span class="eyebrow">Paso 3</span><h2 class="mt-2 font-display text-3xl font-bold">Datos de contacto</h2><p class="mt-2 text-sm text-mist">Elegí WhatsApp o Instagram. Se mantendrán privados y sólo se habilitarán entre vos y el máster cuando seas aceptado en una partida.</p></div>
           <div class="mt-7 grid gap-5">
-            <label><span class="field-label">WhatsApp / celular *</span><input class="input-field" formControlName="whatsapp" inputmode="tel" autocomplete="tel" placeholder="Ej: 261 555 1234"><span *ngIf="invalid('whatsapp')" class="error-text">Usá un número argentino de 10 dígitos con código de área.</span><small *ngIf="whatsappPreview" class="preview-link">Se guardará como {{ whatsappPreview }}</small></label>
-            <label><span class="field-label">Instagram <span class="text-mist">(opcional)</span></span><input class="input-field" formControlName="instagram" autocomplete="off" placeholder="Ej: @nombre.usuario"><span *ngIf="invalid('instagram')" class="error-text">Ingresá un usuario o enlace válido de Instagram.</span><small *ngIf="instagramPreview" class="preview-link">Se guardará como {{ instagramPreview }}</small></label>
+            <label><span class="field-label">WhatsApp / celular <span class="text-mist">(opcional si usás Instagram)</span></span><input class="input-field" formControlName="whatsapp" inputmode="tel" autocomplete="tel" placeholder="Ej: 261 555 1234"><span *ngIf="invalid('whatsapp')" class="error-text">Usá un número argentino de 10 dígitos con código de área.</span><small *ngIf="whatsappPreview" class="preview-link">Se guardará como {{ whatsappPreview }}</small></label>
+            <label><span class="field-label">Instagram <span class="text-mist">(opcional si usás WhatsApp)</span></span><input class="input-field" formControlName="instagram" autocomplete="off" placeholder="Ej: @nombre.usuario"><span *ngIf="invalid('instagram')" class="error-text">Ingresá un usuario o enlace válido de Instagram.</span><small *ngIf="instagramPreview" class="preview-link">Se guardará como {{ instagramPreview }}</small></label>
+            <span *ngIf="contactMethodMissing" class="error-text">Elegí al menos un medio de contacto: WhatsApp o Instagram.</span>
             <label><span class="field-label">Teléfono alternativo <span class="text-mist">(opcional)</span></span><input class="input-field" formControlName="alternatePhone" inputmode="tel" autocomplete="tel-national"></label>
           </div>
         </section>
@@ -64,7 +65,7 @@
             </label>
           </div>
 
-          <label class="consent-box mt-6"><input type="checkbox" formControlName="privacyConsent"><span><strong>Acepto compartir mis datos de contacto con usuarios autorizados.</strong><small>Acepto que WhatsApp y, si lo proporciono, Instagram o teléfono alternativo puedan ser visualizados por usuarios registrados con rol DM o Ambos para organizar partidas. Instagram nunca es obligatorio. Podré bloquear usuarios y modificar o eliminar estos datos desde mi perfil. <a routerLink="/privacidad" target="_blank" (click)="$event.stopPropagation()">Ver Política de Privacidad</a>.</small></span></label>
+          <label class="consent-box mt-6"><input type="checkbox" formControlName="privacyConsent"><span><strong>Acepto compartir mi medio de contacto cuando corresponda.</strong><small>WhatsApp, Instagram y el teléfono alternativo se mantienen privados. Solamente se habilitan entre el jugador y el máster después de aceptar una solicitud de ingreso. Podré bloquear usuarios y modificar o eliminar estos datos desde mi perfil. <a routerLink="/privacidad" target="_blank" (click)="$event.stopPropagation()">Ver Política de Privacidad</a>.</small></span></label>
           <span *ngIf="invalid('privacyConsent')" class="error-text">Necesitamos tu consentimiento para completar el perfil.</span>
         </section>
 
