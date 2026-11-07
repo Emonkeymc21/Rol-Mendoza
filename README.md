@@ -24,7 +24,9 @@ No se utiliza Google Forms ni existe chat interno.
 - Bloqueo reversible que oculta mutuamente los perfiles en la aplicación y protege los contactos en Firestore.
 - Matching por ciudad, sistemas, modalidad y frecuencia.
 - Migración progresiva: un usuario anterior sin `profileCompleted` vuelve al onboarding.
+- Exploración pública de partidas; perfiles, contactos, solicitudes y participantes permanecen protegidos.
 - Partidas publicadas automáticamente mediante una API de Apps Script y Google Sheets.
+- Directorio público de comunidades verificadas y solicitud autenticada para sus representantes, sin reemplazar sus canales oficiales.
 - Menú de usuario con perfil, edición, preferencias, partidas propias y cierre de sesión.
 - Creación restringida a roles `DM` y `BOTH`, validada también en el backend.
 - Edición, pausa, activación y cancelación de partidas por su propietario.
@@ -89,11 +91,15 @@ gameJoinRequests/{requestId}        relación segura entre jugador, partida y DM
 gameParticipants/{idDeterminístico} participantes confirmados por partida y jugador
 contactGrants/{uid}/viewers/{uid}      acceso de contacto entre integrantes aceptados
 users/{uid}/notifications/{id}      notificaciones privadas del usuario
+roleCommunities/{id}                perfiles publicados de espacios y comunidades
+communityAdminRequests/{id}         solicitudes privadas de sus representantes
 ```
 
 `userPrivate` no admite consultas de lista. Un tercero sólo puede leer un documento concreto si Apps Script creó un permiso recíproco en `contactGrants` después de aceptar una solicitud. El rol `DM` o `BOTH` por sí solo no permite ver contactos. También deben existir consentimiento vigente, perfiles completos y ausencia de bloqueo en ambas direcciones.
 
 Los documentos antiguos del chat quedan completamente denegados por las reglas. Si la colección remota `conversations` no contiene información necesaria, puede eliminarse manualmente desde Firebase Console.
+
+Los perfiles de comunidades no se publican automáticamente. Una solicitud queda con estado `PENDING` y debe verificarse desde un entorno administrativo confiable antes de crear o actualizar `roleCommunities`. El navegador no tiene permisos para aprobarse ni publicar directamente.
 
 ## Perfiles anteriores
 
@@ -155,6 +161,7 @@ En Vercel:
 - Output directory: `dist/rol-mendoza`
 
 `vercel.json` contiene el rewrite necesario para Angular. Agregá el dominio final en Firebase Authentication → Settings → Authorized domains.
+La política CSP permite únicamente los orígenes utilizados por Firebase, Google Auth, fuentes y Apps Script. Si cambia el dominio o un proveedor, actualizá esa lista de forma puntual en vez de desactivar la política.
 
 ## Estructura principal
 

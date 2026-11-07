@@ -12,7 +12,10 @@ export class GameService {
   private readonly errorState = new BehaviorSubject<string>('');
   private gamesCache: Game[] = [];
   private loaded = false;
+  private initialized = false;
   private refreshSubscription?: Subscription;
+  private readonly sessionCacheKey = 'cumbre20-public-games';
+  private readonly sessionCacheLifetime = 5 * 60 * 1000;
 
   readonly loading$ = this.loadingState.asObservable();
   readonly error$ = this.errorState.asObservable();
@@ -24,7 +27,11 @@ export class GameService {
   }
 
   getGames(): Observable<Game[]> {
-    if (!this.loaded && !this.refreshSubscription) this.refresh();
+    if (!this.initialized) {
+      this.initialized = true;
+      this.restoreSessionCache();
+      this.refresh();
+    }
     return this.gamesState.asObservable();
   }
 
@@ -91,14 +98,14 @@ export class GameService {
       return;
     }
     if (this.refreshSubscription && !this.refreshSubscription.closed) return;
-    this.loadingState.next(true);
+    this.loadingState.next(!this.loaded);
     this.errorState.next('');
     this.refreshSubscription = defer(() => this.api.getGames()).pipe(
       map(rows => rows.map(row => this.mapGame(row))),
       catchError(error => {
         console.error('No se pudo actualizar el listado de partidas.', error);
         this.errorState.next('No pudimos cargar las partidas. Intentá nuevamente.');
-        return of([]);
+        return of(this.loaded ? this.gamesCache : []);
       }),
       finalize(() => {
         this.loadingState.next(false);
@@ -108,7 +115,33 @@ export class GameService {
       this.gamesCache = games;
       this.loaded = true;
       this.gamesState.next(games);
+      this.saveSessionCache(games);
     });
+  }
+
+  private restoreSessionCache(): void {
+    try {
+      const saved = sessionStorage.getItem(this.sessionCacheKey);
+      if (!saved) return;
+      const cache = JSON.parse(saved) as { savedAt?: number; games?: Game[] };
+      if (!cache.savedAt || !Array.isArray(cache.games) || Date.now() - cache.savedAt > this.sessionCacheLifetime) {
+        sessionStorage.removeItem(this.sessionCacheKey);
+        return;
+      }
+      this.gamesCache = cache.games;
+      this.loaded = true;
+      this.gamesState.next(cache.games);
+    } catch {
+      sessionStorage.removeItem(this.sessionCacheKey);
+    }
+  }
+
+  private saveSessionCache(games: Game[]): void {
+    try {
+      sessionStorage.setItem(this.sessionCacheKey, JSON.stringify({ savedAt: Date.now(), games }));
+    } catch {
+      // La caché es opcional: una restricción del navegador no debe afectar las partidas.
+    }
   }
 
   private mapGame(row: PublicGameRow): Game {

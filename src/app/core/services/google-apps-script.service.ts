@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { forkJoin, map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
+import { map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Game } from '../models/game.model';
 import {
@@ -123,7 +123,13 @@ export class GoogleAppsScriptService {
   }
 
   private compatibleRead<T>(request: Observable<T>): Observable<T> {
-    return forkJoin([this.ensureCompatible(), request]).pipe(map(([, data]) => data));
+    // Las lecturas públicas no deben quedar bloqueadas por el cold-start del
+    // health check. La compatibilidad se verifica en paralelo y sigue siendo
+    // obligatoria antes de cualquier escritura autenticada.
+    this.ensureCompatible().subscribe({
+      error: error => console.error('No se pudo verificar la versión de la API de partidas.', error)
+    });
+    return request;
   }
 
   private ensureCompatible(): Observable<void> {

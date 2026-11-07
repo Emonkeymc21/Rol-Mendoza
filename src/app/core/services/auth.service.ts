@@ -139,6 +139,7 @@ export class AuthService {
       'auth/account-exists-with-different-credential': 'Ese correo ya utiliza otro método de acceso.',
       'auth/user-disabled': 'Esta cuenta fue deshabilitada. Contactá al equipo de Cumbre20.',
       'auth/network-request-failed': 'No pudimos conectarnos. Revisá tu conexión e intentá otra vez.',
+      'auth/internal-error': 'No pudimos abrir el acceso con Google. Intentá nuevamente en unos segundos.',
       'auth/too-many-requests': 'Hubo demasiados intentos. Esperá unos minutos antes de volver a probar.'
     };
     return messages[code] || 'No pudimos completar la operación. Intentá nuevamente.';

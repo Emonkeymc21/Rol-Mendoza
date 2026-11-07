@@ -1,0 +1,31 @@
+:host { display:block; }
+.communities-hero { position:relative;overflow:hidden;background:linear-gradient(115deg,#0e0a0c 0%,#1d1116 62%,#421923 100%);color:#f1e8d5; }
+.communities-hero__layout { position:relative;display:grid;min-height:580px;align-items:center;padding-top:5rem;padding-bottom:5rem; }
+.communities-hero__layout > div { position:relative;z-index:1;max-width:820px; }
+.communities-hero h1 { margin-top:1.1rem;font-family:Cinzel,Georgia,serif;font-size:clamp(2.7rem,5.7vw,5.6rem);font-weight:800;letter-spacing:-.04em;line-height:.98;text-transform:uppercase; }
+.communities-hero h1 span { color:#d8ad57; }
+.communities-hero p { max-width:42rem;margin:1.5rem 0 2rem;color:#d0c4bd;font-family:Alegreya,Georgia,serif;font-size:clamp(1.05rem,1.5vw,1.25rem);line-height:1.7; }
+.communities-hero img { position:absolute;right:-8rem;width:min(42rem,58vw);opacity:.2; }
+.communities-heading { display:grid;gap:1.2rem;align-items:end;margin-bottom:3rem; }
+.communities-heading h2 { margin-top:.55rem;font-family:Cinzel,Georgia,serif;font-size:clamp(2rem,4.5vw,4rem);font-weight:750;line-height:1.05; }
+.communities-heading > p { max-width:36rem;color:var(--text-secondary);font-family:Alegreya,Georgia,serif;font-size:1.12rem;line-height:1.65; }
+.communities-grid { display:grid;gap:1.25rem; }
+.community-entry { display:grid;gap:1.5rem;border-top:1px solid var(--border-strong);padding:2rem 0; }
+.community-entry__identity { display:flex;align-items:center;gap:1rem; }
+.community-entry__identity > span { display:grid;width:58px;aspect-ratio:1;place-items:center;border:1px solid var(--brand-border);background:var(--surface);color:var(--brand-secondary);font-family:Cinzel,Georgia,serif;font-size:.78rem;font-weight:800; }
+.community-entry__identity p { color:var(--brand-primary);font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase; }
+.community-entry__identity h2 { margin-top:.2rem;font-family:Cinzel,Georgia,serif;font-size:clamp(1.4rem,2.3vw,2rem);font-weight:750; }
+.community-entry__description { max-width:46rem;color:var(--text-secondary);line-height:1.75; }
+.community-activities { border-left:2px solid var(--brand-border);padding-left:1rem; }
+.community-activities h3 { margin-bottom:.6rem;font-size:.74rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase; }
+.community-activities a { display:flex;min-height:52px;align-items:center;justify-content:space-between;gap:1rem;border-top:1px solid var(--border);padding:.75rem 0; }
+.community-activities span { display:flex;flex-direction:column; }
+.community-activities small,.community-activities time { color:var(--text-muted);font-size:.75rem; }
+.community-entry__links { display:flex;flex-wrap:wrap;gap:.75rem 1.25rem; }
+.community-entry__links a { display:inline-flex;min-height:42px;align-items:center;gap:.45rem;border-bottom:1px solid var(--brand-border);color:var(--brand-secondary);font-size:.76rem;font-weight:800;text-transform:uppercase; }
+.communities-empty { display:grid;gap:1.4rem;align-items:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:2.5rem 0; }
+.communities-empty > span { color:transparent;font-family:Cinzel,Georgia,serif;font-size:3.5rem;font-weight:900;-webkit-text-stroke:1px var(--brand-border); }
+.communities-empty h2 { font-family:Cinzel,Georgia,serif;font-size:1.7rem;font-weight:750; }
+.communities-empty p { max-width:44rem;margin-top:.4rem;color:var(--text-secondary); }
+@media(min-width:768px) { .communities-heading { grid-template-columns:1fr minmax(300px,.65fr); }.community-entry { grid-template-columns:minmax(230px,.55fr) minmax(300px,1fr); }.community-entry__description { align-self:center; }.community-activities,.community-entry__links { grid-column:2; }.communities-empty { grid-template-columns:auto 1fr auto; } }
+@media(max-width:639px) { .communities-hero__layout { min-height:520px;padding-top:3.5rem;padding-bottom:3.5rem; }.communities-hero h1 { font-size:clamp(2.25rem,12vw,3.5rem); }.communities-hero img { right:-12rem;width:34rem; }.communities-empty .btn-primary { width:100%; } }

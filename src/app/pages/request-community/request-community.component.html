@@ -1,0 +1,22 @@
+<section class="page-hero-dnd py-12 sm:py-16">
+  <div class="page-shell relative"><span class="eyebrow">Comunidades de Mendoza</span><h1 class="section-title mt-4">Solicitar un perfil de comunidad</h1><p class="mt-3 max-w-2xl text-mist">Cumbre20 no reemplaza tu grupo, club o espacio. El perfil sirve para que más personas lo descubran y lleguen a sus canales oficiales.</p></div>
+</section>
+
+<section class="section-space">
+  <div class="page-shell request-layout">
+    <aside><span class="eyebrow">Antes de enviar</span><h2>Publicamos espacios reales.</h2><p>Revisamos cada solicitud para evitar suplantaciones y enlaces engañosos. Por ahora, la administración se habilita después de verificar a la persona representante.</p><ul><li>Usá el nombre público del espacio.</li><li>Agregá al menos un canal oficial.</li><li>No incluyas teléfonos personales en la descripción.</li></ul></aside>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="request-form" novalidate>
+      <label><span class="field-label">Nombre de la comunidad *</span><input class="input-field" formControlName="name" maxlength="100"><small *ngIf="invalid('name')" class="error-text">Ingresá un nombre de al menos 3 caracteres.</small></label>
+      <label><span class="field-label">Zona principal *</span><select class="input-field" formControlName="zone"><option value="" disabled>Seleccioná una zona</option><option *ngFor="let zone of zones" [value]="zone">{{ zone }}</option></select><small *ngIf="invalid('zone')" class="error-text">Seleccioná una zona.</small></label>
+      <label class="request-wide"><span class="field-label">Descripción *</span><textarea class="input-field" formControlName="description" rows="7" maxlength="800" placeholder="Contá qué actividades organizan, para quiénes y cómo se participa."></textarea><span class="field-help">{{ form.controls.description.value.length }} / 800</span><small *ngIf="invalid('description')" class="error-text">La descripción debe tener entre 50 y 800 caracteres.</small></label>
+      <label><span class="field-label">Instagram oficial</span><input class="input-field" formControlName="instagramUrl" placeholder="https://www.instagram.com/..."><small *ngIf="invalid('instagramUrl')" class="error-text">Usá un enlace https válido.</small></label>
+      <label><span class="field-label">Discord oficial</span><input class="input-field" formControlName="discordUrl" placeholder="https://discord.gg/..."><small *ngIf="invalid('discordUrl')" class="error-text">Usá un enlace https válido.</small></label>
+      <label class="request-wide"><span class="field-label">Sitio o canal oficial</span><input class="input-field" formControlName="websiteUrl" placeholder="https://..."><small *ngIf="invalid('websiteUrl')" class="error-text">Usá un enlace https válido.</small></label>
+      <label class="request-confirmation request-wide"><input type="checkbox" formControlName="confirmation"><span>Confirmo que represento a este espacio y que los enlaces enviados son oficiales.</span></label>
+      <small *ngIf="invalid('confirmation')" class="error-text request-wide">Necesitamos esta confirmación para revisar la solicitud.</small>
+      <div class="request-actions request-wide"><a routerLink="/comunidades" class="btn-secondary">Cancelar</a><button type="submit" class="btn-primary" [disabled]="saving || form.disabled">{{ saving ? 'Enviando…' : 'Enviar solicitud' }}</button></div>
+      <p *ngIf="success" class="feedback-success request-wide" role="status">{{ success }}</p>
+      <p *ngIf="error" class="feedback-error request-wide" role="alert">{{ error }}</p>
+    </form>
+  </div>
+</section>

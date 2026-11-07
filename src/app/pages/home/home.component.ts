@@ -15,9 +15,9 @@ export class HomeComponent {
   private readonly destroyRef = inject(DestroyRef);
   players: Player[] = [];
   games: Game[] = [];
-  playerCount = 0;
-  gameCount = 0;
-  systemCount = 0;
+  playerCount: number | null = null;
+  gameCount: number | null = null;
+  systemCount: number | null = null;
   profile: UserProfile | null = null;
   isAuthenticated = false;
   private allPlayers: Player[] = [];
@@ -34,7 +34,7 @@ export class HomeComponent {
   ) {
     this.community.getPlayers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(players => {
       this.allPlayers = players;
-      this.playerCount = players.length;
+      if (this.isAuthenticated) this.playerCount = players.length;
       this.players = players.slice(0, 3);
       this.updateSystemCount();
     });
@@ -46,6 +46,7 @@ export class HomeComponent {
     });
     auth.user$.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       this.isAuthenticated = Boolean(user);
+      this.playerCount = user ? this.allPlayers.length : null;
       if (user) {
         profiles.watchOwnProfile().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
           next: profile => this.profile = profile,
@@ -72,6 +73,6 @@ export class HomeComponent {
       ...this.allPlayers.flatMap(player => player.systems),
       ...this.allGames.map(game => game.system)
     ].map(system => system.trim().toLowerCase()).filter(Boolean);
-    this.systemCount = new Set(systems).size;
+    this.systemCount = this.gameCount === null ? null : new Set(systems).size;
   }
 }

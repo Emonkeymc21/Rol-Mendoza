@@ -104,6 +104,7 @@
 .about-layout p { max-width:35rem;color:var(--text-secondary);font-family:Alegreya,Georgia,serif;font-size:1.16rem;line-height:1.72; }
 .about-layout p+p { margin-top:.8rem; }
 .about-layout .hero-link { margin-top:1.4rem;color:var(--text-primary); }
+.about-links { display:flex;flex-wrap:wrap;gap:.5rem 1.5rem; }
 
 .final-cta { position:relative;min-height:520px;overflow:hidden;background:radial-gradient(circle at 82% 44%,rgba(111,29,42,.46),transparent 28%),linear-gradient(115deg,#0e0a0c 0%,#1d1116 62%,#421923 100%);color:#f1e8d5; }
 .final-cta::before { content:'';position:absolute;right:-8rem;bottom:-18rem;width:min(58rem,72vw);height:min(58rem,72vw);background:url('/assets/branding/map-mendoza.svg') center/contain no-repeat;opacity:.14;transform:rotate(-4deg); }
