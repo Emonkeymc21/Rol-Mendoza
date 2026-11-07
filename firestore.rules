@@ -25,6 +25,34 @@ service cloud.firestore {
       return status in ['PENDING', 'APPROVED', 'REJECTED'];
     }
 
+    function validCommunityRequest() {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'requesterUid', 'name', 'description', 'zone', 'instagramUrl',
+          'discordUrl', 'websiteUrl', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.requesterUid == request.auth.uid
+        && data.name is string
+        && data.name.size() >= 3
+        && data.name.size() <= 100
+        && data.description is string
+        && data.description.size() >= 50
+        && data.description.size() <= 800
+        && data.zone is string
+        && data.zone.size() >= 2
+        && data.zone.size() <= 100
+        && data.instagramUrl is string
+        && data.instagramUrl.size() <= 500
+        && data.discordUrl is string
+        && data.discordUrl.size() <= 500
+        && data.websiteUrl is string
+        && data.websiteUrl.size() <= 500
+        && (data.instagramUrl.size() > 0 || data.discordUrl.size() > 0 || data.websiteUrl.size() > 0)
+        && data.status == 'PENDING'
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
     function currentUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
@@ -237,6 +265,20 @@ service cloud.firestore {
         && request.resource.data.read == true
         && request.resource.data.readAt == request.time;
       allow delete: if ownDocument(userId);
+    }
+
+    match /roleCommunities/{communityId} {
+      allow get, list: if resource.data.status == 'PUBLISHED'
+        && resource.data.active == true;
+      // La publicación y administración se realizan desde un entorno confiable
+      // después de verificar a la persona representante.
+      allow create, update, delete: if false;
+    }
+
+    match /communityAdminRequests/{requestId} {
+      allow get, list: if signedIn() && resource.data.requesterUid == request.auth.uid;
+      allow create: if signedIn() && validCommunityRequest();
+      allow update, delete: if false;
     }
 
     match /conversations/{document=**} {

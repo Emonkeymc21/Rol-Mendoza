@@ -13,6 +13,7 @@ import { GameParticipantView } from '../../core/models/game-participant.model';
 import { GameParticipantService } from '../../core/services/game-participant.service';
 import { UserPrivateProfile, UserProfile } from '../../core/models/user-profile.model';
 import { ContactNormalizerService } from '../../core/services/contact-normalizer.service';
+import { take } from 'rxjs';
 
 @Component({ selector: 'app-game-detail', templateUrl: './game-detail.component.html', styleUrls: ['./game-detail.component.scss'] })
 export class GameDetailComponent {
@@ -34,8 +35,9 @@ export class GameDetailComponent {
   dmProfile?: UserProfile;
   dmContact?: UserPrivateProfile;
   ownProfile?: UserProfile;
+  isAuthenticated = false;
   readonly apiConnected: boolean;
-  private readonly gameId: string;
+  readonly gameId: string;
 
   readonly user$ = this.auth.user$;
 
@@ -57,15 +59,21 @@ export class GameDetailComponent {
     this.gameId = route.snapshot.paramMap.get('id') ?? '';
     this.apiConnected = community.isConnected();
     this.loadGame();
-    participants.watchGame(this.gameId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: items => this.participants = items,
-      error: error => console.error('No se pudieron cargar los jugadores confirmados.', error)
-    });
-    if (this.auth.currentUser) {
+    this.auth.user$.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(user => {
+      this.isAuthenticated = Boolean(user);
+      if (!user) return;
       void profiles.getOwnProfile().then(profile => {
         this.ownProfile = profile || undefined;
-        this.canRequestJoin = profile?.role === 'PLAYER' || profile?.role === 'BOTH';
+        const profileComplete = profiles.isComplete(profile);
+        this.canRequestJoin = profileComplete && (profile?.role === 'PLAYER' || profile?.role === 'BOTH');
         this.joinRoleLoaded = true;
+        if (profileComplete) {
+          participants.watchGame(this.gameId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            next: items => this.participants = items,
+            error: error => console.error('No se pudieron cargar los jugadores confirmados.', error)
+          });
+          this.loadDmProfile();
+        }
         void this.loadApprovedDmContact();
       }).catch(() => this.joinRoleLoaded = true);
       notifications.watchMyRequests().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -81,7 +89,7 @@ export class GameDetailComponent {
         },
         error: error => console.error('No se pudo consultar el estado de la solicitud.', error)
       });
-    }
+    });
     if (this.apiConnected) this.loadComments();
   }
 
@@ -93,6 +101,10 @@ export class GameDetailComponent {
     }
     if (this.isOwnGame()) {
       this.notice = 'Esta partida fue creada por vos. Podés administrarla desde Mis partidas.';
+      return;
+    }
+    if (this.auth.currentUser && this.joinRoleLoaded && !this.ownProfile?.profileCompleted) {
+      void this.router.navigate(['/completar-perfil'], { queryParams: { returnUrl: `/partidas/${this.gameId}` } });
       return;
     }
     if (this.joinRoleLoaded && !this.canRequestJoin) {
@@ -213,11 +225,15 @@ export class GameDetailComponent {
   private loadGame(): void {
     this.community.getGame(this.gameId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(game => {
       this.game = game;
-      if (game?.masterUserId) {
-        void this.profiles.getProfile(game.masterUserId).then(profile => this.dmProfile = profile || undefined).catch(() => this.dmProfile = undefined);
-      }
+      if (this.isAuthenticated) this.loadDmProfile();
       void this.loadApprovedDmContact();
     });
+  }
+
+  private loadDmProfile(): void {
+    const dmUid = this.game?.masterUserId;
+    if (!dmUid) return;
+    void this.profiles.getProfile(dmUid).then(profile => this.dmProfile = profile || undefined).catch(() => this.dmProfile = undefined);
   }
 
   private async loadApprovedDmContact(): Promise<void> {

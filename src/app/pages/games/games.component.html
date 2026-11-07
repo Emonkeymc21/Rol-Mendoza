@@ -31,7 +31,7 @@
           <div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white/[.05] text-gold"><app-icon name="dice" [size]="26"></app-icon></div>
           <h2 class="mt-5 font-display text-2xl font-bold">Todavía no encontramos una mesa que coincida con tu búsqueda</h2>
           <p class="mx-auto mt-2 max-w-xl text-mist">Probá cambiando los filtros o volvé a revisar más tarde. Las nuevas partidas aparecen apenas un máster las publica.</p>
-          <div class="mt-5 flex flex-wrap justify-center gap-3"><button type="button" class="btn-secondary" (click)="reset()">Restablecer filtros</button><a *ngIf="canCreate" routerLink="/partidas/nueva" class="btn-primary">Publicar una partida</a><a *ngIf="!canCreate" routerLink="/perfil/editar" class="btn-primary">Actualizar mi perfil</a></div>
+          <div class="mt-5 flex flex-wrap justify-center gap-3"><button type="button" class="btn-secondary" (click)="reset()">Restablecer filtros</button><a *ngIf="canCreate" routerLink="/partidas/nueva" class="btn-primary">Publicar una partida</a><a *ngIf="isAuthenticated && !canCreate" routerLink="/perfil/editar" class="btn-primary">Actualizar mi perfil</a><a *ngIf="!isAuthenticated" routerLink="/registrarme" class="btn-primary">Crear mi perfil</a></div>
         </div>
       </ng-template>
     </ng-container>

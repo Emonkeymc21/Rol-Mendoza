@@ -2,10 +2,12 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { take } from 'rxjs';
 import { matchesLocation, MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
 import { Game } from '../../core/models/game.model';
 import { GameService } from '../../core/services/game.service';
 import { ProfileService } from '../../core/services/profile.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({ selector: 'app-games', templateUrl: './games.component.html', styleUrls: ['./games.component.scss'] })
 export class GamesComponent {
@@ -16,11 +18,17 @@ export class GamesComponent {
   allGames: Game[] = [];
   games: Game[] = [];
   canCreate = false;
+  isAuthenticated = false;
   filters = this.fb.nonNullable.group({ q: '', city: 'Todas', mode: 'Todas', frequency: 'Todas', level: 'Todos' });
 
-  constructor(private fb: FormBuilder, private gameService: GameService, profiles: ProfileService, route: ActivatedRoute) {
+  constructor(private fb: FormBuilder, private gameService: GameService, profiles: ProfileService, auth: AuthService, route: ActivatedRoute) {
     gameService.getGames().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(games => { this.allGames = games; this.applyFilters(); });
-    void profiles.getOwnProfile().then(profile => this.canCreate = profile?.role === 'DM' || profile?.role === 'BOTH');
+    auth.user$.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(user => {
+      this.isAuthenticated = Boolean(user);
+      if (user) {
+        void profiles.getOwnProfile().then(profile => this.canCreate = profile?.role === 'DM' || profile?.role === 'BOTH');
+      }
+    });
     route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       this.filters.patchValue({ q: params.get('q') ?? '', mode: params.get('mode') ?? 'Todas' }, { emitEvent: false });
       this.applyFilters();

@@ -31,6 +31,8 @@ import { NotificationsComponent } from './pages/notifications/notifications.comp
 import { CustomCursorComponent } from './shared/components/custom-cursor/custom-cursor.component';
 import { RevealDirective } from './shared/directives/reveal.directive';
 import { LegalComponent } from './pages/legal/legal.component';
+import { CommunitiesComponent } from './pages/communities/communities.component';
+import { RequestCommunityComponent } from './pages/request-community/request-community.component';
 
 @NgModule({
   declarations: [
@@ -59,7 +61,9 @@ import { LegalComponent } from './pages/legal/legal.component';
     NotificationsComponent,
     CustomCursorComponent,
     RevealDirective,
-    LegalComponent
+    LegalComponent,
+    CommunitiesComponent,
+    RequestCommunityComponent
   ],
   imports: [
     BrowserModule,

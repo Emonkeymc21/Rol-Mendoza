@@ -25,7 +25,7 @@
 .notification-trigger:hover { border-color:var(--brand-border);color:var(--brand-secondary); }
 .notification-trigger span { position:absolute;top:-4px;right:-4px;display:grid;min-width:19px;height:19px;place-items:center;border:2px solid var(--bg-primary);border-radius:999px;background:var(--brand-secondary);padding:0 4px;color:var(--button-primary-text);font-size:9px;font-weight:900; }
 .mobile-header-actions { display:flex;align-items:center;gap:.5rem; }
-@media(min-width:1024px){.mobile-header-actions{display:none}}
+@media(min-width:1280px){.mobile-header-actions{display:none}}
 .mobile-menu { border-top:1px solid var(--border);background:var(--bg-primary); }
 .mobile-divider { border-top:1px solid var(--border); }
 .menu-trigger { display:grid;width:44px;height:44px;place-items:center;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-muted); }

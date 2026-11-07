@@ -1,0 +1,14 @@
+:host { display:block; }
+.request-layout { display:grid;gap:2.5rem; }
+.request-layout aside h2 { max-width:24rem;margin-top:1rem;font-family:Cinzel,Georgia,serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:750;line-height:1.08; }
+.request-layout aside p { max-width:30rem;margin-top:1.2rem;color:var(--text-secondary);line-height:1.7; }
+.request-layout aside ul { display:grid;gap:.7rem;margin-top:1.5rem;color:var(--text-secondary);font-size:.92rem; }
+.request-layout aside li::before { content:'—';margin-right:.7rem;color:var(--brand-primary); }
+.request-form { display:grid;gap:1.15rem;border-top:1px solid var(--border-strong);padding-top:1.5rem; }
+.request-form textarea { resize:vertical; }
+.field-help { display:block;margin-top:.35rem;color:var(--text-muted);font-size:.72rem;text-align:right; }
+.request-confirmation { display:flex;align-items:flex-start;gap:.75rem;color:var(--text-secondary);font-size:.9rem;line-height:1.5; }
+.request-confirmation input { width:18px;height:18px;margin-top:.12rem;accent-color:var(--brand-primary); }
+.request-actions { display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.75rem;margin-top:.5rem; }
+@media(min-width:900px) { .request-layout { grid-template-columns:minmax(260px,.65fr) minmax(0,1fr);gap:clamp(3rem,8vw,8rem); }.request-form { grid-template-columns:repeat(2,minmax(0,1fr)); }.request-wide { grid-column:1/-1; } }
+@media(max-width:639px) { .request-actions .btn-primary,.request-actions .btn-secondary { width:100%; } }

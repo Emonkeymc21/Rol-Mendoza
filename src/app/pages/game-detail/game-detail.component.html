@@ -50,7 +50,7 @@
                 <a *ngIf="dmContact?.instagramUrl as instagram" [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-action"><app-icon name="instagram" [size]="18"></app-icon> Ver Instagram</a>
               </div>
             </section>
-            <a *ngIf="game.masterUserId" [routerLink]="['/jugadores', game.masterUserId]" class="btn-secondary mt-3 w-full">Ver perfil del máster</a>
+            <a *ngIf="isAuthenticated && game.masterUserId" [routerLink]="['/jugadores', game.masterUserId]" class="btn-secondary mt-3 w-full">Ver perfil del máster</a>
 
             <form *ngIf="joinOpen" [formGroup]="joinForm" (ngSubmit)="submitJoin()" class="mt-5 space-y-4 border-t border-white/[.08] pt-5">
               <p class="rounded-xl border border-white/[.08] bg-black/20 p-3 text-sm text-mist">La solicitud queda asociada a tu cuenta autenticada.</p>
@@ -65,7 +65,7 @@
         </aside>
       </div>
 
-      <section class="glass-panel mt-6 p-6 sm:p-8" aria-labelledby="participants-title">
+      <section *ngIf="ownProfile?.profileCompleted; else participantPrivacy" class="glass-panel mt-6 p-6 sm:p-8" aria-labelledby="participants-title">
         <span class="eyebrow">La mesa</span>
         <h2 id="participants-title" class="mt-2 font-display text-3xl font-bold">Jugadores confirmados</h2>
         <p class="mt-2 text-sm text-mist">Personas que el máster ya aceptó mediante Cumbre20.</p>
@@ -78,6 +78,15 @@
         </div>
         <ng-template #noParticipants><p class="mt-6 border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay jugadores confirmados mediante Cumbre20.</p></ng-template>
       </section>
+      <ng-template #participantPrivacy>
+        <section class="glass-panel mt-6 p-6 sm:p-8" aria-labelledby="participants-private-title">
+          <span class="eyebrow">Privacidad</span>
+          <h2 id="participants-private-title" class="mt-2 font-display text-2xl font-bold">La identidad de los jugadores está protegida</h2>
+          <p class="mt-2 max-w-2xl text-sm leading-6 text-mist">Podés ver los cupos de la mesa sin iniciar sesión. Los perfiles de participantes y los datos de contacto se habilitan únicamente cuando corresponde.</p>
+          <a *ngIf="!isAuthenticated" routerLink="/ingresar" [queryParams]="{ returnUrl: '/partidas/' + gameId }" class="btn-secondary mt-5">Ingresar para continuar</a>
+          <a *ngIf="isAuthenticated" routerLink="/completar-perfil" [queryParams]="{ returnUrl: '/partidas/' + gameId }" class="btn-secondary mt-5">Completar mi perfil</a>
+        </section>
+      </ng-template>
 
       <section class="glass-panel mt-6 p-6 sm:p-8" aria-labelledby="comments-title">
         <div class="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -95,7 +104,7 @@
             <ng-template #noComments><p class="mt-6 border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay comentarios publicados.</p></ng-template>
           </div>
 
-          <form *ngIf="apiConnected; else commentsOffline" [formGroup]="commentForm" (ngSubmit)="submitComment()" class="border border-white/[.08] bg-black/20 p-5">
+          <form *ngIf="apiConnected && isAuthenticated; else commentsUnavailable" [formGroup]="commentForm" (ngSubmit)="submitComment()" class="border border-white/[.08] bg-black/20 p-5">
             <h3 class="font-display text-xl font-bold">Dejar un comentario</h3>
             <p class="mt-1 text-xs text-mist">Se publicará con el nombre de tu cuenta.</p>
             <p class="mt-4 rounded-xl border border-white/[.08] p-3 text-xs text-mist">El comentario se publica con el nombre de tu cuenta.</p>
@@ -104,6 +113,13 @@
             <p *ngIf="commentNotice" class="feedback-success" role="status">{{ commentNotice }}</p>
             <p *ngIf="commentError" class="feedback-error" role="alert">{{ commentError }}</p>
           </form>
+          <ng-template #commentsUnavailable>
+            <div *ngIf="apiConnected; else commentsOffline" class="border border-white/[.08] bg-black/20 p-5 text-sm text-mist">
+              <strong class="block text-parchment">¿Querés participar?</strong>
+              <p class="mt-2">Ingresá con tu perfil para comentar o solicitar unirte. Tu información privada no se publica en este detalle.</p>
+              <a routerLink="/ingresar" [queryParams]="{ returnUrl: '/partidas/' + gameId }" class="btn-secondary mt-5">Ingresar</a>
+            </div>
+          </ng-template>
           <ng-template #commentsOffline><div class="border border-white/[.08] bg-black/20 p-5 text-sm text-mist">Los comentarios no están disponibles en este momento.</div></ng-template>
         </div>
       </section>

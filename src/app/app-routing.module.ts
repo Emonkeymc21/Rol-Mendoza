@@ -23,6 +23,8 @@ import { MyRequestsComponent } from './pages/my-requests/my-requests.component';
 import { DmRequestsComponent } from './pages/dm-requests/dm-requests.component';
 import { NotificationsComponent } from './pages/notifications/notifications.component';
 import { LegalComponent } from './pages/legal/legal.component';
+import { CommunitiesComponent } from './pages/communities/communities.component';
+import { RequestCommunityComponent } from './pages/request-community/request-community.component';
 
 const privatePage = { robots: 'noindex,nofollow' };
 
@@ -30,14 +32,16 @@ const routes: Routes = [
   { path: '', component: HomeComponent, title: 'Cumbre20 | Encontrá tu próxima mesa', data: { description: 'Encontrá y organizá mesas de rol en Mendoza. Cumbre20 conecta jugadores, másters y partidas sin reemplazar los espacios que ya existen.' } },
   { path: 'jugadores', component: PlayersComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Jugadores y másters | Cumbre20', data: privatePage },
   { path: 'jugadores/:id', component: PlayerDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Perfil | Cumbre20', data: privatePage },
-  { path: 'partidas', component: GamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Partidas disponibles | Cumbre20', data: privatePage },
+  { path: 'partidas', component: GamesComponent, title: 'Partidas disponibles | Cumbre20', data: { description: 'Explorá partidas de rol presenciales, online y mixtas en Mendoza. Filtrá por localidad, sistema y experiencia.' } },
   { path: 'partidas/nueva', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Crear una partida | Cumbre20', data: privatePage },
   { path: 'mis-partidas', component: MyGamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis partidas | Cumbre20', data: privatePage },
   { path: 'mis-solicitudes', component: MyRequestsComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis solicitudes | Cumbre20', data: privatePage },
   { path: 'solicitudes', component: DmRequestsComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Solicitudes de jugadores | Cumbre20', data: privatePage },
   { path: 'notificaciones', component: NotificationsComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Notificaciones | Cumbre20', data: privatePage },
   { path: 'mis-partidas/:id/editar', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar partida | Cumbre20', data: privatePage },
-  { path: 'partidas/:id', component: GameDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Detalle de partida | Cumbre20', data: privatePage },
+  { path: 'partidas/:id', component: GameDetailComponent, title: 'Detalle de partida | Cumbre20', data: { description: 'Conocé los datos de una partida publicada en Cumbre20 y solicitá unirte con tu perfil.' } },
+  { path: 'comunidades', component: CommunitiesComponent, title: 'Comunidades de rol en Mendoza | Cumbre20', data: { description: 'Descubrí grupos, clubes, tiendas y espacios que organizan rol en Mendoza y accedé a sus canales oficiales.' } },
+  { path: 'comunidades/solicitar', component: RequestCommunityComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Solicitar perfil de comunidad | Cumbre20', data: privatePage },
   { path: 'como-funciona', component: HowItWorksComponent, title: 'Cómo funciona | Cumbre20', data: { description: 'Descubrí cómo crear tu perfil, encontrar una mesa de rol o publicar una partida en Cumbre20.' } },
   { path: 'nosotros', component: AboutComponent, title: 'Nosotros | Cumbre20', data: { description: 'Cumbre20 es una herramienta que ayuda a conectar jugadores, másters, partidas y espacios de rol que ya existen en Mendoza.' } },
   { path: 'privacidad', component: LegalComponent, title: 'Política de Privacidad | Cumbre20', data: { legalDocument: 'privacy', description: 'Conocé qué datos utiliza Cumbre20, para qué los necesita y cómo protegemos tu privacidad.' } },

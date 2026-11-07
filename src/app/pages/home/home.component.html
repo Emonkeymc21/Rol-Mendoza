@@ -14,14 +14,14 @@
       <div class="hero-actions">
         <a routerLink="/partidas" class="btn-primary">Busco una partida <app-icon name="arrow" [size]="19"></app-icon></a>
         <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-secondary hero-publish">Quiero publicar una partida <app-icon name="plus" [size]="18"></app-icon></a>
-        <a routerLink="/como-funciona" class="hero-link"><span>Nunca jugué, quiero empezar</span><app-icon name="arrow" [size]="18"></app-icon></a>
+        <a routerLink="/comunidades" class="hero-link"><span>Conocer las comunidades</span><app-icon name="arrow" [size]="18"></app-icon></a>
       </div>
     </div>
 
     <div class="hero-ledger" aria-label="Actividad de la comunidad">
-      <div><strong>{{ gameCount }}</strong><span>partidas</span></div>
-      <div><strong>{{ playerCount }}</strong><span>perfiles</span></div>
-      <div><strong>{{ systemCount }}</strong><span>sistemas</span></div>
+      <div><strong>{{ gameCount ?? '—' }}</strong><span>partidas</span></div>
+      <div><strong>{{ playerCount ?? '—' }}</strong><span>perfiles</span></div>
+      <div><strong>{{ systemCount ?? '—' }}</strong><span>sistemas</span></div>
     </div>
 
     <a href="#explorar" class="scroll-cue"><span>Explorar</span><i aria-hidden="true"></i></a>
@@ -119,7 +119,7 @@
 </section>
 
 <section appReveal class="about-editorial">
-  <div class="page-shell about-layout"><img src="assets/branding/map-mendoza.svg" alt="" aria-hidden="true" loading="lazy"><div><span class="eyebrow">Sobre Cumbre20</span><h2>La comunidad ya existe. Cumbre20 ayuda a conectarla.</h2></div><div><p>Jugadores, másters, grupos, tiendas, cafés y clubes ya hacen crecer el rol en Mendoza. Cumbre20 quiere ayudar a que sea más fácil encontrarlos.</p><p><strong>Cumbre20 está empezando.</strong> Estamos construyendo esta herramienta junto a la comunidad rolera de Mendoza.</p><a routerLink="/nosotros" class="hero-link">Conocé nuestro enfoque <app-icon name="arrow" [size]="18"></app-icon></a></div></div>
+  <div class="page-shell about-layout"><img src="assets/branding/map-mendoza.svg" alt="" aria-hidden="true" loading="lazy"><div><span class="eyebrow">Sobre Cumbre20</span><h2>La comunidad ya existe. Cumbre20 ayuda a conectarla.</h2></div><div><p>Jugadores, másters, grupos, tiendas, cafés y clubes ya hacen crecer el rol en Mendoza. Cumbre20 quiere ayudar a que sea más fácil encontrarlos.</p><p><strong>Cumbre20 está empezando.</strong> Estamos construyendo esta herramienta junto a la comunidad rolera de Mendoza.</p><div class="about-links"><a routerLink="/comunidades" class="hero-link">Ver comunidades <app-icon name="arrow" [size]="18"></app-icon></a><a routerLink="/nosotros" class="hero-link">Conocé nuestro enfoque <app-icon name="arrow" [size]="18"></app-icon></a></div></div></div>
 </section>
 
 <section appReveal class="final-cta">
