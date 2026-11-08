@@ -14,6 +14,8 @@
       <div class="hero-actions">
         <a routerLink="/partidas" class="btn-primary">Busco una partida <app-icon name="arrow" [size]="19"></app-icon></a>
         <a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-secondary hero-publish">Quiero publicar una partida <app-icon name="plus" [size]="18"></app-icon></a>
+        <a *ngIf="authReady && profileReady && isAuthenticated && !canCreateGames()" routerLink="/perfil/editar" class="btn-secondary hero-publish">Quiero publicar una partida <app-icon name="plus" [size]="18"></app-icon></a>
+        <a *ngIf="authReady && !isAuthenticated" routerLink="/ingresar" [queryParams]="{ returnUrl: '/partidas/nueva' }" class="btn-secondary hero-publish">Quiero publicar una partida <app-icon name="plus" [size]="18"></app-icon></a>
         <a routerLink="/comunidades" class="hero-link"><span>Conocer las comunidades</span><app-icon name="arrow" [size]="18"></app-icon></a>
       </div>
     </div>
@@ -82,7 +84,7 @@
     </ng-container>
     <ng-template #homeGamesReady>
       <div *ngIf="games.length; else noRecentGames" class="home-game-layout"><app-game-card *ngFor="let game of games; trackBy: trackGame" [game]="game"></app-game-card></div>
-      <ng-template #noRecentGames><div class="home-empty"><span class="empty-number" aria-hidden="true">20</span><div><h3>La próxima mesa puede empezar acá</h3><p>Todavía no hay partidas activas para mostrar. Cumbre20 está empezando y cada nuevo perfil ayuda a que más personas puedan encontrarse.</p></div><a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-primary">Publicar la primera partida</a><a *ngIf="isAuthenticated && !canCreateGames()" routerLink="/perfil/editar" class="btn-secondary">Actualizar mi perfil</a><a *ngIf="!isAuthenticated" routerLink="/registrarme" class="btn-secondary">Crear mi perfil</a></div></ng-template>
+      <ng-template #noRecentGames><div class="home-empty"><span class="empty-number" aria-hidden="true">20</span><div><h3>La próxima mesa puede empezar acá</h3><p>Todavía no hay partidas activas para mostrar. Cumbre20 está empezando y cada nuevo perfil ayuda a que más personas puedan encontrarse.</p></div><a *ngIf="canCreateGames()" routerLink="/partidas/nueva" class="btn-primary">Publicar la primera partida</a><a *ngIf="profileReady && isAuthenticated && !canCreateGames()" routerLink="/perfil/editar" class="btn-secondary">Actualizar mi perfil</a><a *ngIf="authReady && !isAuthenticated" routerLink="/registrarme" class="btn-secondary">Crear mi perfil</a></div></ng-template>
     </ng-template>
   </div>
 </section>
@@ -125,6 +127,6 @@
 <section appReveal class="final-cta">
   <div class="page-shell final-cta-inner">
     <div><span class="eyebrow">Comunidad rolera mendocina</span><h2>¿Listo para sentarte<br>a la mesa?</h2><p>Sumate, completá tus preferencias y conectá con personas que también quieren jugar.</p></div>
-    <ng-container *ngIf="isAuthenticated; else guestCta"><a routerLink="/partidas" class="btn-primary">Explorar partidas <app-icon name="arrow" [size]="19"></app-icon></a></ng-container><ng-template #guestCta><a routerLink="/registrarme" class="btn-primary">Crear mi perfil <app-icon name="arrow" [size]="19"></app-icon></a></ng-template>
+    <ng-container *ngIf="authReady"><ng-container *ngIf="isAuthenticated; else guestCta"><a routerLink="/partidas" class="btn-primary">Explorar partidas <app-icon name="arrow" [size]="19"></app-icon></a></ng-container><ng-template #guestCta><a routerLink="/registrarme" class="btn-primary">Crear mi perfil <app-icon name="arrow" [size]="19"></app-icon></a></ng-template></ng-container>
   </div>
 </section>
