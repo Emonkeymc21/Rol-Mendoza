@@ -6,7 +6,7 @@
 .nav-active { color:var(--text-primary); }
 .nav-active::after { opacity:.85;transform:scaleX(1); }
 .mobile-link { @apply flex min-h-[48px] items-center gap-3 px-4 py-3 text-base font-semibold text-parchment transition hover:bg-white/[.06]; border-radius:var(--radius-sm); }
-.brand-mark { width:33px;height:46px;flex:0 0 auto;object-fit:contain;filter:drop-shadow(0 6px 12px rgba(0,0,0,.24));transition:transform .2s ease; }
+.brand-mark { width:44px;height:44px;flex:0 0 auto;border-radius:50%;object-fit:cover;filter:drop-shadow(0 6px 12px rgba(0,0,0,.24));transition:transform .2s ease; }
 .brand:hover .brand-mark { transform:rotate(-3deg) translateY(-1px); }
 .create-game-link { @apply inline-flex min-h-[42px] items-center gap-2 border-b border-gold/50 px-3 text-sm font-bold text-gold transition hover:-translate-y-0.5 hover:border-gold; }
 .account-trigger { @apply flex min-h-[46px] items-center gap-2 bg-transparent p-1.5 pr-2 text-sm text-parchment transition hover:bg-white/[.045]; border-radius:var(--radius-sm); }
@@ -38,5 +38,5 @@
 .mobile-theme-picker { margin:.6rem 0;padding:.8rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-muted); }
 .mobile-theme-picker>div { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem; }
 .mobile-theme-picker button { display:flex;min-height:42px;align-items:center;justify-content:center;gap:.35rem;border:1px solid transparent;border-radius:var(--radius-xs);color:var(--text-secondary);font-size:.72rem;font-weight:700; }
-@media(max-width:430px){.header-row{min-height:68px;gap:.5rem}.brand{gap:.5rem}.brand-mark{width:29px;height:40px}.brand strong{font-size:1.05rem}.brand strong+span{max-width:124px;font-size:8px;letter-spacing:.08em}.mobile-header-actions{gap:.35rem}.notification-trigger,.menu-trigger{width:42px;height:42px}.mobile-menu{top:calc(68px + env(safe-area-inset-top))}.mobile-link{min-height:50px}}
-@media(max-width:359px){.brand strong+span{display:none}.brand-mark{width:28px;height:38px}}
+@media(max-width:430px){.header-row{min-height:68px;gap:.5rem}.brand{gap:.5rem}.brand-mark{width:40px;height:40px}.brand strong{font-size:1.05rem}.brand strong+span{max-width:124px;font-size:8px;letter-spacing:.08em}.mobile-header-actions{gap:.35rem}.notification-trigger,.menu-trigger{width:42px;height:42px}.mobile-menu{top:calc(68px + env(safe-area-inset-top))}.mobile-link{min-height:50px}}
+@media(max-width:359px){.brand strong+span{display:none}.brand-mark{width:38px;height:38px}}

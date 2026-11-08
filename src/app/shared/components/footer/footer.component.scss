@@ -3,7 +3,7 @@
 .footer-grid { position:relative;display:grid;gap:2.5rem;padding-top:3.8rem;padding-bottom:3.8rem; }
 .footer-tag { display:inline-block;margin-top:1rem;border-left:1px solid var(--brand-primary);padding:.2rem 0 .2rem .7rem;color:var(--text-muted);font-size:.65rem;font-weight:750;letter-spacing:.13em;text-transform:uppercase; }
 .footer-note { margin-top:1rem;max-width:18rem;color:var(--text-muted);font-size:.8rem;line-height:1.6; }
-.footer-brand img { width:48px;height:52px; }
+.footer-brand img { width:52px;height:52px;border-radius:50%;object-fit:cover; }
 .footer-brand strong { font-family:Cinzel,Georgia,serif;font-size:1.4rem; }
 .footer-brand strong span { color:var(--brand-secondary); }
 .footer-brand p { max-width:28rem;margin-top:1rem;color:var(--text-secondary);font-size:.9rem;line-height:1.65; }
