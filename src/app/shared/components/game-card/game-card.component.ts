@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Game } from '../../../core/models/game.model';
 import { UserProfile } from '../../../core/models/user-profile.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { ProfileService } from '../../../core/services/profile.service';
 
 @Component({ selector: 'app-game-card', templateUrl: './game-card.component.html', styleUrls: ['./game-card.component.scss'] })
@@ -8,10 +9,10 @@ export class GameCardComponent implements OnInit {
   @Input({ required: true }) game!: Game;
   dmProfile?: UserProfile;
 
-  constructor(private profiles: ProfileService) {}
+  constructor(private profiles: ProfileService, private auth: AuthService) {}
 
   async ngOnInit(): Promise<void> {
-    if (!this.game.masterUserId) return;
+    if (!this.game.masterUserId || !await this.auth.waitUntilReady()) return;
     try { this.dmProfile = await this.profiles.getProfile(this.game.masterUserId) || undefined; }
     catch { this.dmProfile = undefined; }
   }
