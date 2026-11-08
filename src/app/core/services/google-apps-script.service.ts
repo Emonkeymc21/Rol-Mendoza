@@ -54,11 +54,11 @@ export class GoogleAppsScriptService {
   }
 
   getGames(): Observable<PublicGameRow[]> {
-    return this.compatibleRead(this.get<PublicGameRow[]>(API_ACTION.games));
+    return this.get<PublicGameRow[]>(API_ACTION.games);
   }
 
   getGame(gameId: string): Observable<PublicGameRow> {
-    return this.compatibleRead(this.get<PublicGameRow>(API_ACTION.game, { gameId }));
+    return this.get<PublicGameRow>(API_ACTION.game, { gameId });
   }
 
   getMyGames(idToken: string): Observable<PublicGameRow[]> {
@@ -70,7 +70,7 @@ export class GoogleAppsScriptService {
   }
 
   getComments(gameId: string): Observable<PublicComment[]> {
-    return this.compatibleRead(this.get<PublicComment[]>(API_ACTION.comments, { gameId }));
+    return this.get<PublicComment[]>(API_ACTION.comments, { gameId });
   }
 
   createGame(game: Game, idToken: string): Observable<ApiMutationResult> {
@@ -120,16 +120,6 @@ export class GoogleAppsScriptService {
       switchMap(() => this.http.post<ApiResponse<T>>(this.webAppUrl, body, { headers })),
       map(response => this.unwrap(response, action))
     );
-  }
-
-  private compatibleRead<T>(request: Observable<T>): Observable<T> {
-    // Las lecturas públicas no deben quedar bloqueadas por el cold-start del
-    // health check. La compatibilidad se verifica en paralelo y sigue siendo
-    // obligatoria antes de cualquier escritura autenticada.
-    this.ensureCompatible().subscribe({
-      error: error => console.error('No se pudo verificar la versión de la API de partidas.', error)
-    });
-    return request;
   }
 
   private ensureCompatible(): Observable<void> {
