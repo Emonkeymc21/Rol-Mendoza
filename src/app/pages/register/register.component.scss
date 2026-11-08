@@ -10,7 +10,7 @@
 .next-step small { margin-top:.2rem;color:#bfb2ad;font-size:.78rem; }
 .register-form-column { display:flex;min-width:0;flex-direction:column;padding:1.5rem clamp(1rem,5vw,5rem) 3rem; }
 .auth-brand { display:inline-flex;align-items:center;gap:.65rem;align-self:flex-start;color:var(--text-primary);font-family:Cinzel,Georgia,serif;font-size:1.08rem;font-weight:750; }
-.auth-brand img { width:30px;height:42px; }.auth-brand strong { color:var(--brand-secondary); }
+.auth-brand img { width:42px;height:42px;border-radius:50%;object-fit:cover; }.auth-brand strong { color:var(--brand-secondary); }
 .register-form-inner { width:100%;max-width:600px;margin:auto;padding:2.75rem 0; }
 .register-heading { display:grid;grid-template-columns:auto minmax(0,1fr);gap:1.1rem;align-items:start; }
 .register-heading h2 { margin-top:.55rem;font-family:Cinzel,Georgia,serif;font-size:clamp(2.15rem,4vw,3.55rem);font-weight:750;line-height:1.05; }

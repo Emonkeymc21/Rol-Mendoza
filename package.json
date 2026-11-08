@@ -8,7 +8,9 @@
     "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:share-preview": "node scripts/test-share-preview.cjs"
+    "test:share-preview": "node scripts/test-share-preview.cjs",
+    "test:stability": "node scripts/test-stability.cjs",
+    "test:ci": "npm run test:share-preview && npm run test:stability"
   },
   "private": true,
   "dependencies": {
