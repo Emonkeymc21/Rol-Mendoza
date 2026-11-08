@@ -65,7 +65,7 @@
             </label>
           </div>
 
-          <label class="consent-box mt-6"><input type="checkbox" formControlName="privacyConsent"><span><strong>Acepto compartir mi medio de contacto cuando corresponda.</strong><small>WhatsApp, Instagram y el teléfono alternativo se mantienen privados. Solamente se habilitan entre el jugador y el máster después de aceptar una solicitud de ingreso. Podré bloquear usuarios y modificar o eliminar estos datos desde mi perfil. <a routerLink="/privacidad" target="_blank" (click)="$event.stopPropagation()">Ver Política de Privacidad</a>.</small></span></label>
+          <label class="consent-box mt-6"><input type="checkbox" formControlName="privacyConsent"><span><strong>Acepto compartir mi medio de contacto cuando corresponda.</strong><small>WhatsApp, Instagram y el teléfono alternativo se mantienen privados. Solamente se habilitan entre el jugador y el máster después de aceptar una solicitud de ingreso. Podré bloquear usuarios y modificar o eliminar estos datos desde mi perfil. <a routerLink="/privacidad" target="_blank" rel="noopener" (click)="$event.stopPropagation()">Ver Política de Privacidad</a>.</small></span></label>
           <span *ngIf="invalid('privacyConsent')" class="error-text">Necesitamos tu consentimiento para completar el perfil.</span>
         </section>
 
