@@ -138,10 +138,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 @media(max-width:639px) {
   .page-shell { padding-right:1rem;padding-left:1rem; }
-  .section-space { padding-top:3.5rem;padding-bottom:3.5rem; }
-  .display-title { letter-spacing:-.025em; }
-  .btn-primary,.btn-secondary { padding-right:1.1rem;padding-left:1.1rem; }
+  .section-space { padding-top:2.75rem;padding-bottom:2.75rem; }
+  .display-title { font-size:clamp(2.1rem,10vw,3rem);letter-spacing:-.025em; }
+  .section-title { font-size:clamp(1.75rem,8vw,2.3rem); }
+  .btn-primary,.btn-secondary { min-height:48px;padding-right:1.1rem;padding-left:1.1rem; }
+  .input-field { min-height:50px;font-size:16px; }
+  textarea.input-field { line-height:1.55; }
+  .page-hero-dnd { padding-top:2.5rem !important;padding-bottom:2.5rem !important; }
   .game-results-skeleton { grid-template-columns:1fr; }
+}
+
+@media (hover:none), (pointer:coarse) {
+  .btn-primary:hover,.btn-secondary:hover { transform:none; }
 }
 
 @media(max-width:767px) {
@@ -152,12 +160,33 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   :root[data-theme='light'] .adventures-section::before,:root[data-theme='light'] .journey-section::before { background:linear-gradient(180deg,rgba(241,232,213,.88),rgba(241,232,213,.97)); }
 }
 
+@media(min-width:768px) and (max-width:899px) {
+  .community-image { min-height:520px; }
+  .community-copy { padding:4rem max(1.5rem,calc((100vw - 720px)/2)); }
+  .community-copy h2 { max-width:42rem;font-size:clamp(2.5rem,6vw,4rem); }
+}
+
+@media(max-width:390px) {
+  .hero-kicker { font-size:.62rem;letter-spacing:.18em; }
+  .hero-link { font-size:.69rem; }
+  .hero-ledger span { letter-spacing:.08em; }
+  .roster-heading { align-items:flex-start;flex-direction:column; }
+}
+
+@media(max-width:359px) {
+  .hero-copy h1 { font-size:1.92rem; }
+  .hero-copy p { font-size:.94rem; }
+  .hero-ledger { margin-top:1.35rem; }
+  .editorial-heading h2,.journey-intro h2,.about-layout h2 { font-size:2rem; }
+}
+
 @keyframes skeleton-drift { from { background-position:100% 0; } to { background-position:-120% 0; } }
 
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
   html.cursor-enhanced,html.cursor-enhanced a,html.cursor-enhanced button,html.cursor-enhanced [role='button'] { cursor:none; }
   html.cursor-enhanced input,html.cursor-enhanced textarea { cursor:text; }
   html.cursor-enhanced select { cursor:default; }
+  .community-image:hover img { transform:scale(1.025); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -149,49 +149,47 @@
 }
 
 @media(max-width:767px) {
-  .home-hero { min-height:82svh; }
-  .hero-stage { min-height:82svh;padding-top:4.5rem;padding-bottom:7rem; }
-  .hero-media img { object-position:center; }
-  .hero-atmosphere { background:linear-gradient(90deg,rgba(9,7,8,.92),rgba(9,7,8,.26)),linear-gradient(180deg,rgba(9,7,8,.28),transparent 38%,rgba(9,7,8,.82)); }
-  .hero-copy h1 { font-size:clamp(2.35rem,10.5vw,4.1rem);line-height:.98; }
-  .hero-copy p { max-width:33rem;margin-top:1.25rem;font-size:1.05rem;line-height:1.5; }
-  .hero-actions { margin-top:1.7rem; }
+  .home-hero { min-height:calc(100svh - 68px); }
+  .hero-stage { min-height:calc(100svh - 68px);align-items:stretch;justify-content:center;padding-top:3rem;padding-bottom:2rem; }
+  .hero-media img { object-position:58% center; }
+  .hero-atmosphere { background:linear-gradient(90deg,rgba(9,7,8,.94),rgba(9,7,8,.42)),linear-gradient(180deg,rgba(9,7,8,.2),rgba(9,7,8,.2) 48%,rgba(9,7,8,.9)); }
+  .hero-kicker { margin-bottom:1rem; }
+  .hero-copy h1 { font-size:clamp(2.05rem,9.5vw,3.35rem);line-height:1;letter-spacing:-.035em; }
+  .hero-copy p { max-width:33rem;margin-top:1rem;font-size:1rem;line-height:1.48; }
+  .hero-actions { gap:.65rem;margin-top:1.35rem; }
   .hero-actions .btn-primary,.hero-actions .btn-secondary { width:100%; }
-  .hero-ledger { right:1rem;bottom:1.35rem;left:1rem;justify-content:flex-end;gap:1rem; }
-  .hero-ledger div { min-width:0;padding-left:.6rem; }
+  .hero-link { margin-top:.15rem; }
+  .hero-ledger { position:static;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem;width:100%;margin-top:1.75rem; }
+  .hero-ledger div { min-width:0;padding-left:.65rem; }
   .hero-ledger strong { font-size:1.15rem; }
   .hero-ledger span { font-size:.57rem; }
   .scroll-cue { display:none; }
+  .discovery-layout { gap:1.25rem;padding-top:1.75rem;padding-bottom:1.75rem; }
   .discovery-form { grid-template-columns:1fr; }
   .discovery-form .btn-primary { width:100%; }
+  .search-tabs span { min-height:48px;padding-right:.35rem;padding-left:.35rem;white-space:normal;text-align:center; }
   .editorial-heading { gap:1rem; }
+  .adventures-section,.journey-section { padding:3.75rem 0; }
   .home-game-layout { margin-top:2rem; }
-  .dm-editorial,.dm-copy { min-height:520px; }
+  .dm-editorial,.dm-copy { min-height:460px; }
   .dm-image { background:linear-gradient(180deg,rgba(13,9,11,.35),rgba(13,9,11,.94) 66%),url('/assets/branding/dm-session-real.webp') 60% center/cover no-repeat; }
-  .dm-copy { justify-content:flex-end;padding-bottom:3.2rem; }
-  .community-image { min-height:440px;clip-path:none;opacity:1; }
-  .roster-section { padding:3.5rem 0 4.5rem; }
+  .dm-copy { justify-content:flex-end;padding-bottom:2.75rem; }
+  .dm-copy h2 { font-size:clamp(2.15rem,10vw,3.2rem); }
+  .community-image { min-height:300px;clip-path:none;opacity:1; }
+  .community-copy { padding:2.75rem 1rem 3.25rem; }
+  .community-copy h2 { font-size:clamp(2rem,9.5vw,3rem); }
+  .community-copy p { margin-top:1rem;font-size:1.08rem;line-height:1.62; }
+  .community-copy .btn-secondary { width:100%;margin-top:1.5rem; }
+  .roster-section { padding:3rem 0 3.75rem; }
   .home-player-layout { gap:.8rem; }
-  .final-cta { min-height:570px;background-position:60% center; }
-  .final-cta-inner { min-height:570px;flex-direction:column;align-items:flex-start;justify-content:flex-end;padding-top:4rem;padding-bottom:3.5rem; }
+  .journey-layout { gap:2rem; }
+  .journey-list article { grid-template-columns:38px 1fr;gap:.75rem;padding:1.35rem 0; }
+  .about-editorial { padding:3.5rem 0; }
+  .about-layout { gap:1.25rem; }
+  .final-cta { min-height:440px;background-position:60% center; }
+  .final-cta-inner { min-height:440px;flex-direction:column;align-items:flex-start;justify-content:flex-end;padding-top:3rem;padding-bottom:2.75rem; }
+  .final-cta h2 { font-size:clamp(2.2rem,10vw,3.2rem); }
   .final-cta .btn-primary { width:100%; }
-}
-
-@media(hover:hover) and (pointer:fine) {
-  .community-image:hover img { transform:scale(1.025); }
-}
-
-@media(min-width:768px) and (max-width:899px) {
-  .community-image { min-height:520px; }
-  .community-copy { padding:4rem max(1.5rem,calc((100vw - 720px)/2)); }
-  .community-copy h2 { max-width:42rem;font-size:clamp(2.5rem,6vw,4rem); }
-}
-
-@media(max-width:390px) {
-  .hero-kicker { font-size:.62rem;letter-spacing:.18em; }
-  .hero-link { font-size:.69rem; }
-  .hero-ledger div:nth-child(3) { display:none; }
-  .roster-heading { align-items:flex-start;flex-direction:column; }
 }
 
 @keyframes hero-enter { from { opacity:0;transform:translateY(20px); } to { opacity:1;transform:none; } }

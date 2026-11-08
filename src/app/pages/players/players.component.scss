@@ -4,3 +4,4 @@
 .character-filters::before { content:none; }
 .results-ledger { border-bottom:1px solid var(--border);padding-bottom:.75rem; }
 @media(max-width:639px){.results-ledger{align-items:flex-start;gap:.75rem}.results-ledger>span{font-size:.7rem;text-align:right}}
+@media(min-width:390px) and (max-width:767px){.character-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.character-filters>label:first-child,.character-filters>button{grid-column:1/-1}}
