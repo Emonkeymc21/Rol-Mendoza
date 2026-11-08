@@ -19,7 +19,7 @@ export class GameCardComponent implements OnInit {
 
   statusLabel(): string {
     const labels: Record<Game['status'], string> = {
-      ACTIVE: 'Activa', FULL: 'Sin cupos', PAUSED: 'Pausada', CANCELLED: 'Cancelada'
+      ACTIVE: 'Activa', FULL: 'Sin cupos', PAUSED: 'Inscripciones pausadas', CANCELLED: 'Cancelada'
     };
     return labels[this.game.status];
   }

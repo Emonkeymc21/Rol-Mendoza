@@ -33,6 +33,7 @@ import { RevealDirective } from './shared/directives/reveal.directive';
 import { LegalComponent } from './pages/legal/legal.component';
 import { CommunitiesComponent } from './pages/communities/communities.component';
 import { RequestCommunityComponent } from './pages/request-community/request-community.component';
+import { ShareGameComponent } from './shared/components/share-game/share-game.component';
 
 @NgModule({
   declarations: [
@@ -63,7 +64,8 @@ import { RequestCommunityComponent } from './pages/request-community/request-com
     RevealDirective,
     LegalComponent,
     CommunitiesComponent,
-    RequestCommunityComponent
+    RequestCommunityComponent,
+    ShareGameComponent
   ],
   imports: [
     BrowserModule,

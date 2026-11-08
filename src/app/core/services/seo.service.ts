@@ -1,8 +1,9 @@
 import { DOCUMENT } from '@angular/common';
 import { Inject, Injectable } from '@angular/core';
-import { Meta } from '@angular/platform-browser';
+import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
+import { Game } from '../models/game.model';
 
 @Injectable({ providedIn: 'root' })
 export class SeoService {
@@ -14,6 +15,7 @@ export class SeoService {
     private router: Router,
     private activatedRoute: ActivatedRoute,
     private meta: Meta,
+    private title: Title,
     @Inject(DOCUMENT) private document: Document
   ) {}
 
@@ -24,6 +26,20 @@ export class SeoService {
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(() => this.updateMetadata());
+  }
+
+  setGameMetadata(game: Game): void {
+    const title = `${game.title} | Cumbre20`;
+    const description = `${game.system} · ${game.mode} · ${game.city}. ${game.summary}`.replace(/\s+/g, ' ').slice(0, 180);
+    const canonicalUrl = `${this.siteUrl}/partidas/${encodeURIComponent(game.id)}`;
+    this.title.setTitle(title);
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ property: 'og:title', content: title });
+    this.meta.updateTag({ property: 'og:description', content: description });
+    this.meta.updateTag({ property: 'og:url', content: canonicalUrl });
+    this.meta.updateTag({ name: 'twitter:title', content: title });
+    this.meta.updateTag({ name: 'twitter:description', content: description });
+    this.setCanonical(canonicalUrl);
   }
 
   private updateMetadata(): void {

@@ -22,7 +22,7 @@
           <p *ngIf="errorMessage" class="sm:col-span-2 feedback-error" role="alert">{{ errorMessage }}</p><p *ngIf="successMessage" class="sm:col-span-2 feedback-success" role="status">{{ successMessage }}</p>
           <button type="submit" class="btn-primary sm:col-span-2" [disabled]="saving || googleSaving">{{ saving ? 'Creando cuenta…' : 'Crear cuenta y completar perfil' }}</button>
         </form>
-        <p class="auth-switch">¿Ya tenés una cuenta? <a routerLink="/ingresar">Ingresá acá</a></p>
+        <p class="auth-switch">¿Ya tenés una cuenta? <a routerLink="/ingresar" [queryParams]="{ returnUrl: returnUrl }">Ingresá acá</a></p>
       </div>
     </div>
   </div>

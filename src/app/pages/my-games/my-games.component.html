@@ -14,6 +14,10 @@
 <section class="section-space">
   <div class="page-shell">
     <p *ngIf="notice" class="feedback-success mb-5" role="status">{{ notice }}</p>
+    <section *ngIf="publishedGame() as published" class="published-share mb-6" aria-label="Compartir la partida recién publicada">
+      <div><strong>{{ published.title }}</strong><span>{{ published.system }} · {{ availableMessage(published) }}</span></div>
+      <app-share-game [game]="published"></app-share-game>
+    </section>
     <p *ngIf="errorMessage" class="feedback-error mb-5" role="alert">{{ errorMessage }}</p>
     <div *ngIf="loading" class="game-results-skeleton" aria-label="Cargando tus partidas" aria-busy="true"><div class="game-skeleton" *ngFor="let item of [1,2,3,4]"><span></span><i></i><i></i><i></i></div></div>
 
@@ -47,9 +51,10 @@
         </section>
         <div class="game-admin-actions mt-6 flex flex-wrap gap-2 pt-5">
           <a *ngIf="canCreate" [routerLink]="['/solicitudes']" [queryParams]="{ gameId: game.id }" class="request-button"><app-icon name="users" [size]="17"></app-icon> Solicitudes <span *ngIf="requestCount(game.id)">{{ requestCount(game.id) }}</span></a>
+          <app-share-game *ngIf="game.status !== 'CANCELLED'" [game]="game"></app-share-game>
           <a [routerLink]="['/mis-partidas', game.id, 'editar']" class="btn-secondary !min-h-[40px] !px-4">Editar</a>
-          <button *ngIf="game.status !== 'ACTIVE'" type="button" class="action-button" (click)="changeStatus(game, 'ACTIVE')" [disabled]="busyGameId === game.id">Activar</button>
-          <button *ngIf="game.status === 'ACTIVE' || game.status === 'FULL'" type="button" class="action-button" (click)="changeStatus(game, 'PAUSED')" [disabled]="busyGameId === game.id">Pausar</button>
+          <button *ngIf="game.status !== 'ACTIVE'" type="button" class="action-button" (click)="changeStatus(game, 'ACTIVE')" [disabled]="busyGameId === game.id">Reabrir inscripciones</button>
+          <button *ngIf="game.status === 'ACTIVE' || game.status === 'FULL'" type="button" class="action-button" (click)="changeStatus(game, 'PAUSED')" [disabled]="busyGameId === game.id">Cerrar inscripciones</button>
           <button *ngIf="game.status !== 'FULL' && game.status !== 'CANCELLED'" type="button" class="action-button" (click)="changeStatus(game, 'FULL')" [disabled]="busyGameId === game.id">Marcar sin cupos</button>
           <button *ngIf="game.status !== 'CANCELLED'" type="button" class="action-button text-red-200" (click)="changeStatus(game, 'CANCELLED')" [disabled]="busyGameId === game.id">Cancelar</button>
           <span *ngIf="busyGameId === game.id" class="self-center text-xs text-mist">Guardando…</span>

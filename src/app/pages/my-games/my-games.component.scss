@@ -10,6 +10,11 @@
 .request-button { display:inline-flex;min-height:40px;align-items:center;gap:.45rem;border:1px solid var(--brand-border);border-radius:var(--radius-sm);background:var(--brand-soft);padding:.45rem .85rem;color:var(--brand-secondary);font-size:.82rem;font-weight:800; }
 .request-button span { display:grid;min-width:1.25rem;height:1.25rem;place-items:center;border-radius:999px;background:var(--brand-secondary);color:var(--button-primary-text);font-size:.65rem; }
 .game-admin-actions { border-top:1px solid var(--border); }
+.published-share { display:flex;align-items:center;justify-content:space-between;gap:1rem;border-left:3px solid var(--brand-primary);background:var(--brand-soft);padding:1rem 1.1rem; }
+.published-share div { min-width:0; }
+.published-share strong,.published-share span { display:block; }
+.published-share strong { overflow:hidden;color:var(--text-primary);text-overflow:ellipsis;white-space:nowrap; }
+.published-share span { margin-top:.2rem;color:var(--text-secondary);font-size:.78rem; }
 .confirmed-players { border-top:1px solid var(--border);padding-top:1rem; }
 .confirmed-players h3 { font-size:.82rem;font-weight:800; }
 .confirmed-players>div>span { border-radius:999px;background:var(--brand-soft);padding:.18rem .5rem;color:var(--brand-secondary);font-size:.7rem;font-weight:800; }
@@ -20,4 +25,4 @@
 .chip-remove { display:grid;width:26px;height:26px;flex:0 0 auto;place-items:center;border:1px solid transparent;border-radius:50%;background:transparent;color:var(--text-muted);font-size:1rem;line-height:1;cursor:pointer;transition:.2s ease; }
 .chip-remove:hover:not(:disabled) { border-color:var(--danger-border);background:var(--danger-soft);color:var(--danger); }
 .chip-remove:disabled { cursor:wait;opacity:.5; }
-@media(max-width:430px){.game-admin-head{flex-direction:column}.game-admin-head h2{overflow-wrap:anywhere;font-size:1.35rem}.game-admin-actions>*{flex:1 1 calc(50% - .5rem);justify-content:center;padding-right:.6rem;padding-left:.6rem}.game-admin-actions .request-button{flex-basis:100%}}
+@media(max-width:430px){.published-share{align-items:stretch;flex-direction:column}.published-share app-share-game{display:block}.game-admin-head{flex-direction:column}.game-admin-head h2{overflow-wrap:anywhere;font-size:1.35rem}.game-admin-actions>*{flex:1 1 calc(50% - .5rem);justify-content:center;padding-right:.6rem;padding-left:.6rem}.game-admin-actions .request-button{flex-basis:100%}}

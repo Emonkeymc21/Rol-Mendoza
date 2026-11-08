@@ -17,7 +17,7 @@
           <p *ngIf="errorMessage" class="feedback-error" role="alert">{{ errorMessage }}</p><p *ngIf="notice" class="feedback-success" role="status">{{ notice }}</p>
           <button type="submit" class="btn-primary w-full" [disabled]="saving || googleSaving">{{ saving ? 'Ingresando…' : 'Ingresar' }}</button>
         </form>
-        <p class="auth-switch">¿Todavía no tenés cuenta? <a routerLink="/registrarme">Registrate</a></p>
+        <p class="auth-switch">¿Todavía no tenés cuenta? <a routerLink="/registrarme" [queryParams]="{ returnUrl: returnUrl }">Registrate</a></p>
       </div>
     </div>
   </div>
