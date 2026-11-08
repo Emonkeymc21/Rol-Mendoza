@@ -1,4 +1,8 @@
-.game-masthead { position:relative;background:linear-gradient(100deg,rgba(19,14,16,.96),rgba(19,14,16,.58)),url('/assets/branding/game-detail-real.webp') center/cover no-repeat; }
+.game-masthead { position:relative;background:linear-gradient(100deg,rgba(19,14,16,.96),rgba(19,14,16,.58)),url('/assets/branding/game-detail-real.webp') center/cover no-repeat;color:#f1e8d5; }
+
+.game-masthead .detail-title { color:#f1e8d5; }
+.game-masthead .detail-summary { color:#c8bcba; }
+.game-masthead .tag { border-color:rgba(241,232,213,.22);background:rgba(19,14,16,.55);color:#f1e8d5; }
 
 .game-masthead::after { content:'';position:absolute;inset:0;background:url('/assets/branding/map-mendoza.svg') right center/60% auto no-repeat;opacity:.14;pointer-events:none; }
 
