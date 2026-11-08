@@ -33,9 +33,23 @@
 }
 
 @media(max-width:430px) {
-  .card-art { height:126px; }
-  .game-card h3 { font-size:1.35rem; }
+  .game-card-body { padding:1rem; }
+  .card-art { height:112px; }
+  .game-card-title { display:-webkit-box;margin-top:1rem;overflow:hidden;overflow-wrap:anywhere;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:1.32rem; }
+  .game-card-summary { display:-webkit-box;margin-top:.75rem;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2; }
   .meta-badge,.status-badge { font-size:.6rem; }
+  .game-meta { grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;margin-top:1rem;padding:.85rem 0; }
+  .game-meta > div { gap:.45rem; }
+  .game-card-footer { margin-top:1rem;padding-top:.85rem; }
+  .capacity-row { align-items:flex-start;gap:.5rem; }
+  .capacity-row > span:last-child { max-width:42%; }
+  .game-card-actions { margin-top:.9rem;padding-top:.8rem; }
+}
+
+@media(max-width:359px) {
+  .game-meta { grid-template-columns:1fr; }
+  .capacity-row { flex-direction:column; }
+  .capacity-row > span:last-child { max-width:none;text-align:left; }
 }
 
 @media(prefers-reduced-motion:reduce) {

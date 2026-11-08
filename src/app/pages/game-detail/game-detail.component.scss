@@ -39,4 +39,27 @@
 .detail-loading span:nth-child(2){max-width:24rem}.detail-loading span:nth-child(3){max-width:18rem}.detail-loading p{margin-top:.5rem;color:var(--text-secondary);font-size:.8rem}
 @keyframes detailSkeleton{to{background-position:-200% 0}}
 @media(min-width:640px){.participant-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1024px){.game-sidebar-panel{position:sticky;top:7rem}}
+@media(max-width:639px){
+  .game-detail-page{padding-top:2rem;padding-bottom:3rem}
+  .game-detail-layout{gap:1rem;margin-top:1rem}
+  .game-masthead{padding:1.25rem;background-position:58% center}
+  .game-masthead .tag{padding:.2rem .5rem;font-size:.68rem}
+  .detail-title{margin-top:.65rem;overflow-wrap:anywhere;font-size:clamp(2rem,10vw,2.65rem);line-height:1.05}
+  .detail-summary{margin-top:1rem;font-size:1rem;line-height:1.6}
+  .game-detail-main>div:last-child{gap:1.5rem;padding:1.25rem}
+  .game-detail-main h2,.detail-secondary h2{font-size:1.45rem}
+  .detail-info-grid{gap:.65rem}
+  .info-tile{padding:.85rem}
+  .info-tile span{font-size:.76rem}
+  .game-sidebar-panel{padding:1.1rem}
+  .game-sidebar-panel dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin-top:1rem}
+  .game-sidebar-panel dl>div{min-width:0}
+  .game-sidebar-panel dd{min-width:0;overflow-wrap:anywhere;font-size:.88rem}
+  .game-sidebar-panel .master-summary{grid-column:1/-1}
+  .detail-secondary{padding:1.1rem}
+  .comment-card{padding:1rem}
+}
+@media(min-width:390px) and (max-width:639px){.detail-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:359px){.game-sidebar-panel dl{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.detail-loading span{animation:none}}
