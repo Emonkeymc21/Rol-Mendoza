@@ -11,7 +11,7 @@ export class LoginComponent {
   resetting = false;
   errorMessage = '';
   notice = '';
-  private readonly returnUrl: string;
+  readonly returnUrl: string;
 
   form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],

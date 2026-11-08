@@ -39,7 +39,8 @@
             </dl>
             <div class="my-6 border-t border-white/[.08]"></div>
             <div class="capacity-summary"><div><app-icon name="users" [size]="19"></app-icon><strong>{{ occupiedPlayers() }} / {{ game.totalSeats }}</strong><span>jugadores</span></div><p [class.full]="game.status === 'FULL' || game.seats === 0">{{ availableMessage() }}</p></div>
-            <button type="button" class="btn-primary mt-6 w-full" (click)="join()" [disabled]="game.status === 'FULL' || !!joinRequest || (joinRoleLoaded && !canRequestJoin && !isOwnGame())">{{ joinButtonText() }} <app-icon *ngIf="game.status !== 'FULL' && !joinRequest && (!joinRoleLoaded || canRequestJoin)" name="arrow" [size]="19"></app-icon></button>
+            <button type="button" class="btn-primary mt-6 w-full" (click)="join()" [disabled]="!canAcceptRequests() || !!joinRequest || (joinRoleLoaded && !canRequestJoin && !isOwnGame())">{{ joinButtonText() }} <app-icon *ngIf="canAcceptRequests() && !joinRequest && (!joinRoleLoaded || canRequestJoin)" name="arrow" [size]="19"></app-icon></button>
+            <app-share-game *ngIf="game.status !== 'CANCELLED'" class="detail-share" [game]="game"></app-share-game>
             <p *ngIf="joinNotice && !joinOpen && !joinRequest" class="feedback-success" role="status">{{ joinNotice }}</p>
             <p *ngIf="joinRequest" class="request-state" [class.approved]="joinRequest.status === 'APPROVED'" [class.rejected]="joinRequest.status === 'REJECTED' || joinRequest.status === 'REMOVED'" role="status">{{ requestMessage() }} <a routerLink="/mis-solicitudes">Ver mis solicitudes</a></p>
             <section *ngIf="joinRequest?.status === 'APPROVED' && (dmContact?.whatsappUrl || dmContact?.instagramUrl)" class="approved-contact" aria-label="Contacto con el máster">
@@ -125,6 +126,9 @@
       </section>
     </ng-container>
 
-    <ng-template #missing><div class="glass-panel mt-6 rounded-2xl p-10 text-center"><h1 class="font-display text-3xl font-bold">No encontramos esa partida</h1><a routerLink="/partidas" class="btn-primary mt-6">Ver partidas disponibles</a></div></ng-template>
+    <ng-template #missing>
+      <div *ngIf="loadingGame; else unavailable" class="detail-loading mt-6" aria-live="polite" aria-busy="true"><span></span><span></span><span></span><p>Cargando la partida…</p></div>
+      <ng-template #unavailable><div class="glass-panel mt-6 rounded-2xl p-10 text-center"><h1 class="font-display text-3xl font-bold">Esta partida ya no está disponible</h1><p class="mx-auto mt-3 max-w-xl text-mist">Puede haber sido cancelada, eliminada o el enlace puede ser incorrecto.</p><a routerLink="/partidas" class="btn-primary mt-6">Buscar otras partidas</a></div></ng-template>
+    </ng-template>
   </div>
 </section>

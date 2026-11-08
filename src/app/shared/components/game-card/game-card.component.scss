@@ -1,7 +1,8 @@
 :host { display:block;height:100%;min-width:0; }
-.game-card { position:relative;display:flex;height:100%;min-width:0;flex-direction:column;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--surface);box-shadow:0 18px 40px rgba(0,0,0,.15);transition:transform .26s ease,border-color .26s ease,box-shadow .26s ease; }
+.game-card { position:relative;display:flex;height:100%;min-width:0;flex-direction:column;overflow:visible;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--surface);box-shadow:0 18px 40px rgba(0,0,0,.15);transition:transform .26s ease,border-color .26s ease,box-shadow .26s ease; }
+.game-card:focus-within { z-index:50; }
 .game-card:hover { transform:translateY(-3px);border-color:color-mix(in srgb,var(--brand-primary) 38%,var(--border));box-shadow:0 24px 55px rgba(0,0,0,.22); }
-.card-art { position:relative;height:148px;flex:0 0 auto;overflow:hidden;background:linear-gradient(180deg,rgba(19,14,16,.05),rgba(19,14,16,.88)),url('/assets/branding/tabletop-detail.webp') center 54%/cover no-repeat;transition:background-size .35s ease; }
+.card-art { position:relative;height:148px;flex:0 0 auto;overflow:hidden;border-radius:var(--radius-xs) var(--radius-xs) 0 0;background:linear-gradient(180deg,rgba(19,14,16,.05),rgba(19,14,16,.88)),url('/assets/branding/tabletop-detail.webp') center 54%/cover no-repeat;transition:background-size .35s ease; }
 .game-card:hover .card-art { background-size:auto,103%; }
 .card-art::after { content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(111,29,42,.5),transparent 48%);mix-blend-mode:color; }
 .card-art-system { position:absolute;z-index:1;bottom:1rem;left:1.15rem;max-width:72%;color:#f1e8d5;font-size:.69rem;font-weight:850;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 2px 12px #000; }
@@ -19,7 +20,8 @@
 .game-card-footer { border-top:0; }
 .capacity-track { position:relative;height:4px;overflow:hidden;background:var(--surface-raised); }
 .capacity-track span { display:block;height:100%;background:linear-gradient(90deg,var(--cumbre-wine),var(--brand-primary));transition:width .25s ease; }
-.game-card-action { display:flex;min-height:44px;align-items:center;justify-content:space-between;margin-top:1.15rem;border-top:1px solid var(--border);padding-top:1rem;color:var(--text-primary);font-size:.75rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase;transition:color .2s ease; }
+.game-card-actions { display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:.65rem;margin-top:1.15rem;border-top:1px solid var(--border);padding-top:1rem; }
+.game-card-action { display:flex;min-height:44px;align-items:center;justify-content:space-between;color:var(--text-primary);font-size:.75rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase;transition:color .2s ease; }
 .game-card-action:hover { color:var(--brand-secondary); }
 .game-card-action app-icon { transition:transform .2s ease; }
 .game-card-action:hover app-icon { transform:translateX(4px); }

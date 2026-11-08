@@ -14,6 +14,7 @@ import { GameParticipantService } from '../../core/services/game-participant.ser
 import { UserPrivateProfile, UserProfile } from '../../core/models/user-profile.model';
 import { ContactNormalizerService } from '../../core/services/contact-normalizer.service';
 import { take } from 'rxjs';
+import { SeoService } from '../../core/services/seo.service';
 
 @Component({ selector: 'app-game-detail', templateUrl: './game-detail.component.html', styleUrls: ['./game-detail.component.scss'] })
 export class GameDetailComponent {
@@ -36,6 +37,7 @@ export class GameDetailComponent {
   dmContact?: UserPrivateProfile;
   ownProfile?: UserProfile;
   isAuthenticated = false;
+  loadingGame = true;
   readonly apiConnected: boolean;
   readonly gameId: string;
 
@@ -54,6 +56,7 @@ export class GameDetailComponent {
     private profiles: ProfileService,
     private contacts: ContactNormalizerService,
     participants: GameParticipantService,
+    private seo: SeoService,
     private router: Router
   ) {
     this.gameId = route.snapshot.paramMap.get('id') ?? '';
@@ -95,8 +98,10 @@ export class GameDetailComponent {
 
   join(): void {
     this.notice = '';
-    if (this.game?.status === 'FULL') {
-      this.notice = 'Esta partida está completa y no recibe nuevas solicitudes.';
+    if (!this.canAcceptRequests()) {
+      this.notice = this.game?.status === 'FULL'
+        ? 'Esta partida está completa y no recibe nuevas solicitudes.'
+        : 'Las inscripciones de esta partida no están abiertas en este momento.';
       return;
     }
     if (this.isOwnGame()) {
@@ -153,6 +158,8 @@ export class GameDetailComponent {
 
   joinButtonText(): string {
     if (this.game?.status === 'FULL') return 'Partida completa';
+    if (this.game?.status === 'PAUSED') return 'Inscripciones pausadas';
+    if (this.game?.status === 'CANCELLED') return 'Partida no disponible';
     if (this.isOwnGame()) return 'Administrar mi partida';
     if (this.joinRoleLoaded && !this.canRequestJoin) return 'Disponible para jugadores';
     if (this.joinRequest?.status === 'APPROVED') return 'Ya formás parte';
@@ -161,6 +168,10 @@ export class GameDetailComponent {
     if (this.joinRequest?.seenByDm) return 'Solicitud vista';
     if (this.joinRequest) return 'Solicitud pendiente';
     return 'Solicitar unirme';
+  }
+
+  canAcceptRequests(): boolean {
+    return this.game?.status === 'ACTIVE' && this.game.seats > 0;
   }
 
   requestMessage(): string {
@@ -225,6 +236,8 @@ export class GameDetailComponent {
   private loadGame(): void {
     this.community.getGame(this.gameId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(game => {
       this.game = game;
+      this.loadingGame = false;
+      if (game) this.seo.setGameMetadata(game);
       if (this.isAuthenticated) this.loadDmProfile();
       void this.loadApprovedDmContact();
     });

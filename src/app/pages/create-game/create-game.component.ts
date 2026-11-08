@@ -150,7 +150,7 @@ export class CreateGameComponent implements OnInit {
       next: async result => {
         this.saving = false;
         await this.router.navigate(['/mis-partidas'], {
-          queryParams: { saved: result.id, action: this.editing ? 'updated' : 'published' }
+          queryParams: { saved: result.gameId || result.id, action: this.editing ? 'updated' : 'published' }
         });
       },
       error: error => {

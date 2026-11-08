@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 
@@ -11,6 +11,7 @@ export class RegisterComponent {
   submitted = false;
   errorMessage = '';
   successMessage = '';
+  readonly returnUrl: string;
 
   form = this.fb.nonNullable.group({
     displayName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
@@ -24,8 +25,12 @@ export class RegisterComponent {
     private fb: FormBuilder,
     private auth: AuthService,
     private profiles: ProfileService,
+    route: ActivatedRoute,
     private router: Router
-  ) {}
+  ) {
+    const requested = route.snapshot.queryParamMap.get('returnUrl') || '/perfil';
+    this.returnUrl = requested.startsWith('/') && !requested.startsWith('//') ? requested : '/perfil';
+  }
 
   async register(): Promise<void> {
     if (this.saving || this.googleSaving) return;
@@ -45,7 +50,7 @@ export class RegisterComponent {
     this.saving = true;
     try {
       await this.auth.registerWithEmail(value.displayName, value.email, value.password);
-      await this.router.navigate(['/completar-perfil']);
+      await this.router.navigate(['/completar-perfil'], { queryParams: { returnUrl: this.returnUrl } });
     } catch (error) {
       console.error('No se pudo completar el registro con correo.', error);
       this.errorMessage = this.auth.friendlyError(error);
@@ -62,10 +67,11 @@ export class RegisterComponent {
       await this.auth.signInWithGoogle();
       try {
         const complete = await this.profiles.isOwnProfileComplete();
-        await this.router.navigate([complete ? '/perfil' : '/completar-perfil']);
+        if (complete) await this.router.navigateByUrl(this.returnUrl);
+        else await this.router.navigate(['/completar-perfil'], { queryParams: { returnUrl: this.returnUrl } });
       } catch (error) {
         console.error('No se pudo leer el perfil después del registro con Google.', error);
-        await this.router.navigate(['/completar-perfil'], { queryParams: { profileLoadError: '1' } });
+        await this.router.navigate(['/completar-perfil'], { queryParams: { returnUrl: this.returnUrl, profileLoadError: '1' } });
       }
     } catch (error) {
       console.error('No se pudo completar el acceso con Google.', error);

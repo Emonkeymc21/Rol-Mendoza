@@ -32,4 +32,11 @@
 .approved-contact>div { display:grid;gap:.5rem;margin-top:.75rem; }
 .contact-action { display:inline-flex;min-height:42px;align-items:center;justify-content:center;gap:.45rem;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--surface);padding:.55rem .8rem;color:var(--text-primary);font-size:.78rem;font-weight:800; }
 .contact-action.whatsapp { border-color:var(--success-border);color:var(--success); }
+.detail-share { display:block;margin-top:.65rem; }
+.detail-share ::ng-deep .share-game,.detail-share ::ng-deep .share-trigger { width:100%; }
+.detail-loading { display:grid;gap:.65rem;border:1px solid var(--border);background:var(--surface);padding:2rem; }
+.detail-loading span { display:block;height:.8rem;max-width:34rem;border-radius:2px;background:linear-gradient(90deg,var(--surface-raised),var(--surface-muted),var(--surface-raised));background-size:200% 100%;animation:detailSkeleton 1.5s ease-in-out infinite; }
+.detail-loading span:nth-child(2){max-width:24rem}.detail-loading span:nth-child(3){max-width:18rem}.detail-loading p{margin-top:.5rem;color:var(--text-secondary);font-size:.8rem}
+@keyframes detailSkeleton{to{background-position:-200% 0}}
 @media(min-width:640px){.participant-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.detail-loading span{animation:none}}

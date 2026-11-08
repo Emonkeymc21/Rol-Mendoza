@@ -26,6 +26,8 @@ export class MyGamesComponent implements OnInit {
   canCreate = false;
   requests: GameJoinRequest[] = [];
   participants: GameParticipantView[] = [];
+  readonly savedGameId: string;
+  readonly publishedNow: boolean;
 
   constructor(
     private gamesService: GameService,
@@ -35,7 +37,9 @@ export class MyGamesComponent implements OnInit {
     participantService: GameParticipantService,
     auth: AuthService
   ) {
-    if (route.snapshot.queryParamMap.get('saved')) {
+    this.savedGameId = route.snapshot.queryParamMap.get('saved') || '';
+    this.publishedNow = route.snapshot.queryParamMap.get('action') === 'published';
+    if (this.savedGameId) {
       this.notice = route.snapshot.queryParamMap.get('action') === 'published'
         ? '¡Partida publicada! Tu partida ya está disponible para la comunidad.'
         : 'Los cambios de la partida se guardaron correctamente.';
@@ -93,7 +97,7 @@ export class MyGamesComponent implements OnInit {
 
   statusLabel(status: GameStatus): string {
     const labels: Record<GameStatus, string> = {
-      ACTIVE: 'Activa', PAUSED: 'Pausada', CANCELLED: 'Cancelada', FULL: 'Sin cupos'
+      ACTIVE: 'Activa', PAUSED: 'Inscripciones pausadas', CANCELLED: 'Cancelada', FULL: 'Sin cupos'
     };
     return labels[status];
   }
@@ -130,5 +134,9 @@ export class MyGamesComponent implements OnInit {
   availableMessage(game: Game): string {
     if (game.status === 'FULL' || game.seats <= 0) return 'Mesa completa';
     return `${game.seats} ${game.seats === 1 ? 'lugar disponible' : 'lugares disponibles'}`;
+  }
+
+  publishedGame(): Game | undefined {
+    return this.publishedNow ? this.games.find(game => game.id === this.savedGameId) : undefined;
   }
 }
