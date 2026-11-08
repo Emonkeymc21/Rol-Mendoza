@@ -20,6 +20,8 @@ export class HomeComponent {
   systemCount: number | null = null;
   profile: UserProfile | null = null;
   isAuthenticated = false;
+  authReady = false;
+  profileReady = false;
   private allPlayers: Player[] = [];
   private allGames: Game[] = [];
   readonly gamesLoading$ = this.community.gamesLoading$;
@@ -46,12 +48,21 @@ export class HomeComponent {
     });
     auth.user$.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       this.isAuthenticated = Boolean(user);
+      this.authReady = true;
       this.playerCount = user ? this.allPlayers.length : null;
       if (user) {
         profiles.watchOwnProfile().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
-          next: profile => this.profile = profile,
-          error: () => this.profile = null
+          next: profile => {
+            this.profile = profile;
+            this.profileReady = true;
+          },
+          error: () => {
+            this.profile = null;
+            this.profileReady = true;
+          }
         });
+      } else {
+        this.profileReady = true;
       }
     });
   }
