@@ -23,9 +23,9 @@ try{
  }
  const browser=await chromium.launch();const checks=[];
  try{
-  for(const [name,width,height]of[['compact',320,568],['android',393,851],['large',430,932],['iphone',390,844],['tablet',768,1024],['desktop',1440,900]]){
+  for(const [name,width,height]of[['compact',320,568],['android',393,851],['large',430,932],['iphone',390,844],['landscape-android',800,360],['landscape-iphone',844,390],['landscape-large',932,430],['tablet',768,1024],['desktop',1440,900]]){
    for(const theme of ['dark','light']) {
-   const context=await browser.newContext({viewport:{width,height},colorScheme:theme});const page=await context.newPage();
+   const landscape=name.startsWith('landscape-');const context=await browser.newContext({viewport:{width,height},colorScheme:theme,isMobile:landscape,hasTouch:landscape});const page=await context.newPage();
    const requests=[];page.on('request',r=>requests.push(r.url()));
    for(const route of ['/','/partidas','/partidas/PRT-DEMO-BASE','/comunidades','/ingresar','/registrarme']){
     await page.goto('http://127.0.0.1:4200'+route);await page.locator('h1').first().waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1200);
