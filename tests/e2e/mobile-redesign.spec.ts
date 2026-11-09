@@ -1,0 +1,120 @@
+import { test, expect, type Page } from '@playwright/test';
+import { observeBrowserErrors } from './browser-errors';
+
+const widths: ReadonlyArray<readonly [number, number]> = [
+  [320, 568], [360, 800], [375, 812], [390, 844], [393, 851],
+  [412, 915], [430, 932]
+];
+const extendedRoutes = [
+  ['/como-funciona', 'como-funciona'], ['/nosotros', 'nosotros'],
+  ['/privacidad', 'privacidad'], ['/terminos', 'terminos'],
+  ['/registrarme', 'registro'], ['/ingresar', 'login']
+] as const;
+
+async function assertFits(page: Page, width: number) {
+  const state = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    viewport: window.innerWidth,
+    overflowElements: [...document.querySelectorAll('body *')]
+      .filter(element => {
+        const box = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return box.right > innerWidth + 2 && style.position !== 'fixed' && style.position !== 'absolute';
+      })
+      .slice(0, 8)
+      .map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 100) }))
+  }));
+  expect(state.scrollWidth, JSON.stringify(state.overflowElements)).toBeLessThanOrEqual(width + 1);
+  expect(state.viewport).toBe(width);
+}
+
+for (const [width, height] of widths) {
+  test('Mobile redesign at ' + width + 'px: home, partidas, detalle, share, menus, communities', async ({ browser, request }, info) => {
+    const engine = info.project.name;
+    test.skip(engine !== 'android-chromium' && engine !== 'iphone-webkit', 'Mobile engine only');
+    test.skip(engine === 'iphone-webkit' && ![320, 390, 430].includes(width), 'WebKit sample widths');
+
+    const seeded = await request.post('http://127.0.0.1:4401/reset');
+    expect(seeded.ok()).toBeTruthy();
+    const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+    const page = await context.newPage();
+    const errors = await observeBrowserErrors(page, info, 'browser-errors-' + width);
+    try {
+      await page.goto('/');
+      await expect(page.locator('app-home h1')).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+      await assertFits(page, width);
+      await page.screenshot({ path: info.outputPath('home-' + width + '.png'), fullPage: true, animations: 'disabled' });
+
+      const toggle = page.getByRole('button', { name: 'Abrir menú', exact: true });
+      await toggle.click();
+      await expect(page.getByRole('navigation', { name: 'Navegación móvil' })).toBeVisible();
+      await expect(page.locator('body')).toHaveClass(/c20-mobile-menu-open/);
+      await page.screenshot({ path: info.outputPath('drawer-' + width + '.png'), animations: 'disabled' });
+      await page.getByRole('button', { name: 'Cerrar menú tocando fuera' }).click({ position: { x: width > 360 ? width - 12 : width - 7, y: 40 } });
+      await expect(page.getByRole('navigation', { name: 'Navegación móvil' })).toBeHidden();
+      await expect(page.locator('body')).not.toHaveClass(/c20-mobile-menu-open/);
+
+      await page.goto('/partidas');
+      const card = page.locator('app-game-card').first();
+      await expect(card).toBeVisible();
+      await expect(page.locator('h1').first()).toBeVisible();
+      await assertFits(page, width);
+      const art = await card.locator('.card-art').boundingBox();
+      const content = await card.locator('.game-card-body').boundingBox();
+      expect(art).not.toBeNull();
+      expect(content).not.toBeNull();
+      expect(art!.x + art!.width).toBeLessThanOrEqual(content!.x + 2);
+      await page.screenshot({ path: info.outputPath('partidas-' + width + '.png'), fullPage: true, animations: 'disabled' });
+
+      await page.goto('/partidas/PRT-DEMO-BASE');
+      await expect(page.locator('h1').first()).toBeVisible();
+      await assertFits(page, width);
+      await page.screenshot({ path: info.outputPath('detalle-' + width + '.png'), fullPage: true, animations: 'disabled' });
+      await page.getByRole('button', { name: 'Compartir partida', exact: true }).click();
+      const sheet = page.getByRole('menu', { name: 'Opciones para compartir' });
+      await expect(sheet).toBeVisible();
+      const sheetBox = await sheet.boundingBox();
+      expect(sheetBox).not.toBeNull();
+      expect(Math.abs(sheetBox!.y + sheetBox!.height - height)).toBeLessThanOrEqual(2);
+      await page.screenshot({ path: info.outputPath('compartir-' + width + '.png'), animations: 'disabled' });
+      await page.getByRole('menuitem', { name: 'Cerrar opciones para compartir' }).click();
+      await expect(sheet).toBeHidden();
+
+      await page.goto('/comunidades');
+      await expect(page.locator('h1').first()).toBeVisible();
+      await assertFits(page, width);
+      await page.screenshot({ path: info.outputPath('comunidades-' + width + '.png'), fullPage: true, animations: 'disabled' });
+
+      if (width === 393) {
+        for (const [route, slug] of extendedRoutes) {
+          await page.goto(route);
+          await expect(page.locator('h1').first()).toBeVisible();
+          await assertFits(page, width);
+          await page.screenshot({ path: info.outputPath(slug + '-' + width + '.png'), fullPage: true, animations: 'disabled' });
+        }
+      }
+      await errors.assertClean();
+    } finally {
+      await context.close();
+    }
+  });
+}
+
+test('Viewport isolation: tablet and desktop retain original CSS and no mobile navigation lock', async ({ browser }, info) => {
+  test.skip(info.project.name !== 'desktop-chromium', 'Desktop Chromium only');
+  for (const width of [768, 1024, 1440, 1920]) {
+    const context = await browser.newContext({ viewport: { width, height: 900 } });
+    const page = await context.newPage();
+    try {
+      await page.goto('/');
+      await expect(page.locator('app-home h1')).toBeVisible();
+      await assertFits(page, width);
+      await page.screenshot({ path: info.outputPath('home-unmodified-' + width + '.png'), fullPage: true, animations: 'disabled' });
+      expect(await page.evaluate(() => matchMedia('(max-width: 767px)').matches)).toBe(false);
+      expect(await page.evaluate(() => document.body.classList.contains('c20-mobile-menu-open'))).toBe(false);
+    } finally {
+      await context.close();
+    }
+  }
+});
