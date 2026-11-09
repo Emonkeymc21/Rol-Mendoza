@@ -7,7 +7,15 @@ const landscapeSizes: ReadonlyArray<readonly [number,number,string]> = [
 const mobileLandscapeQuery =
   '(min-width: 768px) and (max-width: 1023px) and (max-height: 500px) and (orientation: landscape) and (hover: none) and (pointer: coarse)';
 
+async function hideEmulatorWarning(page: Page) {
+  // El aviso de Firebase Auth Emulator sólo existe en los tests; no pertenece al producto.
+  await page.locator('.firebase-emulator-warning').evaluateAll(elements => {
+    for (const element of elements) (element as HTMLElement).style.display = 'none';
+  });
+}
+
 async function assertInteractiveLayout(page: Page, width: number) {
+  await hideEmulatorWarning(page);
   const result = await page.evaluate((expected) => {
     const bodyWidth = document.body.scrollWidth;
     const viewportWidth = document.documentElement.clientWidth;
@@ -92,6 +100,7 @@ for (const [width,height,slug] of landscapeSizes) {
       expect(bounds!.y).toBeGreaterThanOrEqual(-1);
       expect(bounds!.x+bounds!.width).toBeLessThanOrEqual(width+2);
       expect(bounds!.y+bounds!.height).toBeLessThanOrEqual(height+2);
+      await hideEmulatorWarning(page);
       await page.screenshot({path:info.outputPath(slug+'-compartir.png'),animations:'disabled'});
       await page.getByRole('menuitem',{name:'Cerrar opciones para compartir'}).click();
       await expect(sheet).toBeHidden();

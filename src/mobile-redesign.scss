@@ -896,3 +896,35 @@
   app-home .home-game-layout.home-game-layout { grid-template-columns: minmax(0, 1fr); }
   app-home .hero-stage.hero-stage { grid-template-columns: minmax(0,1fr) 150px; }
 }
+
+/* El shorthand "font" en home.component.scss está encapsulado por Angular
+   y tiene más especificidad que el primer rediseño global. Igualar/superar
+   ese selector es necesario para que el título NO conserve tamaño desktop. */
+@media screen and (max-width: 767px),
+       screen and (min-width: 768px) and (max-width: 1023px) and (max-height: 500px)
+       and (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  app-home .home-hero.home-hero .hero-copy.hero-copy h1 {
+    max-width: 100%;
+    font-size: clamp(1.9rem, 8vw, 2.85rem);
+    line-height: 1.08;
+    letter-spacing: -.028em;
+  }
+  app-home .home-hero.home-hero .hero-copy.hero-copy p {
+    max-width: 36rem;
+    margin-top: .75rem;
+    font-size: .96rem;
+    line-height: 1.46;
+  }
+}
+@media screen and (min-width: 768px) and (max-width: 1023px) and (max-height: 500px)
+       and (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  app-home .home-hero.home-hero .hero-copy.hero-copy h1 {
+    font-size: clamp(1.55rem, 3.6vw, 2.05rem);
+    line-height: 1.06;
+  }
+  app-home .home-hero.home-hero .hero-copy.hero-copy p {
+    margin-top: .45rem;
+    font-size: .83rem;
+    line-height: 1.34;
+  }
+}
