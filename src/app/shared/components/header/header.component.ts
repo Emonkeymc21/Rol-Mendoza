@@ -98,5 +98,17 @@ export class HeaderComponent {
     this.accountMenuOpen = false;
     if (wasOpen) this.document.querySelector<HTMLButtonElement>('.menu-trigger')?.focus();
   }
-  @HostListener('document:click') closeAccountMenu(): void { this.accountMenuOpen = false; }
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    this.accountMenuOpen = false;
+    if (!this.menuOpen) return;
+    const target = event.target as Node | null;
+    if (!target) return;
+    const nav = this.document.getElementById('mobile-navigation');
+    const trigger = this.document.querySelector('.menu-trigger');
+    if (nav?.contains(target) || trigger?.contains(target)) return;
+    // WebKit may dispatch a tap on <html> instead of the fixed backdrop.
+    // Closing from document guarantees the outside-tap action still works.
+    this.closeMenu();
+  }
 }

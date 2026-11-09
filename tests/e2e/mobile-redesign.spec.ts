@@ -111,7 +111,9 @@ for (const [width, height] of widths) {
       await expect(page.locator('body')).toHaveClass(/c20-mobile-menu-open/);
       await hideEmulatorOnlyBanner(page);
       await page.screenshot({ path: info.outputPath('drawer-' + width + '.png'), animations: 'disabled' });
-      await page.getByRole('button', { name: 'Cerrar menú tocando fuera' }).click({ position: { x: width > 360 ? width - 12 : width - 7, y: 40 } });
+      // Tap the exposed strip to the right of the mobile drawer. Safari can
+      // retarget the event to <html>; the document listener must still close.
+      await page.mouse.click(width - 6, Math.min(150, height - 24));
       await expect(page.getByRole('navigation', { name: 'Navegación móvil' })).toBeHidden();
       await expect(page.locator('body')).not.toHaveClass(/c20-mobile-menu-open/);
 
