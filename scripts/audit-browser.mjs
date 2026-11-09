@@ -21,7 +21,7 @@ try{
  const browser=await chromium.launch();const checks=[];
  try{
   for(const [name,width,height]of[['compact',320,568],['android',393,851],['large',430,932],['iphone',390,844],['tablet',768,1024],['desktop',1440,900]]){
-   const page=await browser.newPage({viewport:{width,height},colorScheme:'dark'});
+   const context=await browser.newContext({viewport:{width,height},colorScheme:'dark'});const page=await context.newPage();
    const requests=[];page.on('request',r=>requests.push(r.url()));
    for(const route of ['/','/partidas','/partidas/PRT-DEMO-BASE','/comunidades','/ingresar','/registrarme']){
     await page.goto('http://127.0.0.1:4200'+route);await page.locator('h1').first().waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1200);
@@ -33,7 +33,7 @@ try{
    }
    await page.emulateMedia({colorScheme:'light'});await page.goto('http://127.0.0.1:4200/');await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1200);await page.screenshot({path:`${directory}/${name}-home-light.png`,fullPage:true,animations:'disabled'});
    const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();checks.push({name,route:'/?theme=system-light',violations:axe.violations});
-   await page.close();
+   await context.close();
   }
  }finally{await browser.close();}
  await writeFile(`${directory}/summary.json`,JSON.stringify({metrics,checks},null,2));console.log('AUDIT_SUMMARY',JSON.stringify({metrics,checks:checks.map(c=>({name:c.name,route:c.route,fits:c.fits,violations:c.violations.map(v=>v.id)}))}));
