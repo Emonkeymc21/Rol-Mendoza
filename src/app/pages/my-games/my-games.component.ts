@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { Game, GameStatus } from '../../core/models/game.model';
@@ -11,9 +11,11 @@ import { GameParticipantService } from '../../core/services/game-participant.ser
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
-  selector: 'app-my-games',
-  templateUrl: './my-games.component.html',
-  styleUrls: ['./my-games.component.scss']
+    selector: 'app-my-games',
+    templateUrl: './my-games.component.html',
+    styleUrls: ['./my-games.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class MyGamesComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);

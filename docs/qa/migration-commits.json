@@ -1,0 +1,112 @@
+[
+  {
+    "local": "c5aec14649df9f5d7b44dd5a78b2b77acad4d947",
+    "remote": "254bff05e242c0ed9c03cf36b764b27eff8aae75",
+    "message": "docs: preparar migración 4.1 y recuperación verificable"
+  },
+  {
+    "local": "da730bd182e3099d2c9eecc408b8375266e799d4",
+    "remote": "d7f1b15508e1fc7bb86285655538f6e90db54414",
+    "message": "chore: migrar Angular a 17 con validación de etapa"
+  },
+  {
+    "local": "be3a1197d4f7010fec55434436b27a64f1df4c01",
+    "remote": "3260c3e23dd47af007f5d4061a5ad64c3bebe689",
+    "message": "chore: migrar Angular a 18 con validación de etapa"
+  },
+  {
+    "local": "a993ed7940b87aafb6f0bb0cc31a58e067166866",
+    "remote": "755a88e4f42857e5c03b7bc588cf63af9a05128f",
+    "message": "chore: migrar Angular a 19 con validación de etapa"
+  },
+  {
+    "local": "c0b785fa1ad85dfa2ca69edb2bec5dee9f4c9946",
+    "remote": "8716ed19ab5fb3c3a49f5a78de2ecfdd3fce9282",
+    "message": "chore: migrar Angular a 20 con validación de etapa"
+  },
+  {
+    "local": "446b8ddcf5a4e2c4415ddf6a1a1255988807a393",
+    "remote": "b24493ef897f29177c3f6d191f43fadc49e3ce3d",
+    "message": "chore: migrar Angular a 21 con validación de etapa"
+  },
+  {
+    "local": "844efada56fdd1f7c04d704b22aa5f3549b5daac",
+    "remote": "f5ecf94fa4b8ae7a616ad2a364046fd8cad54dff",
+    "message": "chore: migrar Angular a 22 con validación de etapa"
+  },
+  {
+    "local": "d15779d32994f5970fa2e26ea0f292d0d56d540c",
+    "remote": "d6dab62ca6b78d0f68dbe47629f95c4f93586789",
+    "message": "build: adoptar compilador actual y ejecutar las pruebas con Vitest"
+  },
+  {
+    "local": "08c3f07e718b1657de4c7a12e5a9d4ecffb8e359",
+    "remote": "942e13b628e97fdc73abd55dcac2be0a2677988f",
+    "message": "test: verificar autenticación, permisos y partidas en emuladores aislados"
+  },
+  {
+    "local": "01005eb733e0f10108aca96467d13ca9a304cb71",
+    "remote": "d9a2e43847cb9e4c283de890e09b817b65b56d4b",
+    "message": "chore: actualizar Firebase a 11.10.0 con pruebas de integración"
+  },
+  {
+    "local": "4595fc9cd0f379f16bd48df1587474af0b21a7aa",
+    "remote": "fdedcc386bae81bbfc3ab8fbfdce73f27bdbcf3c",
+    "message": "chore: actualizar Firebase a 12.19.0 con pruebas de integración"
+  },
+  {
+    "local": "41f853d0ab434687d78362e39177b5c9a63dacbb",
+    "remote": "d3f13f9d304f5248be2e76e4e7ebc26c378e9f19",
+    "message": "chore: actualizar Firebase a 13.2.0 con pruebas de integración"
+  },
+  {
+    "local": "27be31796b2c466fce7b541c2192d4a43a8e6294",
+    "remote": "b3b6cb98b6ddc8464306f7135f49a9756fde30c3",
+    "message": "test: automatizar QA Chromium WebKit y eliminar avisos de dependencias"
+  },
+  {
+    "local": "6b908b4942e291670a363735d82c0a493c01a378",
+    "remote": "e066ce051dc9edd33de857fe86f491823436f637",
+    "message": "perf: cargar páginas por demanda conservando NgModules y rutas"
+  },
+  {
+    "local": "ecb1c24073121df295a10be651a8da090ca5b656",
+    "remote": "cd2325ecc8ba62c4c490ac8f8518a31da5d28b6d",
+    "message": "test: corregir proxy HTTP WebKit y registrar auditoría completa"
+  },
+  {
+    "local": "b709f81feb3a65d92f1ca3a4d92aa14ef5be369d",
+    "remote": "87d1c1f5433a60096a80a43e10b09217274dd1ea",
+    "message": "test: comprobar cooldown de partidas y popup Google emulado"
+  },
+  {
+    "local": "9a7968fa43642789f9fc2975132dc491527d16a5",
+    "remote": "aa89477c4c71d455b0d18c9c92121ca7018a3322",
+    "message": "ci: fijar acciones mantenidas con runtime Node 24"
+  },
+  {
+    "local": "704aa66c8ca1bf3197942f6fd71ee8845cae375c",
+    "remote": "a93c93d4ec201e611a6321a4c2e55e5d1c275d88",
+    "message": "test: usar proxy local para canales Firestore en WebKit"
+  },
+  {
+    "local": "3fd73f6d8e18e3447fd9b63b3be6acbb86293ed5",
+    "remote": "45f61428815f100138e38a422314213b030279f1",
+    "message": "test: mantener tráfico local fuera de la interceptación del navegador"
+  },
+  {
+    "local": "9e77d37c0dc2ef5a0e5301a7900b442b55520aee",
+    "remote": "17bfd9a88ffa8256d8c86bea351565acf769aab0",
+    "message": "test: ejecutar flujos con HTTP nativo y validar aislamiento antes de escribir"
+  },
+  {
+    "local": "8a62d686855bcaa4054f372a374d753ada3932dd",
+    "remote": "83974e52c2316736bd813df026b354f671c34fd0",
+    "message": "ci: validar WebKit en macOS y actualizar guía de mantenimiento"
+  },
+  {
+    "local": "8d4d00b2bdd36d27ad8c1af4d5f1417f8f511ee0",
+    "remote": "702f1d1f50061f4cdd38863fe891b22a58a8881d",
+    "message": "fix: comprobar transporte Firestore compatible con WebKit"
+  }
+]

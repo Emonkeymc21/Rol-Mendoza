@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Player } from '../../core/models/player.model';
 import { UserProfile } from '../../core/models/user-profile.model';
@@ -6,7 +6,11 @@ import { AuthService } from '../../core/services/auth.service';
 import { CommunityService } from '../../core/services/community.service';
 import { ProfileService } from '../../core/services/profile.service';
 
-@Component({ selector: 'app-player-detail', templateUrl: './player-detail.component.html', styleUrls: ['./player-detail.component.scss'] })
+@Component({
+    selector: 'app-player-detail', templateUrl: './player-detail.component.html', styleUrls: ['./player-detail.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class PlayerDetailComponent {
   player?: Player;
   targetProfile?: UserProfile;

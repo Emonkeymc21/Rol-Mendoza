@@ -1,10 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BlockedUser, roleLabel, UserPrivateProfile, UserProfile } from '../../core/models/user-profile.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 
-@Component({ selector: 'app-account', templateUrl: './account.component.html', styleUrls: ['./account.component.scss'] })
+@Component({
+    selector: 'app-account', templateUrl: './account.component.html', styleUrls: ['./account.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class AccountComponent implements OnInit {
   readonly user$ = this.auth.user$;
   profile?: UserProfile;

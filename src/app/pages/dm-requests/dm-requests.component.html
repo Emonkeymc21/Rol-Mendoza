@@ -1,22 +1,51 @@
 <section class="page-intro"><div class="page-shell"><span class="eyebrow">Tus mesas</span><h1 class="section-title mt-3">Solicitudes de jugadores</h1><p>Revisá cada perfil y decidí quién se suma a tu partida.</p></div></section>
 <section class="section-space"><div class="page-shell">
-  <div *ngIf="loading" class="loading-panel">Cargando solicitudes…</div><p *ngIf="errorMessage" class="feedback-error" role="alert">{{ errorMessage }}</p><p *ngIf="successMessage" class="feedback-success" role="status">{{ successMessage }}</p>
-  <div *ngIf="!loading && requests.length" class="requests-layout">
-    <div class="request-inbox"><button *ngFor="let request of requests; trackBy: trackRequest" type="button" class="inbox-item" [class.active]="selected?.id === request.id" [class.unseen]="!request.seenByDm" (click)="open(request)"><span class="inbox-dot"></span><span class="min-w-0 flex-1"><strong>{{ request.playerName }}</strong><small>{{ request.gameTitle }}</small></span><span class="status-label">{{ statusLabel(request) }}</span></button></div>
-    <article *ngIf="selected; else chooseRequest" class="request-detail-card">
-      <header><app-class-avatar [avatarClass]="playerProfile?.avatarClass || 'FIGHTER'" size="lg"></app-class-avatar><div><span class="eyebrow">Quiere sumarse a</span><h2>{{ selected.gameTitle }}</h2><p>{{ playerProfile?.displayName || selected.playerName }} · {{ playerProfile?.city || 'Mendoza' }}</p></div></header>
-      <div class="detail-grid"><section><h3>Sobre {{ (playerProfile?.firstName || selected.playerName).split(' ')[0] }}</h3><p>{{ playerProfile?.preferences?.bio || 'Abrí el perfil para conocer más sobre esta persona.' }}</p></section><section><h3>Sistemas preferidos</h3><div class="flex flex-wrap gap-2"><span *ngFor="let system of playerProfile?.preferences?.systems" class="tag">{{ system }}</span></div></section><section *ngIf="selected.message"><h3>Mensaje</h3><p>{{ selected.message }}</p></section></div>
-      <div class="detail-actions"><a [routerLink]="['/jugadores', selected.playerUid]" class="btn-secondary">Ver perfil</a><ng-container *ngIf="selected.status === 'PENDING'"><button type="button" class="accept-button" (click)="resolve('APPROVED')" [disabled]="resolving">Aceptar</button><button type="button" class="reject-button" (click)="resolve('REJECTED')" [disabled]="resolving">Rechazar</button></ng-container><span *ngIf="selected.status !== 'PENDING'" class="resolved-label">Solicitud {{ selected.status === 'APPROVED' ? 'aceptada' : selected.status === 'REMOVED' ? 'cerrada (jugador removido)' : 'no aceptada' }}</span></div>
-      <section *ngIf="selected.status === 'APPROVED' && (playerContact?.whatsappUrl || playerContact?.instagramUrl)" class="approved-contact" aria-label="Contacto con el jugador aceptado">
+  @if (loading) {
+    <div class="loading-panel">Cargando solicitudes…</div>
+    }@if (errorMessage) {
+    <p class="feedback-error" role="alert">{{ errorMessage }}</p>
+    }@if (successMessage) {
+    <p class="feedback-success" role="status">{{ successMessage }}</p>
+  }
+  @if (!loading && requests.length) {
+    <div class="requests-layout">
+      <div class="request-inbox">@for (request of requests; track trackRequest($index, request)) {
+        <button type="button" class="inbox-item" [class.active]="selected?.id === request.id" [class.unseen]="!request.seenByDm" (click)="open(request)"><span class="inbox-dot"></span><span class="min-w-0 flex-1"><strong>{{ request.playerName }}</strong><small>{{ request.gameTitle }}</small></span><span class="status-label">{{ statusLabel(request) }}</span></button>
+      }</div>
+      @if (selected) {
+        <article class="request-detail-card">
+          <header><app-class-avatar [avatarClass]="playerProfile?.avatarClass || 'FIGHTER'" size="lg"></app-class-avatar><div><span class="eyebrow">Quiere sumarse a</span><h2>{{ selected.gameTitle }}</h2><p>{{ playerProfile?.displayName || selected.playerName }} · {{ playerProfile?.city || 'Mendoza' }}</p></div></header>
+          <div class="detail-grid"><section><h3>Sobre {{ (playerProfile?.firstName || selected.playerName).split(' ')[0] }}</h3><p>{{ playerProfile?.preferences?.bio || 'Abrí el perfil para conocer más sobre esta persona.' }}</p></section><section><h3>Sistemas preferidos</h3><div class="flex flex-wrap gap-2">@for (system of playerProfile?.preferences?.systems; track system) {
+          <span class="tag">{{ system }}</span>
+        }</div></section>@if (selected.message) {
+        <section><h3>Mensaje</h3><p>{{ selected.message }}</p></section>
+      }</div>
+      <div class="detail-actions"><a [routerLink]="['/jugadores', selected.playerUid]" class="btn-secondary">Ver perfil</a>@if (selected.status === 'PENDING') {
+      <button type="button" class="accept-button" (click)="resolve('APPROVED')" [disabled]="resolving">Aceptar</button><button type="button" class="reject-button" (click)="resolve('REJECTED')" [disabled]="resolving">Rechazar</button>
+      }@if (selected.status !== 'PENDING') {
+      <span class="resolved-label">Solicitud {{ selected.status === 'APPROVED' ? 'aceptada' : selected.status === 'REMOVED' ? 'cerrada (jugador removido)' : 'no aceptada' }}</span>
+    }</div>
+    @if (selected.status === 'APPROVED' && (playerContact?.whatsappUrl || playerContact?.instagramUrl)) {
+      <section class="approved-contact" aria-label="Contacto con el jugador aceptado">
         <h3>Coordiná con el jugador</h3>
         <p>El contacto se habilitó al aceptar la solicitud.</p>
         <div>
-          <a *ngIf="playerWhatsappUrl() as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-action whatsapp"><app-icon name="whatsapp" [size]="18"></app-icon> Escribir por WhatsApp</a>
-          <a *ngIf="playerContact?.instagramUrl as instagram" [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-action"><app-icon name="instagram" [size]="18"></app-icon> Ver Instagram</a>
+          @if (playerWhatsappUrl(); as whatsapp) {
+            <a [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-action whatsapp"><app-icon name="whatsapp" [size]="18"></app-icon> Escribir por WhatsApp</a>
+          }
+          @if (playerContact.instagramUrl; as instagram) {
+            <a [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-action"><app-icon name="instagram" [size]="18"></app-icon> Ver Instagram</a>
+          }
         </div>
       </section>
-    </article>
-    <ng-template #chooseRequest><div class="choose-request"><app-icon name="users" [size]="28"></app-icon><h2>Elegí una solicitud</h2><p>Acá vas a ver el perfil y las preferencias del jugador.</p></div></ng-template>
-  </div>
-  <div *ngIf="!loading && !requests.length" class="empty-state"><app-icon name="users" [size]="28"></app-icon><h2>No hay solicitudes pendientes</h2><p>Cuando alguien quiera sumarse a una de tus mesas, aparecerá acá.</p><a routerLink="/mis-partidas" class="btn-secondary">Volver a mis partidas</a></div>
+    }
+  </article>
+} @else {
+  <div class="choose-request"><app-icon name="users" [size]="28"></app-icon><h2>Elegí una solicitud</h2><p>Acá vas a ver el perfil y las preferencias del jugador.</p></div>
+}
+</div>
+}
+@if (!loading && !requests.length) {
+  <div class="empty-state"><app-icon name="users" [size]="28"></app-icon><h2>No hay solicitudes pendientes</h2><p>Cuando alguien quiera sumarse a una de tus mesas, aparecerá acá.</p><a routerLink="/mis-partidas" class="btn-secondary">Volver a mis partidas</a></div>
+}
 </div></section>

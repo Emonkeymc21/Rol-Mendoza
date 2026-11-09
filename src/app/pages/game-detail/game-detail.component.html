@@ -4,12 +4,14 @@
       <span class="rotate-180"><app-icon name="arrow" [size]="17"></app-icon></span> Volver a partidas
     </a>
 
-    <ng-container *ngIf="game; else missing">
+    @if (game) {
       <div class="game-detail-layout mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
         <article class="game-detail-main glass-panel overflow-hidden">
           <div class="game-masthead p-6 sm:p-10">
             <div class="relative">
-              <div class="flex flex-wrap gap-2"><span *ngFor="let tag of game.tags" class="tag">{{ tag }}</span></div>
+              <div class="flex flex-wrap gap-2">@for (tag of game.tags; track tag) {
+                <span class="tag">{{ tag }}</span>
+              }</div>
               <p class="mt-8 text-sm font-bold uppercase tracking-[.16em] text-gold">{{ game.system }}</p>
               <h1 class="detail-title mt-3 max-w-3xl font-display text-4xl font-bold leading-tight sm:text-5xl">{{ game.title }}</h1>
               <p class="detail-summary mt-5 max-w-3xl text-lg leading-8 text-mist">{{ game.summary }}</p>
@@ -27,7 +29,6 @@
             </div>
           </div>
         </article>
-
         <aside class="game-sidebar">
           <div class="game-sidebar-panel glass-panel p-6">
             <p class="text-sm font-bold uppercase tracking-wider text-gold">Datos de la mesa</p>
@@ -35,100 +36,148 @@
               <div><dt class="text-sm text-mist">Máster</dt><dd class="master-summary mt-2"><app-class-avatar [avatarClass]="dmProfile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar><strong>{{ game.gm }}</strong></dd></div>
               <div><dt class="text-sm text-mist">Lugar</dt><dd class="mt-1 flex items-center gap-2 font-bold"><app-icon name="map" [size]="18"></app-icon>{{ game.location }} · {{ game.mode }}</dd></div>
               <div><dt class="text-sm text-mist">Ciudad</dt><dd class="mt-1 font-bold">{{ game.city }}</dd></div>
-              <div><dt class="text-sm text-mist">Horario</dt><dd class="mt-1 flex items-center gap-2 font-bold"><app-icon name="calendar" [size]="18"></app-icon>{{ game.schedule }}<span *ngIf="game.date || game.time"> · {{ game.date | date:'d/M/yy' }} {{ game.time }}</span></dd></div>
-            </dl>
-            <div class="my-6 border-t border-white/[.08]"></div>
-            <div class="capacity-summary"><div><app-icon name="users" [size]="19"></app-icon><strong>{{ occupiedPlayers() }} / {{ game.totalSeats }}</strong><span>jugadores</span></div><p [class.full]="game.status === 'FULL' || game.seats === 0">{{ availableMessage() }}</p></div>
-            <button type="button" class="btn-primary mt-6 w-full" (click)="join()" [disabled]="!canAcceptRequests() || !!joinRequest || (joinRoleLoaded && !canRequestJoin && !isOwnGame())">{{ joinButtonText() }} <app-icon *ngIf="canAcceptRequests() && !joinRequest && (!joinRoleLoaded || canRequestJoin)" name="arrow" [size]="19"></app-icon></button>
-            <app-share-game *ngIf="game.status !== 'CANCELLED'" class="detail-share" [game]="game"></app-share-game>
-            <p *ngIf="joinNotice && !joinOpen && !joinRequest" class="feedback-success" role="status">{{ joinNotice }}</p>
-            <p *ngIf="joinRequest" class="request-state" [class.approved]="joinRequest.status === 'APPROVED'" [class.rejected]="joinRequest.status === 'REJECTED' || joinRequest.status === 'REMOVED'" role="status">{{ requestMessage() }} <a routerLink="/mis-solicitudes">Ver mis solicitudes</a></p>
-            <section *ngIf="joinRequest?.status === 'APPROVED' && (dmContact?.whatsappUrl || dmContact?.instagramUrl)" class="approved-contact" aria-label="Contacto con el máster">
+              <div><dt class="text-sm text-mist">Horario</dt><dd class="mt-1 flex items-center gap-2 font-bold"><app-icon name="calendar" [size]="18"></app-icon>{{ game.schedule }}@if (game.date || game.time) {
+              <span> · {{ game.date | date:'d/M/yy' }} {{ game.time }}</span>
+            }</dd></div>
+          </dl>
+          <div class="my-6 border-t border-white/[.08]"></div>
+          <div class="capacity-summary"><div><app-icon name="users" [size]="19"></app-icon><strong>{{ occupiedPlayers() }} / {{ game.totalSeats }}</strong><span>jugadores</span></div><p [class.full]="game.status === 'FULL' || game.seats === 0">{{ availableMessage() }}</p></div>
+          <button type="button" class="btn-primary mt-6 w-full" (click)="join()" [disabled]="!canAcceptRequests() || !!joinRequest || (joinRoleLoaded && !canRequestJoin && !isOwnGame())">{{ joinButtonText() }} @if (canAcceptRequests() && !joinRequest && (!joinRoleLoaded || canRequestJoin)) {
+            <app-icon name="arrow" [size]="19"></app-icon>
+          }</button>
+          @if (game.status !== 'CANCELLED') {
+            <app-share-game class="detail-share" [game]="game"></app-share-game>
+          }
+          @if (joinNotice && !joinOpen && !joinRequest) {
+            <p class="feedback-success" role="status">{{ joinNotice }}</p>
+          }
+          @if (joinRequest) {
+            <p class="request-state" [class.approved]="joinRequest.status === 'APPROVED'" [class.rejected]="joinRequest.status === 'REJECTED' || joinRequest.status === 'REMOVED'" role="status">{{ requestMessage() }} <a routerLink="/mis-solicitudes">Ver mis solicitudes</a></p>
+          }
+          @if (joinRequest?.status === 'APPROVED' && (dmContact?.whatsappUrl || dmContact?.instagramUrl)) {
+            <section class="approved-contact" aria-label="Contacto con el máster">
               <strong>Coordiná con el máster</strong>
               <p>Estos datos se habilitaron porque ya formás parte de la mesa.</p>
               <div>
-                <a *ngIf="dmWhatsappUrl() as whatsapp" [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-action whatsapp"><app-icon name="whatsapp" [size]="18"></app-icon> Escribir por WhatsApp</a>
-                <a *ngIf="dmContact?.instagramUrl as instagram" [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-action"><app-icon name="instagram" [size]="18"></app-icon> Ver Instagram</a>
+                @if (dmWhatsappUrl(); as whatsapp) {
+                  <a [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-action whatsapp"><app-icon name="whatsapp" [size]="18"></app-icon> Escribir por WhatsApp</a>
+                }
+                @if (dmContact.instagramUrl; as instagram) {
+                  <a [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-action"><app-icon name="instagram" [size]="18"></app-icon> Ver Instagram</a>
+                }
               </div>
             </section>
-            <a *ngIf="isAuthenticated && game.masterUserId" [routerLink]="['/jugadores', game.masterUserId]" class="btn-secondary mt-3 w-full">Ver perfil del máster</a>
-
-            <form *ngIf="joinOpen" [formGroup]="joinForm" (ngSubmit)="submitJoin()" class="mt-5 space-y-4 border-t border-white/[.08] pt-5">
+          }
+          @if (isAuthenticated && game.masterUserId) {
+            <a [routerLink]="['/jugadores', game.masterUserId]" class="btn-secondary mt-3 w-full">Ver perfil del máster</a>
+          }
+          @if (joinOpen) {
+            <form [formGroup]="joinForm" (ngSubmit)="submitJoin()" class="mt-5 space-y-4 border-t border-white/[.08] pt-5">
               <p class="rounded-xl border border-white/[.08] bg-black/20 p-3 text-sm text-mist">La solicitud queda asociada a tu cuenta autenticada.</p>
               <label><span class="field-label">Mensaje opcional</span><textarea class="input-field min-h-[100px] resize-y" formControlName="message" maxlength="500" placeholder="Contale al máster por qué te interesa"></textarea><small class="mt-1 block text-right text-xs text-mist">{{ joinForm.controls.message.value.length }} / 500</small></label>
               <button type="submit" class="btn-secondary w-full" [disabled]="sendingJoin">{{ sendingJoin ? 'Enviando…' : 'Enviar solicitud' }}</button>
-              <p *ngIf="joinNotice" class="feedback-success" role="status">{{ joinNotice }}</p>
-              <p *ngIf="joinError" class="feedback-error" role="alert">{{ joinError }}</p>
+              @if (joinNotice) {
+                <p class="feedback-success" role="status">{{ joinNotice }}</p>
+              }
+              @if (joinError) {
+                <p class="feedback-error" role="alert">{{ joinError }}</p>
+              }
             </form>
-
-            <p *ngIf="notice" class="mt-4 rounded-xl border border-gold/20 bg-gold/10 p-3 text-sm text-parchment" aria-live="polite">{{ notice }} <a routerLink="/registrarme" class="font-bold text-gold">Crear perfil</a></p>
-          </div>
-        </aside>
-      </div>
-
-      <section *ngIf="ownProfile?.profileCompleted; else participantPrivacy" class="detail-secondary glass-panel mt-6 p-6 sm:p-8" aria-labelledby="participants-title">
+          }
+          @if (notice) {
+            <p class="mt-4 rounded-xl border border-gold/20 bg-gold/10 p-3 text-sm text-parchment" aria-live="polite">{{ notice }} <a routerLink="/registrarme" class="font-bold text-gold">Crear perfil</a></p>
+          }
+        </div>
+      </aside>
+    </div>
+    @if (ownProfile?.profileCompleted) {
+      <section class="detail-secondary glass-panel mt-6 p-6 sm:p-8" aria-labelledby="participants-title">
         <span class="eyebrow">La mesa</span>
         <h2 id="participants-title" class="mt-2 font-display text-3xl font-bold">Jugadores confirmados</h2>
         <p class="mt-2 text-sm text-mist">Personas que el máster ya aceptó mediante Cumbre20.</p>
-        <div *ngIf="participants.length; else noParticipants" class="participant-grid mt-6">
-          <a *ngFor="let item of participants" [routerLink]="['/jugadores', item.participant.playerUid]" class="participant-card">
-            <app-class-avatar [avatarClass]="item.profile?.avatarClass || 'FIGHTER'" size="md"></app-class-avatar>
-            <span><strong>{{ item.profile?.displayName || 'Jugador/a de Cumbre20' }}</strong><small>{{ item.profile?.city || 'Mendoza' }} · {{ item.profile?.role === 'BOTH' ? 'Jugador/a y DM' : (item.profile?.role === 'DM' ? 'DM' : 'Jugador/a') }}</small></span>
-            <app-icon name="arrow" [size]="17"></app-icon>
-          </a>
-        </div>
-        <ng-template #noParticipants><p class="mt-6 border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay jugadores confirmados mediante Cumbre20.</p></ng-template>
-      </section>
-      <ng-template #participantPrivacy>
-        <section class="detail-secondary glass-panel mt-6 p-6 sm:p-8" aria-labelledby="participants-private-title">
-          <span class="eyebrow">Privacidad</span>
-          <h2 id="participants-private-title" class="mt-2 font-display text-2xl font-bold">La identidad de los jugadores está protegida</h2>
-          <p class="mt-2 max-w-2xl text-sm leading-6 text-mist">Podés ver los cupos de la mesa sin iniciar sesión. Los perfiles de participantes y los datos de contacto se habilitan únicamente cuando corresponde.</p>
-          <a *ngIf="!isAuthenticated" routerLink="/ingresar" [queryParams]="{ returnUrl: '/partidas/' + gameId }" class="btn-secondary mt-5">Ingresar para continuar</a>
-          <a *ngIf="isAuthenticated" routerLink="/completar-perfil" [queryParams]="{ returnUrl: '/partidas/' + gameId }" class="btn-secondary mt-5">Completar mi perfil</a>
-        </section>
-      </ng-template>
-
-      <section class="detail-secondary glass-panel mt-6 p-6 sm:p-8" aria-labelledby="comments-title">
-        <div class="grid gap-8 lg:grid-cols-[1fr_360px]">
-          <div>
-            <span class="eyebrow">Comunidad</span>
-            <h2 id="comments-title" class="mt-2 font-display text-3xl font-bold">Comentarios sobre la partida</h2>
-            <p class="mt-2 text-sm text-mist">Los comentarios de usuarios registrados se publican automáticamente.</p>
-            <div *ngIf="comments.length; else noComments" class="mt-6 space-y-4">
-              <article *ngFor="let item of comments" class="comment-card">
-                <div class="flex flex-wrap items-center justify-between gap-2"><strong>{{ item.nombre_publico }}</strong><time class="text-xs text-mist">{{ item.fecha | date:'d/M/yy' }}</time></div>
-                <p class="mt-2 whitespace-pre-line leading-7 text-mist">{{ item.comentario }}</p>
-                <p *ngIf="item.respuesta_admin" class="admin-reply"><strong>Equipo de Cumbre20:</strong> {{ item.respuesta_admin }}</p>
-              </article>
-            </div>
-            <ng-template #noComments><p class="mt-6 border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay comentarios publicados.</p></ng-template>
+        @if (participants.length) {
+          <div class="participant-grid mt-6">
+            @for (item of participants; track item) {
+              <a [routerLink]="['/jugadores', item.participant.playerUid]" class="participant-card">
+                <app-class-avatar [avatarClass]="item.profile?.avatarClass || 'FIGHTER'" size="md"></app-class-avatar>
+                <span><strong>{{ item.profile?.displayName || 'Jugador/a de Cumbre20' }}</strong><small>{{ item.profile?.city || 'Mendoza' }} · {{ item.profile?.role === 'BOTH' ? 'Jugador/a y DM' : (item.profile?.role === 'DM' ? 'DM' : 'Jugador/a') }}</small></span>
+                <app-icon name="arrow" [size]="17"></app-icon>
+              </a>
+            }
           </div>
-
-          <form *ngIf="apiConnected && isAuthenticated; else commentsUnavailable" [formGroup]="commentForm" (ngSubmit)="submitComment()" class="border border-white/[.08] bg-black/20 p-5">
+        } @else {
+          <p class="mt-6 border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay jugadores confirmados mediante Cumbre20.</p>
+        }
+      </section>
+    } @else {
+      <section class="detail-secondary glass-panel mt-6 p-6 sm:p-8" aria-labelledby="participants-private-title">
+        <span class="eyebrow">Privacidad</span>
+        <h2 id="participants-private-title" class="mt-2 font-display text-2xl font-bold">La identidad de los jugadores está protegida</h2>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-mist">Podés ver los cupos de la mesa sin iniciar sesión. Los perfiles de participantes y los datos de contacto se habilitan únicamente cuando corresponde.</p>
+        @if (!isAuthenticated) {
+          <a routerLink="/ingresar" [queryParams]="{ returnUrl: '/partidas/' + gameId }" class="btn-secondary mt-5">Ingresar para continuar</a>
+        }
+        @if (isAuthenticated) {
+          <a routerLink="/completar-perfil" [queryParams]="{ returnUrl: '/partidas/' + gameId }" class="btn-secondary mt-5">Completar mi perfil</a>
+        }
+      </section>
+    }
+    <section class="detail-secondary glass-panel mt-6 p-6 sm:p-8" aria-labelledby="comments-title">
+      <div class="grid gap-8 lg:grid-cols-[1fr_360px]">
+        <div>
+          <span class="eyebrow">Comunidad</span>
+          <h2 id="comments-title" class="mt-2 font-display text-3xl font-bold">Comentarios sobre la partida</h2>
+          <p class="mt-2 text-sm text-mist">Los comentarios de usuarios registrados se publican automáticamente.</p>
+          @if (comments.length) {
+            <div class="mt-6 space-y-4">
+              @for (item of comments; track item) {
+                <article class="comment-card">
+                  <div class="flex flex-wrap items-center justify-between gap-2"><strong>{{ item.nombre_publico }}</strong><time class="text-xs text-mist">{{ item.fecha | date:'d/M/yy' }}</time></div>
+                  <p class="mt-2 whitespace-pre-line leading-7 text-mist">{{ item.comentario }}</p>
+                  @if (item.respuesta_admin) {
+                    <p class="admin-reply"><strong>Equipo de Cumbre20:</strong> {{ item.respuesta_admin }}</p>
+                  }
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="mt-6 border border-dashed border-white/10 p-5 text-sm text-mist">Todavía no hay comentarios publicados.</p>
+          }
+        </div>
+        @if (apiConnected && isAuthenticated) {
+          <form [formGroup]="commentForm" (ngSubmit)="submitComment()" class="border border-white/[.08] bg-black/20 p-5">
             <h3 class="font-display text-xl font-bold">Dejar un comentario</h3>
             <p class="mt-1 text-xs text-mist">Se publicará con el nombre de tu cuenta.</p>
             <p class="mt-4 rounded-xl border border-white/[.08] p-3 text-xs text-mist">El comentario se publica con el nombre de tu cuenta.</p>
             <label class="mt-4 block"><span class="field-label">Comentario *</span><textarea class="input-field min-h-[130px] resize-y" formControlName="comment" maxlength="700"></textarea></label>
             <button type="submit" class="btn-primary mt-5 w-full" [disabled]="sendingComment">{{ sendingComment ? 'Publicando…' : 'Publicar comentario' }}</button>
-            <p *ngIf="commentNotice" class="feedback-success" role="status">{{ commentNotice }}</p>
-            <p *ngIf="commentError" class="feedback-error" role="alert">{{ commentError }}</p>
+            @if (commentNotice) {
+              <p class="feedback-success" role="status">{{ commentNotice }}</p>
+            }
+            @if (commentError) {
+              <p class="feedback-error" role="alert">{{ commentError }}</p>
+            }
           </form>
-          <ng-template #commentsUnavailable>
-            <div *ngIf="apiConnected; else commentsOffline" class="border border-white/[.08] bg-black/20 p-5 text-sm text-mist">
+        } @else {
+          @if (apiConnected) {
+            <div class="border border-white/[.08] bg-black/20 p-5 text-sm text-mist">
               <strong class="block text-parchment">¿Querés participar?</strong>
               <p class="mt-2">Ingresá con tu perfil para comentar o solicitar unirte. Tu información privada no se publica en este detalle.</p>
               <a routerLink="/ingresar" [queryParams]="{ returnUrl: '/partidas/' + gameId }" class="btn-secondary mt-5">Ingresar</a>
             </div>
-          </ng-template>
-          <ng-template #commentsOffline><div class="border border-white/[.08] bg-black/20 p-5 text-sm text-mist">Los comentarios no están disponibles en este momento.</div></ng-template>
-        </div>
-      </section>
-    </ng-container>
+          } @else {
+            <div class="border border-white/[.08] bg-black/20 p-5 text-sm text-mist">Los comentarios no están disponibles en este momento.</div>
+          }
+        }
+      </div>
+    </section>
+  } @else {
+    @if (loadingGame) {
+      <div class="detail-loading mt-6" aria-live="polite" aria-busy="true"><span></span><span></span><span></span><p>Cargando la partida…</p></div>
+    } @else {
+      <div class="glass-panel mt-6 rounded-2xl p-10 text-center"><h1 class="font-display text-3xl font-bold">Esta partida ya no está disponible</h1><p class="mx-auto mt-3 max-w-xl text-mist">Puede haber sido cancelada, eliminada o el enlace puede ser incorrecto.</p><a routerLink="/partidas" class="btn-primary mt-6">Buscar otras partidas</a></div>
+    }
+  }
 
-    <ng-template #missing>
-      <div *ngIf="loadingGame; else unavailable" class="detail-loading mt-6" aria-live="polite" aria-busy="true"><span></span><span></span><span></span><p>Cargando la partida…</p></div>
-      <ng-template #unavailable><div class="glass-panel mt-6 rounded-2xl p-10 text-center"><h1 class="font-display text-3xl font-bold">Esta partida ya no está disponible</h1><p class="mx-auto mt-3 max-w-xl text-mist">Puede haber sido cancelada, eliminada o el enlace puede ser incorrecto.</p><a routerLink="/partidas" class="btn-primary mt-6">Buscar otras partidas</a></div></ng-template>
-    </ng-template>
-  </div>
+</div>
 </section>

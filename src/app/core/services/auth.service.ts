@@ -177,8 +177,7 @@ export class AuthService {
 
   private async createInitialUserDocument(user: User): Promise<void> {
     if (!this.firebase.app) return;
-    const api = await import('firebase/firestore');
-    const database = api.getFirestore(this.firebase.app);
+    const { api, database } = await this.firebase.loadFirestore();
     const reference = api.doc(database, 'users', user.uid);
     const snapshot = await api.getDoc(reference);
     if (snapshot.exists()) return;

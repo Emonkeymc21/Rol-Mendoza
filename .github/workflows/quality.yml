@@ -1,0 +1,65 @@
+name: Cumbre20 quality gates
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: qa-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.x
+          cache: npm
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npm ls --all
+      - run: npm audit
+      - run: npm audit --omit=dev
+      - run: npm run build:prod
+      - run: npm run test:production-csp
+      - run: npm run test:unit
+      - run: npm run test:ci
+      - run: npm run test:emulators
+        env:
+          FIREBASE_CLI_DISABLE_MOTD: 'true'
+  browsers:
+    runs-on: ${{ matrix.engine == 'webkit' && 'macos-15' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.x
+          cache: npm
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - run: npm run test:e2e -- --project=desktop-${{ matrix.engine }} --project=${{ matrix.engine == 'chromium' && 'android-chromium' || 'iphone-webkit' }}
+        env:
+          FIREBASE_CLI_DISABLE_MOTD: 'true'
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: browser-evidence-${{ matrix.engine }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

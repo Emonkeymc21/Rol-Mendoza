@@ -6,76 +6,134 @@
       <p class="mt-4 text-mist">Tus preferencias ayudan a encontrar personas compatibles. Tus datos de contacto tienen protección adicional.</p>
     </div>
 
-    <div *ngIf="loading" class="glass-panel mx-auto mt-8 max-w-3xl rounded-2xl p-8 text-center text-mist">Cargando tu perfil…</div>
+    @if (loading) {
+      <div class="glass-panel mx-auto mt-8 max-w-3xl rounded-2xl p-8 text-center text-mist">Cargando tu perfil…</div>
+    }
 
-    <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="save()" class="glass-panel mx-auto mt-8 max-w-3xl overflow-hidden rounded-3xl">
-      <ol class="stepper" aria-label="Progreso del perfil">
-        <li *ngFor="let label of steps; let index = index" [class.active]="index === step" [class.done]="index < step">
-          <button type="button" (click)="goToStep(index)" [disabled]="index > step"><span>{{ index + 1 }}</span><small>{{ label }}</small></button>
-        </li>
-      </ol>
-
-      <div class="p-5 sm:p-8">
-        <section *ngIf="step === 0" class="step-content">
-          <div><span class="eyebrow">Paso 1</span><h2 class="mt-2 font-display text-3xl font-bold">Información personal</h2><p class="mt-2 text-sm text-mist">Esta información será visible en tu perfil comunitario.</p></div>
-          <div class="mt-7 grid gap-5 sm:grid-cols-2">
-            <label><span class="field-label">Nombre *</span><input class="input-field" formControlName="firstName" autocomplete="given-name"><span *ngIf="invalid('firstName')" class="error-text">Ingresá un nombre válido.</span></label>
-            <label><span class="field-label">Apellido *</span><input class="input-field" formControlName="lastName" autocomplete="family-name"><span *ngIf="invalid('lastName')" class="error-text">Ingresá un apellido válido.</span></label>
-            <label class="sm:col-span-2"><span class="field-label">Ciudad o localidad de Mendoza *</span><select class="input-field" formControlName="city"><option value="">Seleccioná una opción</option><option *ngFor="let location of locations" [value]="location">{{ location }}</option></select><span *ngIf="invalid('city')" class="error-text">Seleccioná una localidad.</span></label>
-            <label *ngIf="form.controls.city.value === otherLocation" class="sm:col-span-2"><span class="field-label">¿De qué localidad sos? *</span><input class="input-field" formControlName="otherCity" autocomplete="address-level2" placeholder="Ej: Las Heras"><span *ngIf="invalid('otherCity')" class="error-text">Ingresá tu localidad.</span></label>
-            <fieldset class="sm:col-span-2"><legend class="field-label">Elegí tu emblema *</legend><p class="mb-4 text-xs leading-5 text-mist">Es tu identidad dentro de Cumbre20. No limita los juegos ni los personajes que podés jugar.</p><div class="avatar-picker"><label *ngFor="let avatar of avatarOptions"><input class="peer sr-only" type="radio" formControlName="avatarClass" [value]="avatar.value"><span><app-class-avatar [avatarClass]="avatar.value" size="md"></app-class-avatar><strong>{{ avatar.label }}</strong><small>{{ avatar.description }}</small></span></label></div><span *ngIf="invalid('avatarClass')" class="error-text">Elegí un emblema para continuar.</span></fieldset>
-          </div>
-        </section>
-
-        <section *ngIf="step === 1" class="step-content">
-          <div><span class="eyebrow">Paso 2</span><h2 class="mt-2 font-display text-3xl font-bold">¿Cómo participás?</h2><p class="mt-2 text-sm text-mist">Podés cambiar este rol más adelante.</p></div>
-          <div class="mt-7 grid gap-4">
-            <label *ngFor="let role of roles" class="role-option"><input type="radio" formControlName="role" [value]="role.value"><span><strong>{{ role.label }}</strong><small>{{ role.detail }}</small></span></label>
-          </div>
-          <span *ngIf="invalid('role')" class="error-text">Elegí una opción.</span>
-        </section>
-
-        <section *ngIf="step === 2" class="step-content">
-          <div><span class="eyebrow">Paso 3</span><h2 class="mt-2 font-display text-3xl font-bold">Datos de contacto</h2><p class="mt-2 text-sm text-mist">Elegí WhatsApp o Instagram. No se mostrarán en tu perfil público ni en los resultados de búsqueda. Sólo se habilitarán entre vos y el máster cuando una solicitud para una partida sea aceptada.</p></div>
-          <div class="mt-7 grid gap-5">
-            <label><span class="field-label">WhatsApp / celular <span class="text-mist">(opcional si usás Instagram)</span></span><input class="input-field" formControlName="whatsapp" inputmode="tel" autocomplete="tel" placeholder="Ej: 261 555 1234"><span *ngIf="invalid('whatsapp')" class="error-text">Usá un número argentino de 10 dígitos con código de área.</span><small *ngIf="whatsappPreview" class="preview-link">Se guardará como {{ whatsappPreview }}</small></label>
-            <label><span class="field-label">Instagram <span class="text-mist">(opcional si usás WhatsApp)</span></span><input class="input-field" formControlName="instagram" autocomplete="off" placeholder="Ej: @nombre.usuario"><span *ngIf="invalid('instagram')" class="error-text">Ingresá un usuario o enlace válido de Instagram.</span><small *ngIf="instagramPreview" class="preview-link">Se guardará como {{ instagramPreview }}</small></label>
-            <span *ngIf="contactMethodMissing" class="error-text">Elegí al menos un medio de contacto: WhatsApp o Instagram.</span>
-            <label><span class="field-label">Teléfono alternativo <span class="text-mist">(opcional y privado)</span></span><input class="input-field" formControlName="alternatePhone" inputmode="tel" autocomplete="tel-national"></label>
-          </div>
-        </section>
-
-        <section *ngIf="step === 3" class="step-content">
-          <div><span class="eyebrow">Paso 4</span><h2 class="mt-2 font-display text-3xl font-bold">Preferencias y privacidad</h2><p class="mt-2 text-sm text-mist">Esto mejora el orden de los resultados y ayuda a encontrar una mesa compatible.</p></div>
-          <div class="mt-7 grid gap-5 sm:grid-cols-2">
-            <label class="sm:col-span-2"><span class="field-label">Sistemas preferidos *</span><input class="input-field" formControlName="systems" placeholder="D&D 5e, Pathfinder, Call of Cthulhu"><small class="mt-1 block text-xs text-mist">Separalos con comas.</small><span *ngIf="invalid('systems')" class="error-text">Ingresá al menos un sistema.</span></label>
-            <label><span class="field-label">Experiencia *</span><select class="input-field" formControlName="experience"><option>Estoy empezando</option><option>Principiante</option><option>Intermedia</option><option>Avanzada</option></select></label>
-            <label><span class="field-label">Modalidad *</span><select class="input-field" formControlName="mode"><option>Presencial</option><option>Online</option><option>Mixto</option></select></label>
-            <label><span class="field-label">Frecuencia *</span><select class="input-field" formControlName="frequency"><option>Semanal</option><option>Quincenal</option><option>Mensual</option><option>One-shot</option><option>A coordinar</option></select></label>
-            <label><span class="field-label">Disponibilidad *</span><input class="input-field" formControlName="availability" placeholder="Ej: viernes desde las 20 hs"><span *ngIf="invalid('availability')" class="error-text">Indicá cuándo podrías participar.</span></label>
-            <label class="sm:col-span-2"><span class="field-label">Ambiente o estilo preferido *</span><select class="input-field" formControlName="atmosphere"><option>Me adapto al grupo</option><option>Fantasía heroica y aventura</option><option>Terror y misterio</option><option>Ciencia ficción</option><option>Narrativa e interpretación</option><option>Combate táctico</option><option>Partidas casuales y sociales</option></select></label>
-            <label class="sm:col-span-2">
-              <span class="field-label">Sobre vos y qué buscás *</span>
-              <textarea class="input-field min-h-[120px] resize-y" formControlName="bio" maxlength="500" placeholder="Contá qué tipo de historias, grupos o mesas preferís."></textarea>
-              <div class="mt-1 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                <span *ngIf="invalid('bio') && (form.controls.bio.errors?.['required'] || form.controls.bio.errors?.['minlength'])" class="error-text !mt-0">Contanos un poco más sobre vos. La descripción debe tener al menos 50 caracteres.</span>
-                <span *ngIf="invalid('bio') && form.controls.bio.errors?.['maxlength']" class="error-text !mt-0">La descripción puede tener como máximo 500 caracteres.</span>
-                <small class="ml-auto whitespace-nowrap text-xs" [class.text-gold]="bioLength < 50" [class.text-mist]="bioLength >= 50">{{ bioLength < 50 ? (bioLength + ' / 50 caracteres mínimos') : (bioLength + ' / 500') }}</small>
-              </div>
-            </label>
-          </div>
-
-          <label class="consent-box mt-6"><input type="checkbox" formControlName="privacyConsent"><span><strong>Acepto compartir mi medio de contacto cuando corresponda.</strong><small>WhatsApp, Instagram y el teléfono alternativo se mantienen privados. Solamente se habilitan entre el jugador y el máster después de aceptar una solicitud de ingreso. Podré bloquear usuarios y modificar o eliminar estos datos desde mi perfil. <a routerLink="/privacidad" target="_blank" rel="noopener" (click)="$event.stopPropagation()">Ver Política de Privacidad</a>.</small></span></label>
-          <span *ngIf="invalid('privacyConsent')" class="error-text">Necesitamos tu consentimiento para completar el perfil.</span>
-        </section>
-
-        <p *ngIf="errorMessage" class="feedback-error" role="alert">{{ errorMessage }}</p>
-        <div class="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-          <button *ngIf="step > 0" type="button" class="btn-secondary" (click)="previous()">Volver</button><span *ngIf="step === 0"></span>
-          <button *ngIf="step < steps.length - 1" type="button" class="btn-primary" (click)="next()">Continuar <app-icon name="arrow" [size]="18"></app-icon></button>
-          <button *ngIf="step === steps.length - 1" type="submit" class="btn-primary" [disabled]="saving">{{ saving ? 'Guardando…' : (editing ? 'Guardar cambios' : 'Completar perfil') }}</button>
-        </div>
-      </div>
-    </form>
-  </div>
+    @if (!loading) {
+      <form [formGroup]="form" (ngSubmit)="save()" class="glass-panel mx-auto mt-8 max-w-3xl overflow-hidden rounded-3xl">
+        <ol class="stepper" aria-label="Progreso del perfil">
+          @for (label of steps; track label; let index = $index) {
+            <li [class.active]="index === step" [class.done]="index < step">
+              <button type="button" (click)="goToStep(index)" [disabled]="index > step"><span>{{ index + 1 }}</span><small>{{ label }}</small></button>
+            </li>
+          }
+        </ol>
+        <div class="p-5 sm:p-8">
+          @if (step === 0) {
+            <section class="step-content">
+              <div><span class="eyebrow">Paso 1</span><h2 class="mt-2 font-display text-3xl font-bold">Información personal</h2><p class="mt-2 text-sm text-mist">Esta información será visible en tu perfil comunitario.</p></div>
+              <div class="mt-7 grid gap-5 sm:grid-cols-2">
+                <label><span class="field-label">Nombre *</span><input class="input-field" formControlName="firstName" autocomplete="given-name">@if (invalid('firstName')) {
+                <span class="error-text">Ingresá un nombre válido.</span>
+              }</label>
+              <label><span class="field-label">Apellido *</span><input class="input-field" formControlName="lastName" autocomplete="family-name">@if (invalid('lastName')) {
+              <span class="error-text">Ingresá un apellido válido.</span>
+            }</label>
+            <label class="sm:col-span-2"><span class="field-label">Ciudad o localidad de Mendoza *</span><select class="input-field" formControlName="city"><option value="">Seleccioná una opción</option>@for (location of locations; track location) {
+            <option [value]="location">{{ location }}</option>
+          }</select>@if (invalid('city')) {
+          <span class="error-text">Seleccioná una localidad.</span>
+        }</label>
+        @if (form.controls.city.value === otherLocation) {
+          <label class="sm:col-span-2"><span class="field-label">¿De qué localidad sos? *</span><input class="input-field" formControlName="otherCity" autocomplete="address-level2" placeholder="Ej: Las Heras">@if (invalid('otherCity')) {
+          <span class="error-text">Ingresá tu localidad.</span>
+        }</label>
+      }
+      <fieldset class="sm:col-span-2"><legend class="field-label">Elegí tu emblema *</legend><p class="mb-4 text-xs leading-5 text-mist">Es tu identidad dentro de Cumbre20. No limita los juegos ni los personajes que podés jugar.</p><div class="avatar-picker">@for (avatar of avatarOptions; track avatar) {
+      <label><input class="peer sr-only" type="radio" formControlName="avatarClass" [value]="avatar.value"><span><app-class-avatar [avatarClass]="avatar.value" size="md"></app-class-avatar><strong>{{ avatar.label }}</strong><small>{{ avatar.description }}</small></span></label>
+    }</div>@if (invalid('avatarClass')) {
+    <span class="error-text">Elegí un emblema para continuar.</span>
+  }</fieldset>
+</div>
+</section>
+}
+@if (step === 1) {
+  <section class="step-content">
+    <div><span class="eyebrow">Paso 2</span><h2 class="mt-2 font-display text-3xl font-bold">¿Cómo participás?</h2><p class="mt-2 text-sm text-mist">Podés cambiar este rol más adelante.</p></div>
+    <div class="mt-7 grid gap-4">
+      @for (role of roles; track role) {
+        <label class="role-option"><input type="radio" formControlName="role" [value]="role.value"><span><strong>{{ role.label }}</strong><small>{{ role.detail }}</small></span></label>
+      }
+    </div>
+    @if (invalid('role')) {
+      <span class="error-text">Elegí una opción.</span>
+    }
+  </section>
+}
+@if (step === 2) {
+  <section class="step-content">
+    <div><span class="eyebrow">Paso 3</span><h2 class="mt-2 font-display text-3xl font-bold">Datos de contacto</h2><p class="mt-2 text-sm text-mist">Elegí WhatsApp o Instagram. No se mostrarán en tu perfil público ni en los resultados de búsqueda. Sólo se habilitarán entre vos y el máster cuando una solicitud para una partida sea aceptada.</p></div>
+    <div class="mt-7 grid gap-5">
+      <label><span class="field-label">WhatsApp / celular <span class="text-mist">(opcional si usás Instagram)</span></span><input class="input-field" formControlName="whatsapp" inputmode="tel" autocomplete="tel" placeholder="Ej: 261 555 1234">@if (invalid('whatsapp')) {
+      <span class="error-text">Usá un número argentino de 10 dígitos con código de área.</span>
+      }@if (whatsappPreview) {
+      <small class="preview-link">Se guardará como {{ whatsappPreview }}</small>
+    }</label>
+    <label><span class="field-label">Instagram <span class="text-mist">(opcional si usás WhatsApp)</span></span><input class="input-field" formControlName="instagram" autocomplete="off" placeholder="Ej: @nombre.usuario">@if (invalid('instagram')) {
+    <span class="error-text">Ingresá un usuario o enlace válido de Instagram.</span>
+    }@if (instagramPreview) {
+    <small class="preview-link">Se guardará como {{ instagramPreview }}</small>
+  }</label>
+  @if (contactMethodMissing) {
+    <span class="error-text">Elegí al menos un medio de contacto: WhatsApp o Instagram.</span>
+  }
+  <label><span class="field-label">Teléfono alternativo <span class="text-mist">(opcional y privado)</span></span><input class="input-field" formControlName="alternatePhone" inputmode="tel" autocomplete="tel-national"></label>
+</div>
+</section>
+}
+@if (step === 3) {
+  <section class="step-content">
+    <div><span class="eyebrow">Paso 4</span><h2 class="mt-2 font-display text-3xl font-bold">Preferencias y privacidad</h2><p class="mt-2 text-sm text-mist">Esto mejora el orden de los resultados y ayuda a encontrar una mesa compatible.</p></div>
+    <div class="mt-7 grid gap-5 sm:grid-cols-2">
+      <label class="sm:col-span-2"><span class="field-label">Sistemas preferidos *</span><input class="input-field" formControlName="systems" placeholder="D&D 5e, Pathfinder, Call of Cthulhu"><small class="mt-1 block text-xs text-mist">Separalos con comas.</small>@if (invalid('systems')) {
+      <span class="error-text">Ingresá al menos un sistema.</span>
+    }</label>
+    <label><span class="field-label">Experiencia *</span><select class="input-field" formControlName="experience"><option>Estoy empezando</option><option>Principiante</option><option>Intermedia</option><option>Avanzada</option></select></label>
+    <label><span class="field-label">Modalidad *</span><select class="input-field" formControlName="mode"><option>Presencial</option><option>Online</option><option>Mixto</option></select></label>
+    <label><span class="field-label">Frecuencia *</span><select class="input-field" formControlName="frequency"><option>Semanal</option><option>Quincenal</option><option>Mensual</option><option>One-shot</option><option>A coordinar</option></select></label>
+    <label><span class="field-label">Disponibilidad *</span><input class="input-field" formControlName="availability" placeholder="Ej: viernes desde las 20 hs">@if (invalid('availability')) {
+    <span class="error-text">Indicá cuándo podrías participar.</span>
+  }</label>
+  <label class="sm:col-span-2"><span class="field-label">Ambiente o estilo preferido *</span><select class="input-field" formControlName="atmosphere"><option>Me adapto al grupo</option><option>Fantasía heroica y aventura</option><option>Terror y misterio</option><option>Ciencia ficción</option><option>Narrativa e interpretación</option><option>Combate táctico</option><option>Partidas casuales y sociales</option></select></label>
+  <label class="sm:col-span-2">
+    <span class="field-label">Sobre vos y qué buscás *</span>
+    <textarea class="input-field min-h-[120px] resize-y" formControlName="bio" maxlength="500" placeholder="Contá qué tipo de historias, grupos o mesas preferís."></textarea>
+    <div class="mt-1 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+      @if (invalid('bio') && (form.controls.bio.errors?.['required'] || form.controls.bio.errors?.['minlength'])) {
+        <span class="error-text !mt-0">Contanos un poco más sobre vos. La descripción debe tener al menos 50 caracteres.</span>
+      }
+      @if (invalid('bio') && form.controls.bio.errors?.['maxlength']) {
+        <span class="error-text !mt-0">La descripción puede tener como máximo 500 caracteres.</span>
+      }
+      <small class="ml-auto whitespace-nowrap text-xs" [class.text-gold]="bioLength < 50" [class.text-mist]="bioLength >= 50">{{ bioLength < 50 ? (bioLength + ' / 50 caracteres mínimos') : (bioLength + ' / 500') }}</small>
+    </div>
+  </label>
+</div>
+<label class="consent-box mt-6"><input type="checkbox" formControlName="privacyConsent"><span><strong>Acepto compartir mi medio de contacto cuando corresponda.</strong><small>WhatsApp, Instagram y el teléfono alternativo se mantienen privados. Solamente se habilitan entre el jugador y el máster después de aceptar una solicitud de ingreso. Podré bloquear usuarios y modificar o eliminar estos datos desde mi perfil. <a routerLink="/privacidad" target="_blank" rel="noopener" (click)="$event.stopPropagation()">Ver Política de Privacidad</a>.</small></span></label>
+@if (invalid('privacyConsent')) {
+  <span class="error-text">Necesitamos tu consentimiento para completar el perfil.</span>
+}
+</section>
+}
+@if (errorMessage) {
+  <p class="feedback-error" role="alert">{{ errorMessage }}</p>
+}
+<div class="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+  @if (step > 0) {
+    <button type="button" class="btn-secondary" (click)="previous()">Volver</button>
+    }@if (step === 0) {
+    <span></span>
+  }
+  @if (step < steps.length - 1) {
+    <button type="button" class="btn-primary" (click)="next()">Continuar <app-icon name="arrow" [size]="18"></app-icon></button>
+  }
+  @if (step === steps.length - 1) {
+    <button type="submit" class="btn-primary" [disabled]="saving">{{ saving ? 'Guardando…' : (editing ? 'Guardar cambios' : 'Completar perfil') }}</button>
+  }
+</div>
+</div>
+</form>
+}
+</div>
 </section>

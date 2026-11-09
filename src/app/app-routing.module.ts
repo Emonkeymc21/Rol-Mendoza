@@ -1,60 +1,41 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
-import { PlayersComponent } from './pages/players/players.component';
-import { PlayerDetailComponent } from './pages/player-detail/player-detail.component';
-import { GamesComponent } from './pages/games/games.component';
-import { GameDetailComponent } from './pages/game-detail/game-detail.component';
-import { CreateGameComponent } from './pages/create-game/create-game.component';
-import { RegisterComponent } from './pages/register/register.component';
-import { HowItWorksComponent } from './pages/how-it-works/how-it-works.component';
-import { NotFoundComponent } from './pages/not-found/not-found.component';
-import { LoginComponent } from './pages/login/login.component';
-import { AccountComponent } from './pages/account/account.component';
-import { CompleteProfileComponent } from './pages/complete-profile/complete-profile.component';
+import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { ProfileCompleteGuard } from './core/guards/profile-complete.guard';
 import { IncompleteProfileGuard } from './core/guards/incomplete-profile.guard';
 import { GuestGuard } from './core/guards/guest.guard';
 import { DmGuard } from './core/guards/dm.guard';
-import { MyGamesComponent } from './pages/my-games/my-games.component';
-import { AboutComponent } from './pages/about/about.component';
-import { MyRequestsComponent } from './pages/my-requests/my-requests.component';
-import { DmRequestsComponent } from './pages/dm-requests/dm-requests.component';
-import { NotificationsComponent } from './pages/notifications/notifications.component';
-import { LegalComponent } from './pages/legal/legal.component';
-import { CommunitiesComponent } from './pages/communities/communities.component';
-import { RequestCommunityComponent } from './pages/request-community/request-community.component';
 
 const privatePage = { robots: 'noindex,nofollow' };
 
 const routes: Routes = [
   { path: '', component: HomeComponent, title: 'Cumbre20 | Encontrá tu próxima mesa', data: { description: 'Encontrá y organizá mesas de rol en Mendoza. Cumbre20 conecta jugadores, másters y partidas sin reemplazar los espacios que ya existen.' } },
-  { path: 'jugadores', component: PlayersComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Jugadores y másters | Cumbre20', data: privatePage },
-  { path: 'jugadores/:id', component: PlayerDetailComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Perfil | Cumbre20', data: privatePage },
-  { path: 'partidas', component: GamesComponent, title: 'Partidas disponibles | Cumbre20', data: { description: 'Explorá partidas de rol presenciales, online y mixtas en Mendoza. Filtrá por localidad, sistema y experiencia.' } },
-  { path: 'partidas/nueva', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Crear una partida | Cumbre20', data: privatePage },
-  { path: 'mis-partidas', component: MyGamesComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis partidas | Cumbre20', data: privatePage },
-  { path: 'mis-solicitudes', component: MyRequestsComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis solicitudes | Cumbre20', data: privatePage },
-  { path: 'solicitudes', component: DmRequestsComponent, canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Solicitudes de jugadores | Cumbre20', data: privatePage },
-  { path: 'notificaciones', component: NotificationsComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Notificaciones | Cumbre20', data: privatePage },
-  { path: 'mis-partidas/:id/editar', component: CreateGameComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar partida | Cumbre20', data: privatePage },
-  { path: 'partidas/:id', component: GameDetailComponent, title: 'Detalle de partida | Cumbre20', data: { description: 'Conocé los datos de una partida publicada en Cumbre20 y solicitá unirte con tu perfil.' } },
-  { path: 'comunidades', component: CommunitiesComponent, title: 'Comunidades de rol en Mendoza | Cumbre20', data: { description: 'Descubrí grupos, clubes, tiendas y espacios que organizan rol en Mendoza y accedé a sus canales oficiales.' } },
-  { path: 'comunidades/solicitar', component: RequestCommunityComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Solicitar perfil de comunidad | Cumbre20', data: privatePage },
-  { path: 'como-funciona', component: HowItWorksComponent, title: 'Cómo funciona | Cumbre20', data: { description: 'Descubrí cómo crear tu perfil, encontrar una mesa de rol o publicar una partida en Cumbre20.' } },
-  { path: 'nosotros', component: AboutComponent, title: 'Nosotros | Cumbre20', data: { description: 'Cumbre20 es una herramienta que ayuda a conectar jugadores, másters, partidas y espacios de rol que ya existen en Mendoza.' } },
-  { path: 'privacidad', component: LegalComponent, title: 'Política de Privacidad | Cumbre20', data: { legalDocument: 'privacy', description: 'Conocé qué datos utiliza Cumbre20, para qué los necesita y cómo protegemos tu privacidad.' } },
-  { path: 'terminos', component: LegalComponent, title: 'Términos y Condiciones | Cumbre20', data: { legalDocument: 'terms', description: 'Condiciones de uso de Cumbre20 para jugadores, másters y personas que buscan una mesa de rol en Mendoza.' } },
-  { path: 'registrarme', component: RegisterComponent, canActivate: [GuestGuard], title: 'Sumate | Cumbre20', data: privatePage },
+  { path: 'jugadores', loadChildren: () => import('./pages/players/players.module').then(m => m.PlayersModule), canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Jugadores y másters | Cumbre20', data: privatePage },
+  { path: 'jugadores/:id', loadChildren: () => import('./pages/player-detail/player-detail.module').then(m => m.PlayerDetailModule), canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Perfil | Cumbre20', data: privatePage },
+  { path: 'partidas', loadChildren: () => import('./pages/games/games.module').then(m => m.GamesModule), title: 'Partidas disponibles | Cumbre20', data: { description: 'Explorá partidas de rol presenciales, online y mixtas en Mendoza. Filtrá por localidad, sistema y experiencia.' } },
+  { path: 'partidas/nueva', loadChildren: () => import('./pages/create-game/create-game.module').then(m => m.CreateGameModule), canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Crear una partida | Cumbre20', data: privatePage },
+  { path: 'mis-partidas', loadChildren: () => import('./pages/my-games/my-games.module').then(m => m.MyGamesModule), canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis partidas | Cumbre20', data: privatePage },
+  { path: 'mis-solicitudes', loadChildren: () => import('./pages/my-requests/my-requests.module').then(m => m.MyRequestsModule), canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mis solicitudes | Cumbre20', data: privatePage },
+  { path: 'solicitudes', loadChildren: () => import('./pages/dm-requests/dm-requests.module').then(m => m.DmRequestsModule), canActivate: [AuthGuard, ProfileCompleteGuard, DmGuard], title: 'Solicitudes de jugadores | Cumbre20', data: privatePage },
+  { path: 'notificaciones', loadChildren: () => import('./pages/notifications/notifications.module').then(m => m.NotificationsModule), canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Notificaciones | Cumbre20', data: privatePage },
+  { path: 'mis-partidas/:id/editar', loadChildren: () => import('./pages/create-game/create-game.module').then(m => m.CreateGameModule), canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar partida | Cumbre20', data: privatePage },
+  { path: 'partidas/:id', loadChildren: () => import('./pages/game-detail/game-detail.module').then(m => m.GameDetailModule), title: 'Detalle de partida | Cumbre20', data: { description: 'Conocé los datos de una partida publicada en Cumbre20 y solicitá unirte con tu perfil.' } },
+  { path: 'comunidades', loadChildren: () => import('./pages/communities/communities.module').then(m => m.CommunitiesModule), title: 'Comunidades de rol en Mendoza | Cumbre20', data: { description: 'Descubrí grupos, clubes, tiendas y espacios que organizan rol en Mendoza y accedé a sus canales oficiales.' } },
+  { path: 'comunidades/solicitar', loadChildren: () => import('./pages/request-community/request-community.module').then(m => m.RequestCommunityModule), canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Solicitar perfil de comunidad | Cumbre20', data: privatePage },
+  { path: 'como-funciona', loadChildren: () => import('./pages/how-it-works/how-it-works.module').then(m => m.HowItWorksModule), title: 'Cómo funciona | Cumbre20', data: { description: 'Descubrí cómo crear tu perfil, encontrar una mesa de rol o publicar una partida en Cumbre20.' } },
+  { path: 'nosotros', loadChildren: () => import('./pages/about/about.module').then(m => m.AboutModule), title: 'Nosotros | Cumbre20', data: { description: 'Cumbre20 es una herramienta que ayuda a conectar jugadores, másters, partidas y espacios de rol que ya existen en Mendoza.' } },
+  { path: 'privacidad', loadChildren: () => import('./pages/legal/legal.module').then(m => m.LegalModule), title: 'Política de Privacidad | Cumbre20', data: { legalDocument: 'privacy', description: 'Conocé qué datos utiliza Cumbre20, para qué los necesita y cómo protegemos tu privacidad.' } },
+  { path: 'terminos', loadChildren: () => import('./pages/legal/legal.module').then(m => m.LegalModule), title: 'Términos y Condiciones | Cumbre20', data: { legalDocument: 'terms', description: 'Condiciones de uso de Cumbre20 para jugadores, másters y personas que buscan una mesa de rol en Mendoza.' } },
+  { path: 'registrarme', loadChildren: () => import('./pages/register/register.module').then(m => m.RegisterModule), canActivate: [GuestGuard], title: 'Sumate | Cumbre20', data: privatePage },
   { path: 'registro', redirectTo: 'registrarme', pathMatch: 'full' },
-  { path: 'ingresar', component: LoginComponent, canActivate: [GuestGuard], title: 'Ingresar | Cumbre20', data: privatePage },
-  { path: 'completar-perfil', component: CompleteProfileComponent, canActivate: [AuthGuard, IncompleteProfileGuard], title: 'Completar perfil | Cumbre20', data: privatePage },
-  { path: 'perfil/editar', component: CompleteProfileComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar perfil | Cumbre20', data: privatePage },
+  { path: 'ingresar', loadChildren: () => import('./pages/login/login.module').then(m => m.LoginModule), canActivate: [GuestGuard], title: 'Ingresar | Cumbre20', data: privatePage },
+  { path: 'completar-perfil', loadChildren: () => import('./pages/complete-profile/complete-profile.module').then(m => m.CompleteProfileModule), canActivate: [AuthGuard, IncompleteProfileGuard], title: 'Completar perfil | Cumbre20', data: privatePage },
+  { path: 'perfil/editar', loadChildren: () => import('./pages/complete-profile/complete-profile.module').then(m => m.CompleteProfileModule), canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Editar perfil | Cumbre20', data: privatePage },
   { path: 'editar-perfil', redirectTo: 'perfil/editar', pathMatch: 'full' },
-  { path: 'perfil', component: AccountComponent, canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mi perfil | Cumbre20', data: privatePage },
+  { path: 'perfil', loadChildren: () => import('./pages/account/account.module').then(m => m.AccountModule), canActivate: [AuthGuard, ProfileCompleteGuard], title: 'Mi perfil | Cumbre20', data: privatePage },
   { path: 'mi-cuenta', redirectTo: 'perfil', pathMatch: 'full' },
-  { path: '404', component: NotFoundComponent, title: 'Página no encontrada | Cumbre20', data: { description: 'La página que buscás no existe o cambió de ubicación.', robots: 'noindex,nofollow' } },
+  { path: '404', loadChildren: () => import('./pages/not-found/not-found.module').then(m => m.NotFoundModule), title: 'Página no encontrada | Cumbre20', data: { description: 'La página que buscás no existe o cambió de ubicación.', robots: 'noindex,nofollow' } },
   { path: '**', redirectTo: '404' }
 ];
 

@@ -1,11 +1,13 @@
-import { Component, HostListener, Input } from '@angular/core';
+import { Component, HostListener, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Game } from '../../../core/models/game.model';
 import { GameShareService } from '../../../core/services/game-share.service';
 
 @Component({
-  selector: 'app-share-game',
-  templateUrl: './share-game.component.html',
-  styleUrls: ['./share-game.component.scss']
+    selector: 'app-share-game',
+    templateUrl: './share-game.component.html',
+    styleUrls: ['./share-game.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class ShareGameComponent {
   @Input({ required: true }) game!: Game;

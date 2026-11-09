@@ -24,7 +24,9 @@
       <div class="capacity-track mt-3"><span [style.width.%]="capacityPercent()"></span></div>
       <div class="game-card-actions">
         <a [routerLink]="['/partidas', game.id]" class="game-card-action">Ver aventura <app-icon name="arrow" [size]="18"></app-icon></a>
-        <app-share-game *ngIf="game.status !== 'CANCELLED'" [game]="game" [compact]="true"></app-share-game>
+        @if (game.status !== 'CANCELLED') {
+          <app-share-game [game]="game" [compact]="true"></app-share-game>
+        }
       </div>
     </div>
   </div>

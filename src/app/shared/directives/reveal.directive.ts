@@ -1,6 +1,9 @@
 import { AfterViewInit, Directive, ElementRef, NgZone, OnDestroy } from '@angular/core';
 
-@Directive({ selector: '[appReveal]' })
+@Directive({
+    selector: '[appReveal]',
+    standalone: false
+})
 export class RevealDirective implements AfterViewInit, OnDestroy {
   private observer?: IntersectionObserver;
 

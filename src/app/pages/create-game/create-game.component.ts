@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MENDOZA_LOCATIONS, OTHER_LOCATION, resolveLocation, splitLocation } from '../../core/data/mendoza-locations';
@@ -7,7 +7,11 @@ import { AuthService } from '../../core/services/auth.service';
 import { GameService } from '../../core/services/game.service';
 import { ProfileService } from '../../core/services/profile.service';
 
-@Component({ selector: 'app-create-game', templateUrl: './create-game.component.html', styleUrls: ['./create-game.component.scss'] })
+@Component({
+    selector: 'app-create-game', templateUrl: './create-game.component.html', styleUrls: ['./create-game.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class CreateGameComponent implements OnInit {
   readonly locations = MENDOZA_LOCATIONS;
   readonly otherLocation = OTHER_LOCATION;

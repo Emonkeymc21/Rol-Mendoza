@@ -14,7 +14,11 @@
           <label class="block"><span class="field-label">Correo electrónico</span><input type="email" class="input-field" formControlName="email" autocomplete="email"></label>
           <label class="block"><span class="field-label">Contraseña</span><input type="password" class="input-field" formControlName="password" autocomplete="current-password"></label>
           <div class="text-right"><button type="button" class="text-sm font-bold text-gold hover:text-parchment" (click)="resetPassword()" [disabled]="resetting">{{ resetting ? 'Enviando…' : 'Olvidé mi contraseña' }}</button></div>
-          <p *ngIf="errorMessage" class="feedback-error" role="alert">{{ errorMessage }}</p><p *ngIf="notice" class="feedback-success" role="status">{{ notice }}</p>
+          @if (errorMessage) {
+            <p class="feedback-error" role="alert">{{ errorMessage }}</p>
+            }@if (notice) {
+            <p class="feedback-success" role="status">{{ notice }}</p>
+          }
           <button type="submit" class="btn-primary w-full" [disabled]="saving || googleSaving">{{ saving ? 'Ingresando…' : 'Ingresar' }}</button>
         </form>
         <p class="auth-switch">¿Todavía no tenés cuenta? <a routerLink="/registrarme" [queryParams]="{ returnUrl: returnUrl }">Registrate</a></p>

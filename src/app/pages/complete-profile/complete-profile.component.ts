@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, FormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AVATAR_CLASS_OPTIONS, AvatarClass, avatarClassForUid } from '../../core/data/avatar-classes';
@@ -12,9 +12,11 @@ const exactLocationValidator = (): ValidatorFn => (control: AbstractControl): Va
   MENDOZA_LOCATIONS.includes(String(control.value || '').trim()) ? null : { location: true };
 
 @Component({
-  selector: 'app-complete-profile',
-  templateUrl: './complete-profile.component.html',
-  styleUrls: ['./complete-profile.component.scss']
+    selector: 'app-complete-profile',
+    templateUrl: './complete-profile.component.html',
+    styleUrls: ['./complete-profile.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class CompleteProfileComponent implements OnInit {
   readonly locations = MENDOZA_LOCATIONS;
@@ -61,7 +63,7 @@ export class CompleteProfileComponent implements OnInit {
     route: ActivatedRoute,
     private router: Router
   ) {
-    this.editing = route.snapshot.routeConfig?.path === 'perfil/editar';
+    this.editing = (route.snapshot.routeConfig?.path || route.parent?.snapshot.routeConfig?.path) === 'perfil/editar';
     const requested = route.snapshot.queryParamMap.get('returnUrl') || '/';
     this.returnUrl = requested.startsWith('/') && !requested.startsWith('//') ? requested : '/';
     this.form.controls.city.valueChanges.subscribe(() => this.updateOtherCityValidation());

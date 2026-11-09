@@ -6,7 +6,9 @@
 </div>
 <app-custom-cursor></app-custom-cursor>
 
-<div *ngIf="authLoading$ | async" class="auth-loading" role="status" aria-live="polite">
-  <span aria-hidden="true"></span>
-  <span class="sr-only">Estamos recuperando tu sesión…</span>
-</div>
+@if (authLoading$ | async) {
+  <div class="auth-loading" role="status" aria-live="polite">
+    <span aria-hidden="true"></span>
+    <span class="sr-only">Estamos recuperando tu sesión…</span>
+  </div>
+}

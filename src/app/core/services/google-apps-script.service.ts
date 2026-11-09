@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { isIsolatedTestApi } from './isolated-test-api';
 import { Game } from '../models/game.model';
 import {
   ApiMutationResult,
@@ -50,7 +51,8 @@ export class GoogleAppsScriptService {
   constructor(private http: HttpClient) {}
 
   get enabled(): boolean {
-    return /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/i.test(this.webAppUrl);
+    return /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/i.test(this.webAppUrl) ||
+      isIsolatedTestApi(this.webAppUrl, environment, window.location.origin);
   }
 
   getGames(): Observable<PublicGameRow[]> {

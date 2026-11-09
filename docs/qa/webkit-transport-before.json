@@ -1,0 +1,15 @@
+{
+  "workflowRun": 42561694964,
+  "job": 128979403143,
+  "artifact": 13650031336,
+  "scope": "desktop WebKit DM/player flow before local Firestore proxy",
+  "firestoreHttp200": 90,
+  "unfinishedRequests": 6,
+  "receivedCorsHeaders": {
+    "access-control-allow-origin": "http://127.0.0.1:4200",
+    "access-control-allow-credentials": "true"
+  },
+  "functionalChecksCompleted": true,
+  "pageErrorAssertion": "failed on browser access-control messages",
+  "cause": "not established for hosted production"
+}
