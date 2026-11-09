@@ -9,15 +9,10 @@ async function isolate(context:BrowserContext) {
       const result=await route.fetch({url:`${api}/apps-script${url.search}`});
       return route.fulfill({response:result});
     }
-    if(url.pathname.startsWith('/compartir/partida/')&&url.origin===app){
-      const result=await route.fetch({url:`${api}${url.pathname}`,headers:{...route.request().headers(),'x-forwarded-host':'127.0.0.1:4200'},maxRedirects:0});
-      return route.fulfill({response:result});
-    }
     if(['127.0.0.1','localhost'].includes(url.hostname)||['data:','blob:'].includes(url.protocol))return route.continue();
-    // Firebase's mobile popup resolver loads Google's static bootstrap even on the Auth emulator.
-    if(url.hostname==='apis.google.com' && route.request().resourceType()==='script')return route.continue();
-    if(['fonts.googleapis.com','fonts.gstatic.com'].includes(url.hostname))return route.fulfill({status:200,body:'',contentType:'text/css'});
-    throw new Error(`External access forbidden in isolated QA: ${url.origin}`);
+    // Public font assets and Firebase's mobile popup resolver bootstrap. Auth/data endpoints remain forbidden.
+    if(['apis.google.com','fonts.googleapis.com','fonts.gstatic.com'].includes(url.hostname)&&route.request().method()==='GET')return route.continue();
+    throw new Error(`External access forbidden in isolated QA: ${url.origin}${url.pathname} (${route.request().resourceType()})`);
   });
 }
 const control=(page:Page,name:string)=>page.locator(`[formcontrolname="${name}"]`);
@@ -50,7 +45,7 @@ async function menu(page:Page){
   if(await mobile.isVisible()) await mobile.click();
   else await page.getByRole('button',{name:'Abrir menú de usuario'}).click();
 }
-async function logout(page:Page){await menu(page);await page.getByRole('button',{name:'Cerrar sesión',exact:true}).click();await expect(page).toHaveURL(/ingresar/);}
+async function logout(page:Page){await menu(page);await page.locator('app-header').getByText('Cerrar sesión',{exact:true}).click();await expect(page).toHaveURL(/ingresar/);}
 async function login(page:Page,name:string,returnUrl='/perfil'){
   await page.goto(`/ingresar?returnUrl=${encodeURIComponent(returnUrl)}`);
   await control(page,'email').fill(`${name.toLowerCase()}@example.test`);await control(page,'password').fill(password);
@@ -112,9 +107,10 @@ test('DM publishes, player registers and requests, DM accepts and manages, playe
   await logout(page);await login(page,'Master','/solicitudes');
   await page.locator('.inbox-item').filter({hasText:'Aventura QA definitiva'}).click();
   await page.getByRole('button',{name:'Aceptar',exact:true}).click();await expect(page.getByText('Solicitud aceptada',{exact:true})).toBeVisible();
-  await page.goto('/mis-partidas');const entry=page.locator('.my-game-entry').filter({hasText:'Aventura QA definitiva'});
+  await page.goto('/mis-partidas');let entry=page.locator('.my-game-entry').filter({hasText:'Aventura QA definitiva'});
   await expect(entry).toContainText('1 / 4');await entry.getByRole('link',{name:'Editar',exact:true}).click();
   await control(page,'title').fill('Aventura QA verificada');await page.getByRole('button',{name:'Guardar cambios',exact:true}).click();await expect(page).toHaveURL(/mis-partidas/);
+  entry=page.locator('.my-game-entry').filter({hasText:'Aventura QA verificada'});
   await entry.getByRole('button',{name:'Cerrar inscripciones',exact:true}).click();await expect(entry).toContainText('Inscripciones pausadas');
   await entry.getByRole('button',{name:'Reabrir inscripciones',exact:true}).click();
   await logout(page);await login(page,'Player',`/partidas/${id}`);

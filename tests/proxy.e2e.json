@@ -1,0 +1,7 @@
+{
+  "/compartir/**": {
+    "target": "http://127.0.0.1:4401",
+    "secure": false,
+    "changeOrigin": false
+  }
+}

@@ -3,10 +3,14 @@
 - Antes de modificar, leer `docs/phase-4-audit.md`, consultar el estado real de `main`, los PR y producción. Los commits del informe son referencias históricas; no asumir que siguen siendo el último commit.
 - Continuar el proyecto existente. CUMBRE20 conecta jugadores, DMs, mesas y comunidades de Mendoza; complementa a las comunidades existentes.
 - Conservar las funciones de las fases 1 a 4. No reconstruir, eliminar funciones ni modificar datos, permisos o backend sin una necesidad comprobada.
-- Mantener Angular 16.2 y Firebase 10.14 hasta disponer de una migración controlada: comparar compatibilidad, actualizar Angular por etapas y validar Auth, Firestore y partidas. Firebase se migra por separado. No usar `npm audit fix --force` ni aplicar downgrades sugeridos por npm sin análisis.
+- La rama Fase 4.1 migra Angular 16 → 22.2.5 (CLI/build 22.2.6) y Firebase 10 → 13.2.0 en etapas separadas. Node 24.x, TypeScript 6.0.3. Leer también `docs/phase-4-1-migration.md` y consultar el PR #24 antes de asumir que esta migración está en producción. No usar `npm audit fix --force` ni downgrades sin análisis.
 - Firebase modular administra Auth y Firestore; no se usa AngularFire. La API de partidas es Apps Script 8.0.0 con Google Sheets. No confundirla con el registro de usuarios, que usa Firebase.
 - Corregir problemas reproducidos con cambios mínimos y pruebas relacionadas. `npm run test:ci` no sustituye las pruebas integrales con cuentas autorizadas ni dispositivos Android/iOS reales.
 - El endpoint de compartir distingue bots y personas por User-Agent. Sus respuestas deben usar `Cache-Control: private, no-store`; una caché compartida puede entregar la vista previa a una persona en lugar de redirigirla.
 - Las credenciales y sesiones de prueba no se versionan. No crear usuarios, partidas, solicitudes o comentarios de prueba en producción sin autorización para esos datos.
 - Después de una corrección de compartir, comprobar en el mismo enlace: bot (200 + Open Graph), persona (302 al detalle), otro bot y otra persona. También comprobar partida inexistente (404) e identificador inválido (400).
 - Mantener documentadas las pruebas ejecutadas, sus límites y los pendientes. Publicar únicamente cambios necesarios y verificados.
+
+- QA: `npm ci`, `npm ls --all`, `npm audit`, `npm audit --omit=dev`, `npm run build:prod`, `npm run test:unit`, `npm run test:ci`, `npm run test:emulators`, `npm run test:e2e`. CI usa Java 21 y navegadores Chromium/WebKit. Sólo proyectos Firebase demo en loopback para tests; `firebase.test.json` no se despliega.
+- Home sigue en la carga inicial. Las páginas secundarias usan NgModules con carga diferida; conservar guards y datos de rutas. Perfil/editar detecta el path del padre del módulo.
+- No integrar una migración con comprobaciones críticas fallidas o sin acceso al preview. Las comprobaciones físicas pendientes se registran en `docs/qa/physical-device-checklist.md`.

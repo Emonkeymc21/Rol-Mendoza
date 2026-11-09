@@ -32,7 +32,7 @@ Si una publicación completa presenta regresión, revertir el PR de migración y
 
 ## Registro de ejecución
 
-Pendiente de completar con los resultados observados en cada etapa.
+Los resultados siguientes corresponden a ejecuciones observadas; cada limitación se distingue de una prueba aprobada.
 
 - Angular 17: core 17.3.12, CLI 17.3.17, TypeScript 5.4.5, Node v18.20.8. Migraciones oficiales aplicadas; build, test:ci y compilación de las pruebas Jasmine aprobados. Karma/E2E se validan en la infraestructura ampliada de esta fase.
 
