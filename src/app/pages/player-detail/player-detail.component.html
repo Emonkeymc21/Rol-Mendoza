@@ -1,31 +1,42 @@
 <section class="section-space"><div class="page-shell max-w-5xl">
   <a routerLink="/jugadores" class="inline-flex items-center gap-2 text-sm font-bold text-mist hover:text-gold"><span class="rotate-180"><app-icon name="arrow" [size]="17"></app-icon></span> Volver a jugadores</a>
-  <ng-container *ngIf="player; else missing">
+  @if (player) {
     <div class="profile-card glass-panel mt-5 overflow-hidden rounded-3xl">
       <div class="profile-cover" [style.--accent]="player.accent" aria-hidden="true"></div>
       <div class="profile-content">
         <header class="profile-header">
           <app-class-avatar [avatarClass]="player.avatarClass" size="lg"></app-class-avatar>
           <div class="profile-heading">
-            <div class="profile-name-row"><h1>{{ player.name }}</h1><span *ngIf="player.verified" class="verified-mark" role="img" aria-label="Perfil completo" title="Perfil completo"><app-icon name="shield" [size]="20"></app-icon></span></div>
-            <p class="profile-role">{{ player.role }}</p>
-            <p class="profile-location"><app-icon name="map" [size]="17"></app-icon>{{ player.city }}</p>
-          </div>
-          <a *ngIf="isOwnProfile" routerLink="/perfil/editar" class="edit-profile-button"><app-icon name="edit" [size]="17"></app-icon> Editar mi perfil</a>
-        </header>
-        <div class="profile-body">
-          <div class="profile-main"><section><h2>{{ isOwnProfile ? 'Sobre mí' : ('Sobre ' + player.name.split(' ')[0]) }}</h2><p>{{ player.bio }}</p></section><section><h2>Qué busca</h2><p>{{ player.lookingFor }}</p></section><section><h2>Sistemas</h2><div class="system-list"><span *ngFor="let system of player.systems" class="tag">{{ system }}</span></div></section></div>
-          <aside class="preference-card"><h2>Preferencias</h2><dl><div><dt>Localidad</dt><dd><app-icon name="map" [size]="17"></app-icon>{{ player.city }}</dd></div><div><dt>Disponibilidad</dt><dd><app-icon name="clock" [size]="17"></app-icon>{{ player.availability }}</dd></div><div><dt>Modalidad</dt><dd>{{ player.mode }}</dd></div><div><dt>Frecuencia</dt><dd>{{ player.frequency }}</dd></div><div><dt>Experiencia</dt><dd>{{ player.experience }}</dd></div></dl></aside>
+            <div class="profile-name-row"><h1>{{ player.name }}</h1>@if (player.verified) {
+            <span class="verified-mark" role="img" aria-label="Perfil completo" title="Perfil completo"><app-icon name="shield" [size]="20"></app-icon></span>
+          }</div>
+          <p class="profile-role">{{ player.role }}</p>
+          <p class="profile-location"><app-icon name="map" [size]="17"></app-icon>{{ player.city }}</p>
         </div>
-        <section *ngIf="!isOwnProfile" class="contact-panel mt-7">
-          <h2 class="font-display text-xl font-bold">Contacto</h2>
-          <p class="mt-3 text-sm text-mist">Los datos de contacto son privados. Se habilitan entre el jugador y el máster únicamente después de aceptar una solicitud para una partida.</p>
-          <button type="button" class="mt-5 text-sm font-bold text-red-200 hover:text-red-100" (click)="block()" [disabled]="blocking">{{ blocking ? 'Bloqueando…' : 'Bloquear usuario' }}</button>
-        </section>
-        <p *ngIf="notice" class="feedback-error" role="alert">{{ notice }}</p>
-        <div class="safety-note mt-7"><strong>Cuidemos la comunidad.</strong> Coordiná solamente con personas de confianza, no compartas domicilios y utilizá el bloqueo si no querés que alguien acceda a tus datos de contacto.</div>
-      </div>
+        @if (isOwnProfile) {
+          <a routerLink="/perfil/editar" class="edit-profile-button"><app-icon name="edit" [size]="17"></app-icon> Editar mi perfil</a>
+        }
+      </header>
+      <div class="profile-body">
+        <div class="profile-main"><section><h2>{{ isOwnProfile ? 'Sobre mí' : ('Sobre ' + player.name.split(' ')[0]) }}</h2><p>{{ player.bio }}</p></section><section><h2>Qué busca</h2><p>{{ player.lookingFor }}</p></section><section><h2>Sistemas</h2><div class="system-list">@for (system of player.systems; track system) {
+        <span class="tag">{{ system }}</span>
+      }</div></section></div>
+      <aside class="preference-card"><h2>Preferencias</h2><dl><div><dt>Localidad</dt><dd><app-icon name="map" [size]="17"></app-icon>{{ player.city }}</dd></div><div><dt>Disponibilidad</dt><dd><app-icon name="clock" [size]="17"></app-icon>{{ player.availability }}</dd></div><div><dt>Modalidad</dt><dd>{{ player.mode }}</dd></div><div><dt>Frecuencia</dt><dd>{{ player.frequency }}</dd></div><div><dt>Experiencia</dt><dd>{{ player.experience }}</dd></div></dl></aside>
     </div>
-  </ng-container>
-  <ng-template #missing><div class="glass-panel mt-6 rounded-2xl p-10 text-center"><h1 class="font-display text-3xl font-bold">No encontramos ese perfil</h1><a routerLink="/jugadores" class="btn-primary mt-6">Ver todos los perfiles</a></div></ng-template>
+    @if (!isOwnProfile) {
+      <section class="contact-panel mt-7">
+        <h2 class="font-display text-xl font-bold">Contacto</h2>
+        <p class="mt-3 text-sm text-mist">Los datos de contacto son privados. Se habilitan entre el jugador y el máster únicamente después de aceptar una solicitud para una partida.</p>
+        <button type="button" class="mt-5 text-sm font-bold text-red-200 hover:text-red-100" (click)="block()" [disabled]="blocking">{{ blocking ? 'Bloqueando…' : 'Bloquear usuario' }}</button>
+      </section>
+    }
+    @if (notice) {
+      <p class="feedback-error" role="alert">{{ notice }}</p>
+    }
+    <div class="safety-note mt-7"><strong>Cuidemos la comunidad.</strong> Coordiná solamente con personas de confianza, no compartas domicilios y utilizá el bloqueo si no querés que alguien acceda a tus datos de contacto.</div>
+  </div>
+</div>
+} @else {
+  <div class="glass-panel mt-6 rounded-2xl p-10 text-center"><h1 class="font-display text-3xl font-bold">No encontramos ese perfil</h1><a routerLink="/jugadores" class="btn-primary mt-6">Ver todos los perfiles</a></div>
+}
 </div></section>

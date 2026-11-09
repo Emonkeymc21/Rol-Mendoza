@@ -1,20 +1,30 @@
 <div class="share-game" [class.compact]="compact" (click)="stop($event)">
   <button type="button" class="share-trigger" (click)="toggle($event)" [attr.aria-expanded]="open" aria-haspopup="menu">
     <app-icon name="share" [size]="18"></app-icon>
-    <span *ngIf="!compact">Compartir partida</span>
-    <span *ngIf="compact" class="sr-only">Compartir {{ game.title }}</span>
+    @if (!compact) {
+      <span>Compartir partida</span>
+    }
+    @if (compact) {
+      <span class="sr-only">Compartir {{ game.title }}</span>
+    }
   </button>
 
-  <div *ngIf="open" class="share-menu" role="menu" aria-label="Opciones para compartir">
-    <button *ngIf="sharing.canUseNativeShare()" type="button" role="menuitem" (click)="shareNative($event)">
-      <app-icon name="share" [size]="18"></app-icon><span><strong>Compartir</strong><small>Usar las aplicaciones de este dispositivo</small></span>
-    </button>
-    <a role="menuitem" [href]="sharing.whatsappUrl(game)" target="_blank" rel="noopener noreferrer">
-      <app-icon name="whatsapp" [size]="18"></app-icon><span><strong>WhatsApp</strong><small>Enviar la convocatoria y el enlace</small></span>
-    </a>
-    <button type="button" role="menuitem" (click)="copy($event)">
-      <app-icon name="copy" [size]="18"></app-icon><span><strong>Copiar enlace</strong><small>Para Instagram, Discord u otra aplicación</small></span>
-    </button>
-    <p *ngIf="feedback" class="share-feedback" aria-live="polite">{{ feedback }}</p>
-  </div>
+  @if (open) {
+    <div class="share-menu" role="menu" aria-label="Opciones para compartir">
+      @if (sharing.canUseNativeShare()) {
+        <button type="button" role="menuitem" (click)="shareNative($event)">
+          <app-icon name="share" [size]="18"></app-icon><span><strong>Compartir</strong><small>Usar las aplicaciones de este dispositivo</small></span>
+        </button>
+      }
+      <a role="menuitem" [href]="sharing.whatsappUrl(game)" target="_blank" rel="noopener noreferrer">
+        <app-icon name="whatsapp" [size]="18"></app-icon><span><strong>WhatsApp</strong><small>Enviar la convocatoria y el enlace</small></span>
+      </a>
+      <button type="button" role="menuitem" (click)="copy($event)">
+        <app-icon name="copy" [size]="18"></app-icon><span><strong>Copiar enlace</strong><small>Para Instagram, Discord u otra aplicación</small></span>
+      </button>
+      @if (feedback) {
+        <p class="share-feedback" aria-live="polite">{{ feedback }}</p>
+      }
+    </div>
+  }
 </div>

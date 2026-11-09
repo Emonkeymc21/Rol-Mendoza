@@ -4,8 +4,11 @@
       <span class="eyebrow">Comunidades y espacios de Mendoza</span>
       <h1>La comunidad ya existe.<br><span>Cumbre20 ayuda a conectarla.</span></h1>
       <p>Este espacio reúne grupos, clubes, tiendas, cafés y proyectos que ya organizan rol. Cumbre20 les da visibilidad y deriva a cada persona hacia sus canales oficiales.</p>
-      <a *ngIf="user$ | async; else communityGuest" routerLink="/comunidades/solicitar" class="btn-primary">Solicitar perfil de comunidad <app-icon name="arrow" [size]="18"></app-icon></a>
-      <ng-template #communityGuest><a routerLink="/ingresar" [queryParams]="{ returnUrl: '/comunidades/solicitar' }" class="btn-primary">Represento una comunidad <app-icon name="arrow" [size]="18"></app-icon></a></ng-template>
+      @if (user$ | async) {
+        <a routerLink="/comunidades/solicitar" class="btn-primary">Solicitar perfil de comunidad <app-icon name="arrow" [size]="18"></app-icon></a>
+      } @else {
+        <a routerLink="/ingresar" [queryParams]="{ returnUrl: '/comunidades/solicitar' }" class="btn-primary">Represento una comunidad <app-icon name="arrow" [size]="18"></app-icon></a>
+      }
     </div>
     <img src="assets/branding/map-mendoza.svg" width="640" height="820" alt="" aria-hidden="true">
   </div>
@@ -18,35 +21,57 @@
       <p>Sólo mostramos comunidades y actividades verificadas. No inventamos convocatorias para que la plataforma parezca más activa.</p>
     </header>
 
-    <ng-container *ngIf="communities$ | async as communities; else communitiesLoading">
-      <div *ngIf="communities.length; else noCommunities" class="communities-grid">
-        <article *ngFor="let community of communities" class="community-entry">
-          <div class="community-entry__identity"><span aria-hidden="true">{{ initials(community.name) }}</span><div><p>{{ community.zone }}</p><h2>{{ community.name }}</h2></div></div>
-          <p class="community-entry__description">{{ community.description }}</p>
-          <div *ngIf="community.activities.length" class="community-activities">
-            <h3>Próximas actividades</h3>
-            <a *ngFor="let activity of community.activities" [href]="activity.url || null" [attr.target]="activity.url ? '_blank' : null" [attr.rel]="activity.url ? 'noopener noreferrer' : null">
-              <span><strong>{{ activity.title }}</strong><small>{{ activity.location || community.zone }} · {{ activity.mode }}</small></span>
-              <time *ngIf="activity.date">{{ activity.date | date:'d/M/yy' }}</time>
-            </a>
+    @if (communities$ | async; as communities) {
+      @if (communities.length) {
+        <div class="communities-grid">
+          @for (community of communities; track community) {
+            <article class="community-entry">
+              <div class="community-entry__identity"><span aria-hidden="true">{{ initials(community.name) }}</span><div><p>{{ community.zone }}</p><h2>{{ community.name }}</h2></div></div>
+              <p class="community-entry__description">{{ community.description }}</p>
+              @if (community.activities.length) {
+                <div class="community-activities">
+                  <h3>Próximas actividades</h3>
+                  @for (activity of community.activities; track activity) {
+                    <a [href]="activity.url || null" [attr.target]="activity.url ? '_blank' : null" [attr.rel]="activity.url ? 'noopener noreferrer' : null">
+                      <span><strong>{{ activity.title }}</strong><small>{{ activity.location || community.zone }} · {{ activity.mode }}</small></span>
+                      @if (activity.date) {
+                        <time>{{ activity.date | date:'d/M/yy' }}</time>
+                      }
+                    </a>
+                  }
+                </div>
+              }
+              <div class="community-entry__links">
+                @if (community.instagramUrl) {
+                  <a [href]="community.instagramUrl" target="_blank" rel="noopener noreferrer"><app-icon name="instagram" [size]="18"></app-icon> Instagram</a>
+                }
+                @if (community.discordUrl) {
+                  <a [href]="community.discordUrl" target="_blank" rel="noopener noreferrer">Discord</a>
+                }
+                @if (community.websiteUrl) {
+                  <a [href]="community.websiteUrl" target="_blank" rel="noopener noreferrer">Sitio oficial <app-icon name="arrow" [size]="16"></app-icon></a>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        @if (loadError) {
+          <div class="feedback-error" role="alert">{{ loadError }} Intentá nuevamente más tarde.</div>
+        } @else {
+          <div class="communities-empty">
+            <span aria-hidden="true">MZA</span>
+            <div><h2>Estamos abriendo este mapa</h2><p>Todavía no hay perfiles de comunidades publicados. Si organizás rol en Mendoza, podés enviar la primera solicitud sin abandonar tus grupos ni canales actuales.</p></div>
+            @if (user$ | async) {
+              <a routerLink="/comunidades/solicitar" class="btn-primary">Presentar una comunidad</a>
+            } @else {
+              <a routerLink="/ingresar" [queryParams]="{ returnUrl: '/comunidades/solicitar' }" class="btn-primary">Ingresar para solicitar</a>
+            }
           </div>
-          <div class="community-entry__links">
-            <a *ngIf="community.instagramUrl" [href]="community.instagramUrl" target="_blank" rel="noopener noreferrer"><app-icon name="instagram" [size]="18"></app-icon> Instagram</a>
-            <a *ngIf="community.discordUrl" [href]="community.discordUrl" target="_blank" rel="noopener noreferrer">Discord</a>
-            <a *ngIf="community.websiteUrl" [href]="community.websiteUrl" target="_blank" rel="noopener noreferrer">Sitio oficial <app-icon name="arrow" [size]="16"></app-icon></a>
-          </div>
-        </article>
-      </div>
-      <ng-template #noCommunities>
-        <div *ngIf="loadError; else communitiesEmpty" class="feedback-error" role="alert">{{ loadError }} Intentá nuevamente más tarde.</div>
-        <ng-template #communitiesEmpty><div class="communities-empty">
-          <span aria-hidden="true">MZA</span>
-          <div><h2>Estamos abriendo este mapa</h2><p>Todavía no hay perfiles de comunidades publicados. Si organizás rol en Mendoza, podés enviar la primera solicitud sin abandonar tus grupos ni canales actuales.</p></div>
-          <a *ngIf="user$ | async; else emptyGuest" routerLink="/comunidades/solicitar" class="btn-primary">Presentar una comunidad</a>
-          <ng-template #emptyGuest><a routerLink="/ingresar" [queryParams]="{ returnUrl: '/comunidades/solicitar' }" class="btn-primary">Ingresar para solicitar</a></ng-template>
-        </div></ng-template>
-      </ng-template>
-    </ng-container>
-    <ng-template #communitiesLoading><div class="loading-panel" role="status">Cargando comunidades publicadas…</div></ng-template>
+        }
+      }
+    } @else {
+      <div class="loading-panel" role="status">Cargando comunidades publicadas…</div>
+    }
   </div>
 </section>

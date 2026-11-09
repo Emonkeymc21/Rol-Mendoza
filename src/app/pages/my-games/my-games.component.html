@@ -6,67 +6,110 @@
         <h1 class="section-title">Mis partidas</h1>
         <p class="mt-3 max-w-2xl text-mist">Editá la información o cambiá el estado de las mesas que publicaste.</p>
       </div>
-      <a *ngIf="canCreate" routerLink="/partidas/nueva" class="btn-primary">Crear partida <app-icon name="plus" [size]="19"></app-icon></a>
+      @if (canCreate) {
+        <a routerLink="/partidas/nueva" class="btn-primary">Crear partida <app-icon name="plus" [size]="19"></app-icon></a>
+      }
     </div>
   </div>
 </section>
 
 <section class="section-space">
   <div class="page-shell">
-    <p *ngIf="notice" class="feedback-success mb-5" role="status">{{ notice }}</p>
-    <section *ngIf="publishedGame() as published" class="published-share mb-6" aria-label="Compartir la partida recién publicada">
-      <div><strong>{{ published.title }}</strong><span>{{ published.system }} · {{ availableMessage(published) }}</span></div>
-      <app-share-game [game]="published"></app-share-game>
-    </section>
-    <p *ngIf="errorMessage" class="feedback-error mb-5" role="alert">{{ errorMessage }}</p>
-    <div *ngIf="loading" class="game-results-skeleton" aria-label="Cargando tus partidas" aria-busy="true"><div class="game-skeleton" *ngFor="let item of [1,2,3,4]"><span></span><i></i><i></i><i></i></div></div>
+    @if (notice) {
+      <p class="feedback-success mb-5" role="status">{{ notice }}</p>
+    }
+    @if (publishedGame(); as published) {
+      <section class="published-share mb-6" aria-label="Compartir la partida recién publicada">
+        <div><strong>{{ published.title }}</strong><span>{{ published.system }} · {{ availableMessage(published) }}</span></div>
+        <app-share-game [game]="published"></app-share-game>
+      </section>
+    }
+    @if (errorMessage) {
+      <p class="feedback-error mb-5" role="alert">{{ errorMessage }}</p>
+    }
+    @if (loading) {
+      <div class="game-results-skeleton" aria-label="Cargando tus partidas" aria-busy="true">@for (item of [1,2,3,4]; track item) {
+        <div class="game-skeleton"><span></span><i></i><i></i><i></i></div>
+      }</div>
+    }
 
-    <div *ngIf="!loading && games.length" class="grid gap-5 lg:grid-cols-2">
-      <article *ngFor="let game of games; trackBy: trackGame" class="my-game-entry p-5 sm:p-6">
-        <div class="game-admin-head flex items-start justify-between gap-4">
-          <div class="min-w-0">
-            <p class="text-xs font-bold uppercase tracking-wider text-gold">{{ game.system }}</p>
-            <h2 class="mt-2 font-display text-2xl font-bold">{{ game.title }}</h2>
+    @if (!loading && games.length) {
+      <div class="grid gap-5 lg:grid-cols-2">
+        @for (game of games; track trackGame($index, game)) {
+          <article class="my-game-entry p-5 sm:p-6">
+            <div class="game-admin-head flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <p class="text-xs font-bold uppercase tracking-wider text-gold">{{ game.system }}</p>
+                <h2 class="mt-2 font-display text-2xl font-bold">{{ game.title }}</h2>
+              </div>
+              <span class="status-pill" [class.status-active]="game.status === 'ACTIVE'" [class.status-full]="game.status === 'FULL'" [class.status-cancelled]="game.status === 'CANCELLED'">{{ statusLabel(game.status) }}</span>
+            </div>
+            <div class="mt-5 grid gap-3 text-sm text-mist sm:grid-cols-2">
+              <span>{{ game.city }} · {{ game.mode }}</span>
+              <span>{{ game.schedule }}</span>
+              <span><strong>{{ game.currentPlayers }} / {{ game.totalSeats }}</strong> jugadores · {{ availableMessage(game) }}</span>
+              <span>Actualizada: {{ game.updatedAt | date:'d/M/yy, HH:mm' }}</span>
+            </div>
+            @if (participantsFor(game.id); as confirmed) {
+              <section class="confirmed-players mt-5">
+                <div class="flex items-center justify-between gap-3"><h3>Jugadores confirmados</h3><span>{{ confirmed.length }}</span></div>
+                @if (confirmed.length) {
+                  <div class="confirmed-list mt-3">
+                    @for (item of confirmed; track trackParticipant($index, item)) {
+                      <span class="confirmed-chip">
+                        <a [routerLink]="['/jugadores', item.participant.playerUid]">
+                          <app-class-avatar [avatarClass]="item.profile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar>
+                          <span>{{ item.profile?.displayName || 'Jugador/a de Cumbre20' }}</span>
+                        </a>
+                        <button type="button" class="chip-remove" (click)="removePlayer(game, item)" [disabled]="removingUid === item.participant.playerUid" [title]="removingUid === item.participant.playerUid ? 'Removiendo…' : 'Remover a ' + (item.profile?.displayName || 'este jugador')" [attr.aria-label]="removingUid === item.participant.playerUid ? 'Removiendo jugador' : 'Remover a ' + (item.profile?.displayName || 'este jugador')">×</button>
+                      </span>
+                    }
+                  </div>
+                } @else {
+                  <p class="mt-2 text-xs text-mist">Todavía no aceptaste jugadores mediante Cumbre20.</p>
+                }
+              </section>
+            }
+            <div class="game-admin-actions mt-6 flex flex-wrap gap-2 pt-5">
+              @if (canCreate) {
+                <a [routerLink]="['/solicitudes']" [queryParams]="{ gameId: game.id }" class="request-button"><app-icon name="users" [size]="17"></app-icon> Solicitudes @if (requestCount(game.id)) {
+                <span>{{ requestCount(game.id) }}</span>
+              }</a>
+            }
+            @if (game.status !== 'CANCELLED') {
+              <app-share-game [game]="game"></app-share-game>
+            }
+            <a [routerLink]="['/mis-partidas', game.id, 'editar']" class="btn-secondary !min-h-[40px] !px-4">Editar</a>
+            @if (game.status !== 'ACTIVE') {
+              <button type="button" class="action-button" (click)="changeStatus(game, 'ACTIVE')" [disabled]="busyGameId === game.id">Reabrir inscripciones</button>
+            }
+            @if (game.status === 'ACTIVE' || game.status === 'FULL') {
+              <button type="button" class="action-button" (click)="changeStatus(game, 'PAUSED')" [disabled]="busyGameId === game.id">Cerrar inscripciones</button>
+            }
+            @if (game.status !== 'FULL' && game.status !== 'CANCELLED') {
+              <button type="button" class="action-button" (click)="changeStatus(game, 'FULL')" [disabled]="busyGameId === game.id">Marcar sin cupos</button>
+            }
+            @if (game.status !== 'CANCELLED') {
+              <button type="button" class="action-button text-red-200" (click)="changeStatus(game, 'CANCELLED')" [disabled]="busyGameId === game.id">Cancelar</button>
+            }
+            @if (busyGameId === game.id) {
+              <span class="self-center text-xs text-mist">Guardando…</span>
+            }
           </div>
-          <span class="status-pill" [class.status-active]="game.status === 'ACTIVE'" [class.status-full]="game.status === 'FULL'" [class.status-cancelled]="game.status === 'CANCELLED'">{{ statusLabel(game.status) }}</span>
-        </div>
-        <div class="mt-5 grid gap-3 text-sm text-mist sm:grid-cols-2">
-          <span>{{ game.city }} · {{ game.mode }}</span>
-          <span>{{ game.schedule }}</span>
-          <span><strong>{{ game.currentPlayers }} / {{ game.totalSeats }}</strong> jugadores · {{ availableMessage(game) }}</span>
-          <span>Actualizada: {{ game.updatedAt | date:'d/M/yy, HH:mm' }}</span>
-        </div>
-        <section class="confirmed-players mt-5" *ngIf="participantsFor(game.id) as confirmed">
-          <div class="flex items-center justify-between gap-3"><h3>Jugadores confirmados</h3><span>{{ confirmed.length }}</span></div>
-          <div *ngIf="confirmed.length; else noConfirmed" class="confirmed-list mt-3">
-            <span *ngFor="let item of confirmed; trackBy: trackParticipant" class="confirmed-chip">
-              <a [routerLink]="['/jugadores', item.participant.playerUid]">
-                <app-class-avatar [avatarClass]="item.profile?.avatarClass || 'FIGHTER'" size="sm"></app-class-avatar>
-                <span>{{ item.profile?.displayName || 'Jugador/a de Cumbre20' }}</span>
-              </a>
-              <button type="button" class="chip-remove" (click)="removePlayer(game, item)" [disabled]="removingUid === item.participant.playerUid" [title]="removingUid === item.participant.playerUid ? 'Removiendo…' : 'Remover a ' + (item.profile?.displayName || 'este jugador')" [attr.aria-label]="removingUid === item.participant.playerUid ? 'Removiendo jugador' : 'Remover a ' + (item.profile?.displayName || 'este jugador')">×</button>
-            </span>
-          </div>
-          <ng-template #noConfirmed><p class="mt-2 text-xs text-mist">Todavía no aceptaste jugadores mediante Cumbre20.</p></ng-template>
-        </section>
-        <div class="game-admin-actions mt-6 flex flex-wrap gap-2 pt-5">
-          <a *ngIf="canCreate" [routerLink]="['/solicitudes']" [queryParams]="{ gameId: game.id }" class="request-button"><app-icon name="users" [size]="17"></app-icon> Solicitudes <span *ngIf="requestCount(game.id)">{{ requestCount(game.id) }}</span></a>
-          <app-share-game *ngIf="game.status !== 'CANCELLED'" [game]="game"></app-share-game>
-          <a [routerLink]="['/mis-partidas', game.id, 'editar']" class="btn-secondary !min-h-[40px] !px-4">Editar</a>
-          <button *ngIf="game.status !== 'ACTIVE'" type="button" class="action-button" (click)="changeStatus(game, 'ACTIVE')" [disabled]="busyGameId === game.id">Reabrir inscripciones</button>
-          <button *ngIf="game.status === 'ACTIVE' || game.status === 'FULL'" type="button" class="action-button" (click)="changeStatus(game, 'PAUSED')" [disabled]="busyGameId === game.id">Cerrar inscripciones</button>
-          <button *ngIf="game.status !== 'FULL' && game.status !== 'CANCELLED'" type="button" class="action-button" (click)="changeStatus(game, 'FULL')" [disabled]="busyGameId === game.id">Marcar sin cupos</button>
-          <button *ngIf="game.status !== 'CANCELLED'" type="button" class="action-button text-red-200" (click)="changeStatus(game, 'CANCELLED')" [disabled]="busyGameId === game.id">Cancelar</button>
-          <span *ngIf="busyGameId === game.id" class="self-center text-xs text-mist">Guardando…</span>
-        </div>
-      </article>
+        </article>
+      }
     </div>
+  }
 
-    <div *ngIf="!loading && !games.length" class="glass-panel rounded-2xl p-10 text-center">
+  @if (!loading && !games.length) {
+    <div class="glass-panel rounded-2xl p-10 text-center">
       <div class="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-wine/40 text-gold"><app-icon name="dice" [size]="27"></app-icon></div>
       <h2 class="mt-5 font-display text-2xl font-bold">Tu próxima aventura empieza acá</h2>
       <p class="mx-auto mt-2 max-w-xl text-mist">Aún no creaste ninguna partida. Publicá una mesa y empezá a encontrar jugadores en Mendoza.</p>
-      <a *ngIf="canCreate" routerLink="/partidas/nueva" class="btn-primary mt-5">Crear mi primera partida</a>
+      @if (canCreate) {
+        <a routerLink="/partidas/nueva" class="btn-primary mt-5">Crear mi primera partida</a>
+      }
     </div>
-  </div>
+  }
+</div>
 </section>

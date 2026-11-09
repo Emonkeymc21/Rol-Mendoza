@@ -41,3 +41,5 @@ Pendiente de completar con los resultados observados en cada etapa.
 - Angular 19: core 19.2.25, CLI 19.2.27, TypeScript 5.8.3, Node v22.22.3. Migraciones oficiales aplicadas; build, test:ci y compilación de las pruebas Jasmine aprobados. Karma/E2E se validan en la infraestructura ampliada de esta fase.
 
 - Angular 20: core 20.3.35, CLI 20.3.42, TypeScript 5.8.3, Node v22.22.3. Migraciones oficiales aplicadas; build, test:ci y compilación de las pruebas Jasmine aprobados. Karma/E2E se validan en la infraestructura ampliada de esta fase.
+
+- Angular 21: core 21.2.26, CLI 21.2.29, TypeScript 5.9.3, Node v22.22.3. Migraciones oficiales aplicadas; build, test:ci y compilación de las pruebas Jasmine aprobados. Karma/E2E se validan en la infraestructura ampliada de esta fase.
