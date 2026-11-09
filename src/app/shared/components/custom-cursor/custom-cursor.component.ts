@@ -21,6 +21,7 @@ export class CustomCursorComponent implements AfterViewInit, OnDestroy {
   constructor(private zone: NgZone) {}
 
   ngAfterViewInit(): void {
+    if (typeof window === 'undefined') return;
     const media = window.matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
     if (!media.matches) return;
     this.enabled = true;

@@ -1,18 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  Auth,
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-  updateProfile,
-  User
-} from 'firebase/auth';
+import type {Auth, User} from 'firebase/auth';
 import { BehaviorSubject, distinctUntilChanged, filter, firstValueFrom, map, Observable, take } from 'rxjs';
 import { FirebaseService } from './firebase.service';
 import { avatarClassForUid } from '../data/avatar-classes';
@@ -20,7 +8,8 @@ import { avatarClassForUid } from '../data/avatar-classes';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly state = new BehaviorSubject<User | null | undefined>(undefined);
-  private readonly auth: Auth | null;
+  private auth: Auth | null = null;
+  private authApi?: typeof import('./auth-api');
   private readonly provisioning = new Map<string, Promise<void>>();
   readonly user$: Observable<User | null> = this.state.pipe(
     filter((user): user is User | null => user !== undefined)
@@ -31,26 +20,27 @@ export class AuthService {
   );
 
   constructor(private firebase: FirebaseService, private router: Router) {
-    this.auth = firebase.auth;
-    if (!this.auth) {
-      this.state.next(null);
+    if (!firebase.enabled || typeof window === 'undefined') {
+      // SSR leaves auth unresolved, matching the browser's initial hydration state.
+      if (typeof window !== 'undefined') this.state.next(null);
       return;
     }
-    onAuthStateChanged(
-      this.auth,
-      user => {
+    void firebase.loadAuth().then(({api, auth}) => {
+      this.auth = auth;
+      this.authApi = api;
+      api.onAuthStateChanged(auth, user => {
         this.state.next(user);
-        if (user) {
-          void this.ensureInitialUserDocument(user).catch(error => {
-            console.error('No se pudo preparar el perfil inicial del usuario.', error);
-          });
-        }
-      },
-      error => {
+        if (user) void this.ensureInitialUserDocument(user).catch(error => {
+          console.error('No se pudo preparar el perfil inicial del usuario.', error);
+        });
+      }, error => {
         console.error('Firebase no pudo restaurar el estado de autenticación.', error);
         this.state.next(null);
-      }
-    );
+      });
+    }).catch(error => {
+      console.error('No se pudo iniciar Firebase Auth.', error);
+      this.state.next(null);
+    });
   }
 
   get enabled(): boolean {
@@ -66,18 +56,18 @@ export class AuthService {
   }
 
   async registerWithEmail(displayName: string, email: string, password: string): Promise<User> {
-    const auth = this.requireAuth();
     await this.firebase.persistenceReady;
-    const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+    const auth = this.requireAuth();
+    const credential = await this.authApi!.createUserWithEmailAndPassword(auth, email.trim(), password);
     try {
-      await updateProfile(credential.user, { displayName: displayName.trim() });
+      await this.authApi!.updateProfile(credential.user, { displayName: displayName.trim() });
       await credential.user.reload();
     } catch (error) {
       console.error('La cuenta se creó, pero no se pudo actualizar el nombre en Firebase Auth.', error);
     }
     if (!credential.user.emailVerified) {
       try {
-        await sendEmailVerification(credential.user);
+        await this.authApi!.sendEmailVerification(credential.user);
       } catch (error) {
         // La verificación es informativa por ahora y no forma parte de los guards.
         console.error('No se pudo enviar el correo de verificación.', error);
@@ -88,28 +78,29 @@ export class AuthService {
 
   async signInWithEmail(email: string, password: string): Promise<User> {
     await this.firebase.persistenceReady;
-    const credential = await signInWithEmailAndPassword(this.requireAuth(), email.trim(), password);
+    const credential = await this.authApi!.signInWithEmailAndPassword(this.requireAuth(), email.trim(), password);
     return this.finishAuthentication(credential.user);
   }
 
   async signInWithGoogle(): Promise<User> {
     await this.firebase.persistenceReady;
-    const provider = new GoogleAuthProvider();
+    const provider = new this.authApi!.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    const credential = await signInWithPopup(this.requireAuth(), provider);
+    const credential = await this.authApi!.signInWithPopup(this.requireAuth(), provider, this.authApi!.browserPopupRedirectResolver);
     return this.finishAuthentication(credential.user);
   }
 
   async updateDisplayName(displayName: string): Promise<void> {
     const user = this.currentUser;
     if (!user) throw new Error('Necesitás iniciar sesión para continuar.');
-    await updateProfile(user, { displayName: displayName.trim() });
+    await this.authApi!.updateProfile(user, { displayName: displayName.trim() });
     await user.reload();
     this.state.next(user);
   }
 
   async resetPassword(email: string): Promise<void> {
-    await sendPasswordResetEmail(this.requireAuth(), email.trim());
+    await this.firebase.persistenceReady;
+    await this.authApi!.sendPasswordResetEmail(this.requireAuth(), email.trim());
   }
 
   async getIdToken(): Promise<string> {
@@ -119,7 +110,8 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
-    await signOut(this.requireAuth());
+    await this.firebase.persistenceReady;
+    await this.authApi!.signOut(this.requireAuth());
     this.state.next(null);
     await this.router.navigateByUrl('/ingresar');
   }

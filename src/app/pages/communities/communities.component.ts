@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, RESPONSE_INIT } from '@angular/core';
 import { catchError, of } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { RoleCommunityService } from '../../core/services/role-community.service';
@@ -11,10 +11,12 @@ import { RoleCommunityService } from '../../core/services/role-community.service
     standalone: false
 })
 export class CommunitiesComponent {
+  private readonly response = inject(RESPONSE_INIT, {optional:true});
   loadError = '';
   readonly user$ = this.auth.user$;
   readonly communities$ = this.communities.getPublished().pipe(catchError(error => {
     console.error('No se pudieron cargar las comunidades publicadas.', error);
+    if (this.response) this.response.status = 503;
     this.loadError = 'No pudimos cargar las comunidades en este momento.';
     return of([]);
   }));

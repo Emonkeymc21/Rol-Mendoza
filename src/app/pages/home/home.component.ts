@@ -2,7 +2,7 @@ import { Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
-import { take } from 'rxjs';
+import { of, take } from 'rxjs';
 import { Game } from '../../core/models/game.model';
 import { Player } from '../../core/models/player.model';
 import { UserProfile } from '../../core/models/user-profile.model';
@@ -28,7 +28,8 @@ export class HomeComponent {
   profileReady = false;
   private allPlayers: Player[] = [];
   private allGames: Game[] = [];
-  readonly gamesLoading$ = this.community.gamesLoading$;
+  readonly gamesError$ = this.community.gamesError$;
+  readonly gamesLoading$ = typeof window === 'undefined' ? of(true) : this.community.gamesLoading$;
   searchForm = this.fb.nonNullable.group({ type: 'partidas', query: '', mode: 'Cualquier modalidad' });
 
   constructor(
@@ -40,11 +41,15 @@ export class HomeComponent {
   ) {
     this.community.getPlayers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(players => {
       this.allPlayers = players;
-      if (this.isAuthenticated) this.playerCount = players.length;
+      if (this.isAuthenticated) this.playerCount = this.profile?.profileCompleted && !this.community.playersErrorState.value ? players.length : null;
       this.players = players.slice(0, 3);
       this.updateSystemCount();
     });
-    this.community.getGames().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(games => {
+    this.community.playersLoading$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(loading => {
+      if (!loading && this.isAuthenticated && this.profile?.profileCompleted && !this.community.playersErrorState.value) this.playerCount = this.allPlayers.length;
+    });
+    // Home is static HTML with honest placeholders; live activity loads once in the browser.
+    if (typeof window !== 'undefined') this.community.getGames().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(games => {
       this.allGames = games;
       this.gameCount = games.length;
       this.games = games.slice(0, 3);
@@ -53,12 +58,13 @@ export class HomeComponent {
     auth.user$.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       this.isAuthenticated = Boolean(user);
       this.authReady = true;
-      this.playerCount = user ? this.allPlayers.length : null;
+      this.playerCount = null;
       if (user) {
         profiles.watchOwnProfile().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
           next: profile => {
             this.profile = profile;
             this.profileReady = true;
+            if (profile?.profileCompleted && !this.community.playersLoadingState.value && !this.community.playersErrorState.value) this.playerCount = this.allPlayers.length;
           },
           error: () => {
             this.profile = null;
@@ -70,6 +76,8 @@ export class HomeComponent {
       }
     });
   }
+
+  retryGames(): void { this.community.refreshGames(); }
 
   canCreateGames(): boolean {
     return this.profile?.role === 'DM' || this.profile?.role === 'BOTH';

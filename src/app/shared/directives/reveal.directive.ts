@@ -10,6 +10,7 @@ export class RevealDirective implements AfterViewInit, OnDestroy {
   constructor(private element: ElementRef<HTMLElement>, private zone: NgZone) {}
 
   ngAfterViewInit(): void {
+    if (typeof window === 'undefined') return;
     const node = this.element.nativeElement;
     node.classList.add('reveal-on-scroll');
     if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {

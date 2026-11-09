@@ -1,19 +1,34 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone, PendingTasks, inject, TransferState, makeStateKey } from '@angular/core';
 import type { DocumentData } from 'firebase/firestore';
-import { defer, map, Observable, shareReplay } from 'rxjs';
+import { defer, map, Observable, shareReplay, of } from 'rxjs';
 import { CommunityActivity, CommunityAdminRequestInput, RoleCommunity } from '../models/role-community.model';
 import { AuthService } from './auth.service';
 import { FirebaseService } from './firebase.service';
 
 @Injectable({ providedIn: 'root' })
 export class RoleCommunityService {
+  private readonly zone = inject(NgZone);
+  private readonly transfer = inject(TransferState);
+  private readonly publicKey = makeStateKey<RoleCommunity[]>('cumbre20-published-communities');
+  private readonly pending = inject(PendingTasks);
   private published$?: Observable<RoleCommunity[]>;
 
   constructor(private firebase: FirebaseService, private auth: AuthService) {}
 
   getPublished(): Observable<RoleCommunity[]> {
+    if (this.transfer.hasKey(this.publicKey)) {
+      const data = this.transfer.get(this.publicKey, []);
+      this.transfer.remove(this.publicKey);
+      this.published$ = of(data.map(community => ({...community,
+        updatedAt: community.updatedAt ? new Date(community.updatedAt) : undefined,
+        activities: community.activities.map(activity => ({...activity, date: activity.date ? new Date(activity.date) : undefined}))
+      } as RoleCommunity)));
+    }
     if (!this.published$) {
       this.published$ = defer(async () => {
+        const done = this.pending.add();
+        try {
+        const read = async () => {
         const { api, database } = await this.loadFirestore();
         const query = api.query(
           api.collection(database, 'roleCommunities'),
@@ -24,6 +39,20 @@ export class RoleCommunityService {
         return snapshot.docs
           .map(item => this.mapCommunity(item.id, item.data()))
           .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+        };
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let published: RoleCommunity[];
+        try {
+          // Track this read explicitly; SDK idle timers must not hold SSR open.
+          published = await this.zone.runOutsideAngular(() => Promise.race([
+            read(), new Promise<never>((_resolve, reject) => {
+              timer = setTimeout(() => reject(new Error('La consulta pública superó el tiempo de espera.')), 8000);
+            })
+          ]));
+        } finally { clearTimeout(timer); }
+        if (typeof window === 'undefined') this.transfer.set(this.publicKey, published);
+        return published;
+        } finally { done(); }
       }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
     }
     return this.published$;

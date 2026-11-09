@@ -83,6 +83,9 @@
       <a routerLink="/partidas" class="section-link">Ver todas <app-icon name="arrow" [size]="18"></app-icon></a>
     </header>
 
+    @if (gamesError$ | async; as error) {
+      <div class="feedback-error" role="alert">{{ error }} <button type="button" class="font-bold underline" (click)="retryGames()">Reintentar</button></div>
+    }
     @if (gamesLoading$ | async) {
       <div class="home-game-layout game-skeleton-grid" aria-label="Cargando partidas" aria-busy="true">
         @for (item of [1,2,3]; track item) {
@@ -94,7 +97,7 @@
         <div class="home-game-layout">@for (game of games; track trackGame($index, game)) {
           <app-game-card [game]="game"></app-game-card>
         }</div>
-      } @else {
+      } @else if (!(gamesError$ | async)) {
         <div class="home-empty"><span class="empty-number" aria-hidden="true">20</span><div><h3>La próxima mesa puede empezar acá</h3><p>Todavía no hay partidas activas para mostrar. Cumbre20 está empezando y cada nuevo perfil ayuda a que más personas puedan encontrarse.</p></div>@if (canCreateGames()) {
         <a routerLink="/partidas/nueva" class="btn-primary">Publicar la primera partida</a>
         }@if (profileReady && isAuthenticated && !canCreateGames()) {

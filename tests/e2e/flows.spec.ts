@@ -1,14 +1,17 @@
+import {JSDOM} from 'jsdom';
 import {test, expect, BrowserContext, Page} from '@playwright/test';
 import {observeBrowserErrors} from './browser-errors';
 const password='Emulator-only-123!';
 const api='http://127.0.0.1:4401';
 const app='http://127.0.0.1:4200';
+const observedRequests=new WeakMap<BrowserContext,string[]>();
 const unexpectedRequests=new WeakMap<BrowserContext,string[]>();
 const browserErrors=new WeakMap<Page,Awaited<ReturnType<typeof observeBrowserErrors>>>();
 async function isolate(context:BrowserContext) {
-  const unexpected:string[]=[];unexpectedRequests.set(context,unexpected);
+  const unexpected:string[]=[];unexpectedRequests.set(context,unexpected);const observed:string[]=[];observedRequests.set(context,observed);
   // Observe without interception: WebKit's driver otherwise pauses every local stream.
   context.on('request',request=>{
+    observed.push(request.url());
     const url=new URL(request.url());
     if(['127.0.0.1','localhost'].includes(url.hostname)||['data:','blob:'].includes(url.protocol))return;
     if(['apis.google.com','fonts.googleapis.com','fonts.gstatic.com'].includes(url.hostname)&&request.method()==='GET')return;
@@ -86,6 +89,7 @@ test('public pages, filters, share sheet and safe mobile layout',async({page},in
   const rect=await sheet.boundingBox();expect(rect).not.toBeNull();expect(rect!.x).toBeGreaterThanOrEqual(0);expect(rect!.x+rect!.width).toBeLessThanOrEqual(page.viewportSize()!.width+1);
   await page.screenshot({path:info.outputPath('share.png'),fullPage:true});await page.keyboard.press('Escape');await expect(sheet).toBeHidden();
   for(const route of ['/ingresar','/registrarme','/comunidades','/como-funciona']){await page.goto(route);await expect(page.locator('h1')).toBeVisible();await fits(page);}
+  expect((observedRequests.get(page.context())||[]).filter(url=>url.startsWith('https://apis.google.com/'))).toEqual([]);
 });
 test('DM publishes, player registers and requests, DM accepts and manages, player sees private contact',async({page},info)=>{
   await register(page,'Master','DM');
@@ -176,4 +180,40 @@ test('browser error gate rejects real exceptions and unhandled promises',async({
   expect(probe.protocol.some(error=>error.message.includes('due to access control checks.'))).toBe(true);
   await expect(probe.assertClean()).rejects.toThrow();
   await checked.close();
+});
+
+test('URL filters survive sharing, reload, history, invalid values and reset',async({page})=>{
+ await page.goto('/partidas?city=Guaymall%C3%A9n&mode=Presencial&frequency=One-shot&level=Principiantes&q=GUAYMALLEN');
+ await expect(control(page,'city')).toHaveValue('Guaymallén');await expect(control(page,'frequency')).toHaveValue('One-shot');await expect(page.locator('app-game-card')).toHaveCount(1);
+ await page.reload();await expect(page.locator('app-game-card')).toHaveCount(1);
+ await control(page,'city').selectOption('Godoy Cruz');await expect(page).toHaveURL(/city=Godoy%20Cruz/);await expect(page.locator('app-game-card')).toHaveCount(0);
+ await page.goBack();await expect(control(page,'city')).toHaveValue('Guaymallén');await expect(page.locator('app-game-card')).toHaveCount(1);
+ await page.goForward();await expect(control(page,'city')).toHaveValue('Godoy Cruz');
+ await page.getByRole('button',{name:'Limpiar',exact:true}).click();await expect(page).toHaveURL('/partidas');await page.reload();await expect(page.locator('app-game-card')).toHaveCount(1);
+ await page.goto('/partidas?mode=Unknown&city=Unknown&q=Fate&q=other');await expect(control(page,'q')).toHaveValue('Fate');await expect(control(page,'mode')).toHaveValue('Todas');await expect(page.locator('app-game-card')).toHaveCount(1);
+ await control(page,'q').fill('Dragón & +20');await expect.poll(()=>new URL(page.url()).searchParams.get('q')).toBe('Dragón & +20');await page.reload();await expect(control(page,'q')).toHaveValue('Dragón & +20');await expect(page.locator('app-game-card')).toHaveCount(0);
+});
+
+test('failed public list is an error, never a fake empty list; retry recovers',async({page})=>{
+ await page.route('**/apps-script?action=games',route=>route.fulfill({json:{ok:false,error:'Fallo aislado de conexión'}}));
+ await page.evaluate(()=>sessionStorage.clear());await page.reload();
+ await expect(page.getByRole('alert')).toContainText('No pudimos cargar las partidas');
+ await expect(page.getByText('Todavía no hay partidas activas para mostrar.',{exact:false})).toHaveCount(0);
+ expect(await page.evaluate(()=>sessionStorage.getItem('cumbre20-public-games'))).toBeNull();
+ await page.unroute('**/apps-script?action=games');await page.getByRole('button',{name:'Reintentar',exact:true}).click();
+ await expect(page.locator('app-game-card')).toHaveCount(1);await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('public Angular HTML is readable without JavaScript and private routes stay noindex',async({request})=>{
+ test.skip(process.env.CUMBRE20_SSR_E2E!=='1','Requires optimized hybrid server');
+ const detail=await request.get('/partidas/PRT-DEMO-BASE');expect(detail.status()).toBe(200);
+ const html=await detail.text();expect(new JSDOM(html).window.document.querySelector('h1')?.textContent?.trim()).toBe('Mesa pública de prueba');expect(html).toContain('Fate');expect(html).toContain('Guaymallén');
+ expect(html).toContain('<title>Mesa pública de prueba | Cumbre20</title>');expect(html).toContain('https://rol-mendoza-2026.vercel.app/partidas/PRT-DEMO-BASE');
+ expect(html).not.toMatch(/fixture@example.test|whatsappNumber|5492615551234|idToken/);
+ const list=await request.get('/partidas');expect(await list.text()).toContain('Mesa pública de prueba');
+ const communities=await request.get('/comunidades');expect(await communities.text()).toContain('Espacio de rol de prueba');
+ const home=await request.get('/');expect(await home.text()).toMatch(/<h1/);
+ const publish=await request.get('/partidas/nueva');expect(publish.status()).toBe(200);expect(publish.headers()['x-robots-tag']).toBe('noindex, nofollow');
+ const privatePage=await request.get('/perfil');expect(privatePage.headers()['x-robots-tag']).toBe('noindex, nofollow');expect(await privatePage.text()).not.toMatch(/fixture@example.test|whatsappNumber/);
+ const missing=await request.get('/partidas/PRT-MISSING');expect(missing.status()).toBe(404);
 });
