@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { FirebaseApp, getApps, initializeApp } from 'firebase/app';
 import { Auth, browserLocalPersistence, connectAuthEmulator, getAuth, setPersistence } from 'firebase/auth';
 import { environment } from '../../../environments/environment';
+import { requiresWebKitLongPolling } from './firestore-transport';
 
 @Injectable({ providedIn: 'root' })
 export class FirebaseService {
@@ -47,7 +48,11 @@ export class FirebaseService {
     const app = this.app;
     if (!app) throw new Error('Firestore no está disponible en este momento.');
     return this.firestoreReady ??= import('./firestore-api').then(api => {
-      const database = api.getFirestore(app);
+      // Supported SDK transport fallback for the WebKit stream failures reproduced in QA.
+      // https://github.com/firebase/firebase-js-sdk/issues/9789
+      const database = requiresWebKitLongPolling(navigator.userAgent)
+        ? api.initializeFirestore(app, { experimentalForceLongPolling: true })
+        : api.getFirestore(app);
       if (this.emulators) api.connectFirestoreEmulator(database, this.emulators.host, this.emulators.firestorePort);
       return { api, database };
     });

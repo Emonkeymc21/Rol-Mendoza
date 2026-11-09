@@ -11,6 +11,7 @@ async function isolate(context:BrowserContext) {
     if(['127.0.0.1','localhost'].includes(url.hostname)||['data:','blob:'].includes(url.protocol))return;
     if(['apis.google.com','fonts.googleapis.com','fonts.gstatic.com'].includes(url.hostname)&&request.method()==='GET')return;
     if(url.hostname==='unpkg.com'&&/^\/material-components-web@10(?:\.\d+\.\d+)?\/dist\/material-components-web\.min\.(js|css)$/.test(url.pathname)&&request.method()==='GET')return;
+    if(request.method()==='GET'&&url.href==='https://www.google.com/images/cleardot.gif')return;
     unexpected.push(`${request.method()} ${url.origin}${url.pathname}`);
   });
 }
