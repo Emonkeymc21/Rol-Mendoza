@@ -1,3 +1,4 @@
+import {JSDOM} from 'jsdom';
 import {test, expect, BrowserContext, Page} from '@playwright/test';
 import {observeBrowserErrors} from './browser-errors';
 const password='Emulator-only-123!';
@@ -206,7 +207,7 @@ test('failed public list is an error, never a fake empty list; retry recovers',a
 test('public Angular HTML is readable without JavaScript and private routes stay noindex',async({request})=>{
  test.skip(process.env.CUMBRE20_SSR_E2E!=='1','Requires optimized hybrid server');
  const detail=await request.get('/partidas/PRT-DEMO-BASE');expect(detail.status()).toBe(200);
- const html=await detail.text();expect(html).toMatch(/<h1[^>]*>Mesa pública de prueba/);expect(html).toContain('Fate');expect(html).toContain('Guaymallén');
+ const html=await detail.text();expect(new JSDOM(html).window.document.querySelector('h1')?.textContent?.trim()).toBe('Mesa pública de prueba');expect(html).toContain('Fate');expect(html).toContain('Guaymallén');
  expect(html).toContain('<title>Mesa pública de prueba | Cumbre20</title>');expect(html).toContain('https://rol-mendoza-2026.vercel.app/partidas/PRT-DEMO-BASE');
  expect(html).not.toMatch(/fixture@example.test|whatsappNumber|5492615551234|idToken/);
  const list=await request.get('/partidas');expect(await list.text()).toContain('Mesa pública de prueba');

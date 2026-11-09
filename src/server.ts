@@ -28,7 +28,7 @@ if (!environment.production && environment.firebase.projectId === 'demo-cumbre20
   });
   app.use('/compartir', async (req, res, next) => {
     try {
-      const response = await fetch('http://127.0.0.1:4401' + req.originalUrl, {headers:{'user-agent':req.headers['user-agent']||''},redirect:'manual'});
+      const response = await fetch('http://127.0.0.1:4401' + req.originalUrl, {headers:{'user-agent':req.headers['user-agent']||'', 'x-forwarded-host':req.headers.host||'127.0.0.1:4200'},redirect:'manual'});
       res.status(response.status);response.headers.forEach((value,key)=>res.setHeader(key,value));res.send(await response.text());
     } catch (error) { next(error); }
   });
