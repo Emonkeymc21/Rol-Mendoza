@@ -16,3 +16,5 @@
 - No integrar una migración con comprobaciones críticas fallidas o sin acceso al preview. Las comprobaciones físicas pendientes se registran en `docs/qa/physical-device-checklist.md`.
 
 - Estado Fase 4.1 al 2026-11-09: PR #24 borrador, Angular 22/Firebase 13 y auditorías cero en la rama. Pendientes de cierre: errores WebKit Listen/Write del emulador reproducidos en Linux/macOS y acceso Vercel 403. Conservar CI estricto; no publicar hasta resolverlos o verificar técnicamente su alcance.
+
+- Reverificación 9/11: acceso Vercel habilitado. Se corrigió el hash CSP del script Beasties generado, que dejaba CSS en media=print en el preview. Ejecutar `npm run build:prod` y `npm run test:production-csp` juntos; conservar CSP estricta y critical CSS. WebKit sigue pendiente; consultar el último CI/preview del PR #24.

@@ -2,7 +2,7 @@
 
 **Estado al 2026-11-09: migración implementada en rama; lanzamiento pendiente.** Angular 22.2.5, Firebase 13.2.0, TypeScript 6.0.3 y auditorías completas/de producción en cero.
 
-El PR #24 permanece en borrador. WebKit conserva errores de transporte reproducidos en Linux y macOS; Vercel devuelve 403 al revisar el preview protegido y los registros privados. No se declara aprobado el QA integral.
+El PR #24 permanece en borrador. WebKit conserva errores de transporte reproducidos en Linux y macOS. El acceso a Vercel se habilitó en la reverificación del 9/11; permitió detectar y corregir el bloqueo de CSS generado por Angular 22 bajo la CSP existente. Ver la sección de reverificación y el CI del PR para el resultado final. No se declara aprobado el QA integral.
 
 Producción y main siguen en `7e6a0039f4cf9413fa035ac1e65a29c4702ee02d`. El trabajo y el procedimiento para continuar quedan preservados en esta rama.
 
@@ -196,7 +196,7 @@ Estado: **migración implementada y preservada, publicación bloqueada**. PR #24
 Bloqueos comprobados:
 
 1. WebKit, tanto Linux como macOS, completa lecturas, escrituras, aprobación, cupos y contactos, pero registra errores de control de acceso en los canales Listen/Write del emulador. Se probaron proxy mismo origen, tráfico nativo sin interceptación, macOS y la opción pública de long polling. Ninguno justificó dar el problema por resuelto. Las trazas, capturas y logs quedan en los artifacts de Actions; no se desactivó el control de errores. La causa exacta y su alcance sobre Firestore alojado todavía requieren contraste.
-2. Vercel devuelve 403 para abrir el preview protegido y para leer errores privados del proyecto/equipo. El build preview es READY; no equivale a una revisión funcional de esa URL. Hace falta habilitar el acceso de la conexión a `emonkeymc21s-projects` / `rol-mendoza-2026` antes de completar ese contraste. No hay credenciales CLI/OIDC disponibles en este entorno.
+2. Vercel devuelve 403 para abrir el preview protegido y para leer errores privados del proyecto/equipo. El build preview es READY; no equivale a una revisión funcional de esa URL. Este bloqueo de acceso quedó resuelto en la reverificación; ver el registro posterior. No hay credenciales CLI/OIDC disponibles en este entorno.
 3. Google OAuth real y dispositivos físicos siguen pendientes según el checklist; los resultados con Auth emulator y tamaños de dispositivos no los sustituyen.
 
 La corrección del popup del emulador espera la carga del widget antes de usar sus controles. El detalle de la ejecución final y su enlace se registra en la descripción del PR, junto con el SHA, porque sus controles pueden volver a ejecutarse sin cambiar este informe.
@@ -210,4 +210,21 @@ La corrección del popup del emulador espera la carga del widget antes de usar s
 
 ### Retomar sin perder trabajo
 
-Leer este informe y el estado actualizado del PR #24. Habilitar Vercel, revisar el preview correspondiente al SHA de la rama y comparar sus canales Firestore con la reproducción emulada. Resolver WebKit y repetir CI antes de integrar. Completar OAuth autorizado y el checklist físico en el alcance disponible. No rehacer las migraciones ni restaurar Angular 16/Firebase 10 para continuar. Los checkpoints remotos están inventariados en `docs/qa/migration-commits.json`; la referencia estable original y el lockfile se conservan para rollback.
+Leer este informe y el estado actualizado del PR #24. El acceso Vercel ya se habilitó: revisar el preview correspondiente al SHA actual de la rama y comparar sus canales Firestore con la reproducción emulada. Resolver WebKit y repetir CI antes de integrar. Completar OAuth autorizado y el checklist físico en el alcance disponible. No rehacer las migraciones ni restaurar Angular 16/Firebase 10 para continuar. Los checkpoints remotos están inventariados en `docs/qa/migration-commits.json`; la referencia estable original y el lockfile se conservan para rollback.
+
+
+## Reverificación del 9/11/2026
+
+Se volvieron a ejecutar por separado los tres jobs del commit `e166a4e`: verify aprobó instalación, árbol, ambas auditorías cero, build, 28 pruebas Vitest y 28 de emuladores; Chromium aprobó 8/8; WebKit macOS aprobó 6/8 y falló los dos recorridos jugador/DM por errores de control de acceso en Listen/Write del emulador. Se conservan los fallos. La navegación pública iPhone aprobó en esta repetición.
+
+La web estable respondió 200 en Home, partidas, ingreso, registro, comunidades y logo. La API alojada respondió health 8.0.0 / auth configured y una partida pública. Ocho GET consecutivos al endpoint de compartir en producción aprobaron: WhatsApp/persona/Telegram/persona/Discord/persona, inexistente 404 e inválido 400; todos con private, no-store, metadatos o redirección según corresponda y sin los campos de contacto examinados. En Chrome publicado se recorrieron Home, listado, detalle y menú compartir sin generar datos.
+
+**Acceso Vercel resuelto.** Se pudo abrir el preview protegido, leer sus logs de build y consultar errores privados. Producción continúa READY en `7e6a003`; preview `e166a4e` READY. Los grupos de errores de 24 horas muestran nueve avisos DEP0169 de url.parse() en /api/share-game de la versión estable. El handler del repositorio usa new URL, sin llamada a url.parse(); el log disponible no incluye una traza de origen. No se atribuye a una dependencia ni se cambia el handler sin esa evidencia. La consulta individual del preview se acotó a 30 minutos por la retención Hobby y no devolvió errores/avisos bajo ese filtro; no equivale a certificación global de ausencia de errores.
+
+### Regresión de CSS detectada en el preview
+
+La observación real del preview encontró la hoja global en `media=print`, sin aplicar utilidades, tipografías y estructura. Angular 22/Beasties emite un script inline que restaura `media` desde data-beasties-media. La CSP heredada autorizaba el script de tema y el antiguo onload, pero no el nuevo script generado. La prueba contra el HTML de producción reprodujo el rechazo del hash `sha256-LMY6wYoFV9I4wWzxaq1N/dTpl4iurQktw706UCHK3vM=` antes de la corrección.
+
+Se agrega únicamente ese SHA-256 a script-src. Se conservan critical CSS, todos los orígenes y restricciones, sin unsafe-inline/unsafe-eval para scripts ni nonce fijo. No cambia el bundle. Se incorpora `npm run test:production-csp` después del build en CI: analiza los scripts y handlers efectivamente emitidos y exige autorización exacta en la CSP de Vercel. Detecta futuros cambios del bundler que rompan esa autorización; el servidor e2e de desarrollo no cubría este caso. La prueba falló antes y pasó después de la corrección. Referencia oficial: https://angular.dev/best-practices/security#static-hosting-without-per-response-nonces .
+
+El SHA y los resultados del nuevo preview/CI se registran en el PR #24. El acceso 403 deja de ser un pendiente; WebKit y OAuth/dispositivos reales continúan abiertos. Esta corrección se conserva en la misma rama de migración y no se integra en producción con CI crítico fallido.

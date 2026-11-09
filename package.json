@@ -12,6 +12,7 @@
     "test:stability": "node scripts/test-stability.cjs",
     "test:ci": "npm run test:share-preview && npm run test:stability",
     "test:unit": "ng test --watch=false",
+    "test:production-csp": "node scripts/test-production-csp.mjs",
     "test:emulators": "firebase emulators:exec --config firebase.test.json --only auth,firestore --project demo-cumbre20 --non-interactive \"node --test --test-concurrency=1 --test-timeout=60000 tests/*.test.mjs\"",
     "test:e2e": "node scripts/run-e2e.cjs"
   },
