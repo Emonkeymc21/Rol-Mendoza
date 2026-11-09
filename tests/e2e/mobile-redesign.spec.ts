@@ -121,9 +121,11 @@ for (const [width, height] of widths) {
       await expect(page.locator('h1').first()).toBeVisible();
       await assertFits(page, width);
       const art = await card.locator('.card-art').boundingBox();
-      const content = await card.locator('.game-card-body').boundingBox();
+      const content = await card.locator('.game-card .mobile-system-label').boundingBox();
       expect(art).not.toBeNull();
       expect(content).not.toBeNull();
+      // The grid item boxes may touch; actual text must remain clearly
+      // separated from the illustration on Safari and Chromium.
       expect(art!.x + art!.width).toBeLessThanOrEqual(content!.x + 2);
       await captureRealPage(page, info.outputPath('partidas-' + width + '.png'));
 

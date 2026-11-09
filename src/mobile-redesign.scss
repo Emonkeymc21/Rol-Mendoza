@@ -969,3 +969,11 @@
   app-header { display: block; position: relative; z-index: 100; }
   app-header .mobile-menu-backdrop.mobile-menu-backdrop { touch-action: manipulation; }
 }
+
+/* La zona de arte puede solaparse unos píxeles con el box del cuerpo en WebKit
+   por el ajuste del grid. Separar el contenido real evita tocar la ilustración. */
+@media screen and (max-width: 767px) {
+  app-game-card .game-card.game-card .game-card-body {
+    padding-left: .9rem;
+  }
+}
