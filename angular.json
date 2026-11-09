@@ -77,10 +77,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "rol-mendoza:build:production"
+              "buildTarget": "rol-mendoza:build:production"
             },
             "development": {
-              "browserTarget": "rol-mendoza:build:development"
+              "buildTarget": "rol-mendoza:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -88,7 +88,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "rol-mendoza:build"
+            "buildTarget": "rol-mendoza:build"
           }
         },
         "test": {
