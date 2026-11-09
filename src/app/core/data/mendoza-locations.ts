@@ -13,11 +13,20 @@ export const MENDOZA_LOCATIONS: readonly string[] = [
 
 export const STANDARD_MENDOZA_LOCATIONS = MENDOZA_LOCATIONS.filter(location => location !== OTHER_LOCATION);
 
+export function normalizeSearch(value: string): string {
+  return (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, ' ');
+}
+
+export function canonicalLocation(value: string): string {
+  const key = normalizeSearch(value);
+  // Historical profile values refer to these same localities, never to neighbouring departments.
+  const aliases: Record<string, string> = { ciudad: 'Ciudad de Mendoza', 'lujan': 'Luján de Cuyo' };
+  return STANDARD_MENDOZA_LOCATIONS.find(location => normalizeSearch(location) === key) || aliases[key] || value.trim();
+}
+
 export function splitLocation(city: string | null | undefined): { city: string; otherCity: string } {
-  const normalized = String(city || '').trim();
-  if (!normalized || STANDARD_MENDOZA_LOCATIONS.includes(normalized)) {
-    return { city: normalized, otherCity: '' };
-  }
+  const normalized = canonicalLocation(String(city || ''));
+  if (!normalized || STANDARD_MENDOZA_LOCATIONS.includes(normalized)) return { city: normalized, otherCity: '' };
   return { city: OTHER_LOCATION, otherCity: normalized };
 }
 
@@ -27,6 +36,7 @@ export function resolveLocation(city: string, otherCity: string): string {
 
 export function matchesLocation(actualCity: string, selectedCity: string): boolean {
   if (selectedCity === 'Todas') return true;
-  if (selectedCity === OTHER_LOCATION) return !STANDARD_MENDOZA_LOCATIONS.includes(actualCity);
-  return actualCity === selectedCity;
+  const actual = canonicalLocation(actualCity);
+  if (selectedCity === OTHER_LOCATION) return Boolean(actual) && !STANDARD_MENDOZA_LOCATIONS.includes(actual);
+  return normalizeSearch(actual) === normalizeSearch(canonicalLocation(selectedCity));
 }

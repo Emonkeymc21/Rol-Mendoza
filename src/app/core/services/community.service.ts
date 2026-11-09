@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { catchError, combineLatest, from, map, Observable, of, ReplaySubject, switchMap } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, from, map, Observable, of, ReplaySubject, switchMap, tap } from 'rxjs';
 import {
   ApiMutationResult,
   PublicComment
@@ -15,6 +15,11 @@ import { GameService } from './game.service';
 @Injectable({ providedIn: 'root' })
 export class CommunityService {
   private readonly playersSubject = new ReplaySubject<Player[]>(1);
+  readonly playersLoadingState = new BehaviorSubject<boolean>(true);
+  readonly playersErrorState = new BehaviorSubject<string>('');
+  readonly playersLoading$ = this.playersLoadingState.asObservable();
+  readonly playersError$ = this.playersErrorState.asObservable();
+  readonly gamesError$ = this.games.error$;
   readonly gamesLoading$ = this.games.loading$;
 
   constructor(
@@ -23,7 +28,10 @@ export class CommunityService {
     private profiles: ProfileService,
     private games: GameService
   ) {
-    this.auth.user$.pipe(switchMap(user => user
+    this.auth.user$.pipe(tap(() => {
+      this.playersLoadingState.next(true);
+      this.playersErrorState.next('');
+    }), switchMap(user => user
       ? this.profiles.watchOwnProfile().pipe(switchMap(own => this.profiles.isComplete(own)
         ? combineLatest([
             this.profiles.watchProfiles(),
@@ -33,9 +41,15 @@ export class CommunityService {
             .map(profile => this.mapProfile(profile, own))
             .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))))
         : of([])
-      ))
+      ), catchError(() => {
+        this.playersErrorState.next('No pudimos cargar los perfiles. Recargá la página para reintentar.');
+        return of([]);
+      }))
       : of([])
-    ), catchError(() => of([]))).subscribe(players => this.playersSubject.next(players));
+    )).subscribe(players => {
+      this.playersSubject.next(players);
+      this.playersLoadingState.next(false);
+    });
   }
 
   isConnected(): boolean { return this.api.enabled; }
@@ -47,6 +61,8 @@ export class CommunityService {
     }
     return this.playersSubject.pipe(map(players => players.find(player => player.id === id)));
   }
+
+  refreshGames(): void { this.games.refresh(); }
 
   getGames(): Observable<Game[]> { return this.games.getGames(); }
   getGame(id: string): Observable<Game | undefined> { return this.games.getGame(id); }

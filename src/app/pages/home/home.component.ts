@@ -28,6 +28,7 @@ export class HomeComponent {
   profileReady = false;
   private allPlayers: Player[] = [];
   private allGames: Game[] = [];
+  readonly gamesError$ = this.community.gamesError$;
   readonly gamesLoading$ = this.community.gamesLoading$;
   searchForm = this.fb.nonNullable.group({ type: 'partidas', query: '', mode: 'Cualquier modalidad' });
 
@@ -44,6 +45,9 @@ export class HomeComponent {
       this.players = players.slice(0, 3);
       this.updateSystemCount();
     });
+    this.community.playersLoading$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(loading => {
+      if (!loading && this.isAuthenticated && !this.community.playersErrorState.value) this.playerCount = this.allPlayers.length;
+    });
     this.community.getGames().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(games => {
       this.allGames = games;
       this.gameCount = games.length;
@@ -53,7 +57,7 @@ export class HomeComponent {
     auth.user$.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       this.isAuthenticated = Boolean(user);
       this.authReady = true;
-      this.playerCount = user ? this.allPlayers.length : null;
+      this.playerCount = null;
       if (user) {
         profiles.watchOwnProfile().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
           next: profile => {
@@ -70,6 +74,8 @@ export class HomeComponent {
       }
     });
   }
+
+  retryGames(): void { this.community.refreshGames(); }
 
   canCreateGames(): boolean {
     return this.profile?.role === 'DM' || this.profile?.role === 'BOTH';

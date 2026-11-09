@@ -1,9 +1,10 @@
+import { bindFilterUrl } from '../../core/data/filter-url-state';
 import { Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { take } from 'rxjs';
-import { matchesLocation, MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
+import { matchesLocation, MENDOZA_LOCATIONS, normalizeSearch } from '../../core/data/mendoza-locations';
 import { Game } from '../../core/models/game.model';
 import { GameService } from '../../core/services/game.service';
 import { ProfileService } from '../../core/services/profile.service';
@@ -25,7 +26,7 @@ export class GamesComponent {
   isAuthenticated = false;
   filters = this.fb.nonNullable.group({ q: '', city: 'Todas', mode: 'Todas', frequency: 'Todas', level: 'Todos' });
 
-  constructor(private fb: FormBuilder, private gameService: GameService, profiles: ProfileService, auth: AuthService, route: ActivatedRoute) {
+  constructor(private fb: FormBuilder, private gameService: GameService, profiles: ProfileService, auth: AuthService, route: ActivatedRoute, router: Router) {
     gameService.getGames().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(games => { this.allGames = games; this.applyFilters(); });
     auth.user$.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(user => {
       this.isAuthenticated = Boolean(user);
@@ -33,10 +34,7 @@ export class GamesComponent {
         void profiles.getOwnProfile().then(profile => this.canCreate = profile?.role === 'DM' || profile?.role === 'BOTH');
       }
     });
-    route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
-      this.filters.patchValue({ q: params.get('q') ?? '', mode: params.get('mode') ?? 'Todas' }, { emitEvent: false });
-      this.applyFilters();
-    });
+    bindFilterUrl(this.filters, route, router, this.destroyRef, { q: null, city: ['Todas', ...MENDOZA_LOCATIONS], mode: ['Todas', 'Presencial', 'Online', 'Mixto'], frequency: ['Todas', 'One-shot', 'Semanal', 'Quincenal', 'Mensual'], level: ['Todos', 'Principiantes', 'Intermedio', 'Con experiencia'] }, () => this.applyFilters());
     this.filters.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.applyFilters());
   }
 
@@ -45,9 +43,9 @@ export class GamesComponent {
   trackGame(_index: number, game: Game): string { return game.id; }
   private applyFilters(): void {
     const { q, city, mode, frequency, level } = this.filters.getRawValue();
-    const term = q.trim().toLowerCase();
+    const term = normalizeSearch(q);
     this.games = this.allGames.filter(game =>
-      (!term || `${game.title} ${game.system} ${game.location} ${game.tags.join(' ')}`.toLowerCase().includes(term)) &&
+      (!term || normalizeSearch(`${game.title} ${game.system} ${game.city} ${game.location} ${game.tags.join(' ')}`).includes(term)) &&
       matchesLocation(game.city, city) &&
       (mode === 'Todas' || game.mode === mode || game.mode === 'Mixto') &&
       (frequency === 'Todas' || game.frequency === frequency) &&

@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable, of, shareReplay, switchMap, tap } from 'rxjs';
+import { map, Observable, of, timeout, shareReplay, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { isIsolatedTestApi } from './isolated-test-api';
 import { Game } from '../models/game.model';
@@ -52,7 +52,7 @@ export class GoogleAppsScriptService {
 
   get enabled(): boolean {
     return /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/i.test(this.webAppUrl) ||
-      isIsolatedTestApi(this.webAppUrl, environment, window.location.origin);
+      isIsolatedTestApi(this.webAppUrl, environment, typeof window === 'undefined' ? 'http://127.0.0.1:4200' : window.location.origin);
   }
 
   getGames(): Observable<PublicGameRow[]> {
@@ -111,7 +111,7 @@ export class GoogleAppsScriptService {
     this.assertEnabled();
     let params = new HttpParams().set('action', action);
     Object.entries(values).forEach(([key, value]) => params = params.set(key, value));
-    return this.http.get<ApiResponse<T>>(this.webAppUrl, { params }).pipe(map(response => this.unwrap(response, action)));
+    return this.http.get<ApiResponse<T>>(this.webAppUrl, { params }).pipe(timeout(8000), map(response => this.unwrap(response, action)));
   }
 
   private post<T>(action: string, payload: unknown, idToken = ''): Observable<T> {
@@ -125,7 +125,7 @@ export class GoogleAppsScriptService {
   }
 
   private ensureCompatible(): Observable<void> {
-    if (sessionStorage.getItem(this.compatibilityKey) === 'ok') return of(undefined);
+    try { if (sessionStorage.getItem(this.compatibilityKey) === 'ok') return of(undefined); } catch { /* Optional cache. */ }
     if (!this.compatibilityCheck$) {
       this.compatibilityCheck$ = this.get<ApiHealth>(API_ACTION.health).pipe(
         map(health => {
@@ -137,7 +137,7 @@ export class GoogleAppsScriptService {
             throw new Error('El servicio de partidas se está actualizando. Intentá nuevamente en unos minutos.');
           }
         }),
-        tap(() => sessionStorage.setItem(this.compatibilityKey, 'ok')),
+        tap(() => { try { sessionStorage.setItem(this.compatibilityKey, 'ok'); } catch { /* Optional cache. */ } }),
         shareReplay({ bufferSize: 1, refCount: false })
       );
     }
@@ -162,12 +162,11 @@ export class GoogleAppsScriptService {
 
   private getClientId(): string {
     const key = 'rol-mendoza-client-id';
-    const saved = localStorage.getItem(key);
-    if (saved) return saved;
+    try { const saved = localStorage.getItem(key); if (saved) return saved; } catch { /* Optional storage. */ }
     const value = typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID()
       : `browser-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    localStorage.setItem(key, value);
+    try { localStorage.setItem(key, value); } catch { /* Optional storage. */ }
     return value;
   }
 }

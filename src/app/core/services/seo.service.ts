@@ -29,6 +29,11 @@ export class SeoService {
   }
 
   setGameMetadata(game: Game): void {
+    // TransferCache can emit during navigation. Apply after the route title strategy.
+    queueMicrotask(() => this.applyGameMetadata(game));
+  }
+
+  private applyGameMetadata(game: Game): void {
     const title = `${game.title} | Cumbre20`;
     const description = `${game.system} · ${game.mode} · ${game.city}. ${game.summary}`.replace(/\s+/g, ' ').slice(0, 180);
     const canonicalUrl = `${this.siteUrl}/partidas/${encodeURIComponent(game.id)}`;

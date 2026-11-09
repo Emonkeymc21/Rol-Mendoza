@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
+import { BrowserModule, provideClientHydration, withNoIncrementalHydration } from '@angular/platform-browser';
 import { ReactiveFormsModule } from '@angular/forms';
-import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withFetch } from '@angular/common/http';
 
 import { SharedUiModule } from './shared/shared-ui.module';
 import { AppRoutingModule } from './app-routing.module';
@@ -23,5 +23,5 @@ import { CustomCursorComponent } from './shared/components/custom-cursor/custom-
         ReactiveFormsModule,
         SharedUiModule,
         IconComponent,
-        AppRoutingModule], providers: [provideHttpClient(withXhr(), withInterceptorsFromDi())] })
+        AppRoutingModule], providers: [provideHttpClient(withFetch(), withInterceptorsFromDi()), provideClientHydration(withNoIncrementalHydration())] })
 export class AppModule { }

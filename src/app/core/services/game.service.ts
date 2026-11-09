@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, catchError, defer, finalize, from, map, Observable, of, ReplaySubject, Subscription, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, EMPTY, shareReplay, catchError, defer, finalize, from, map, Observable, of, ReplaySubject, Subscription, switchMap, tap } from 'rxjs';
 import { ApiMutationResult, PublicGameRow } from '../models/community-api.model';
 import { Game } from '../models/game.model';
 import { AuthService } from './auth.service';
@@ -13,6 +13,7 @@ export class GameService {
   private gamesCache: Game[] = [];
   private loaded = false;
   private initialized = false;
+  private readonly pendingDetails = new Map<string, Observable<Game | undefined>>();
   private refreshSubscription?: Subscription;
   private readonly sessionCacheKey = 'cumbre20-public-games';
   private readonly sessionCacheLifetime = 5 * 60 * 1000;
@@ -36,15 +37,21 @@ export class GameService {
   }
 
   getGame(id: string): Observable<Game | undefined> {
-    const cached = this.gamesCache.find(game => game.id === id);
-    if (cached) return of(cached);
-    return defer(() => this.api.getGame(id)).pipe(
+    // Details must be fresh after an approval; the list/session cache can have older seats.
+    const pending = this.pendingDetails.get(id);
+    if (pending) return pending;
+    const request = defer(() => this.api.getGame(id)).pipe(
       map(row => this.mapGame(row)),
       catchError(error => {
-        console.error('No se pudo cargar la partida.', error);
-        return of(undefined);
-      })
+        // A missing row is distinct from a transport failure.
+        if (/no encontrada|no existe|not found/i.test(String(error?.message))) return of(undefined);
+        throw error;
+      }),
+      finalize(() => this.pendingDetails.delete(id)),
+      shareReplay({ bufferSize: 1, refCount: true })
     );
+    this.pendingDetails.set(id, request);
+    return request;
   }
 
   getMyGames(): Observable<Game[]> {
@@ -105,7 +112,7 @@ export class GameService {
       catchError(error => {
         console.error('No se pudo actualizar el listado de partidas.', error);
         this.errorState.next('No pudimos cargar las partidas. Intentá nuevamente.');
-        return of(this.loaded ? this.gamesCache : []);
+        return EMPTY;
       }),
       finalize(() => {
         this.loadingState.next(false);
@@ -132,7 +139,7 @@ export class GameService {
       this.loaded = true;
       this.gamesState.next(cache.games);
     } catch {
-      sessionStorage.removeItem(this.sessionCacheKey);
+      // Storage can be unavailable in private/restricted browsers. It is optional.
     }
   }
 

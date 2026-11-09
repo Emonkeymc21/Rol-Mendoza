@@ -46,7 +46,7 @@
 .path-grid a:hover { padding-left:.5rem;color:var(--brand-secondary); }
 .path-grid span { grid-area:n;color:var(--brand-primary);font-family:Cinzel,Georgia,serif;font-size:.74rem; }
 .path-grid strong { grid-area:title;font-size:.85rem;letter-spacing:.045em;text-transform:uppercase; }
-.path-grid small { grid-area:note;color:var(--text-muted);font-size:.76rem; }
+.path-grid small { grid-area:note;color:var(--text-secondary);font-size:.76rem; }
 .path-grid app-icon { grid-area:arrow; }
 
 .adventures-section { position:relative;isolation:isolate;overflow:hidden;padding:clamp(4.5rem,9vw,8rem) 0;background:var(--bg-primary); }

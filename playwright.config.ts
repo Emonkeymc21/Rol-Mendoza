@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e', fullyParallel: false, workers: 1, timeout: 90000,
+  snapshotPathTemplate:'{testDir}/../visual/{arg}{ext}',
   expect: { timeout: 20000 }, retries: 0,
   reporter: [['list'], ['html', {open:'never'}], ['json', {outputFile:'test-results/results.json'}]],
   use: {baseURL:'http://127.0.0.1:4200', screenshot:'only-on-failure', trace:'retain-on-failure'},
@@ -12,6 +13,6 @@ export default defineConfig({
   ],
   webServer: [
     {command:'node tests/isolated-server.cjs',url:'http://127.0.0.1:4401/health',reuseExistingServer:false,env:{CUMBRE20_TEST_MODE:'1'}},
-    {command:'node scripts/serve-e2e.cjs',url:'http://127.0.0.1:4200',reuseExistingServer:false,timeout:120000}
+    {command:process.env.CUMBRE20_SSR_E2E==='1'?'node scripts/serve-ssr-test.cjs':'node scripts/serve-e2e.cjs',env:{PORT:'4200',CUMBRE20_TEST_MODE:'1'},url:'http://127.0.0.1:4200',reuseExistingServer:false,timeout:120000}
   ]
 });

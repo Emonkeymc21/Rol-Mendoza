@@ -8,7 +8,10 @@ Disallow: /mi-cuenta
 Disallow: /mis-partidas
 Disallow: /mis-solicitudes
 Disallow: /notificaciones
-Disallow: /partidas
+Disallow: /partidas/nueva
+Disallow: /comunidades/solicitar
+Disallow: /compartir/
+Disallow: /api/
 Disallow: /perfil
 Disallow: /registrarme
 Disallow: /registro

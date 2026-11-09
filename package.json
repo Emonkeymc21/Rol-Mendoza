@@ -16,7 +16,10 @@
     "test:emulators": "firebase emulators:exec --config firebase.test.json --only auth,firestore --project demo-cumbre20 --non-interactive \"node --test --test-concurrency=1 --test-timeout=60000 tests/*.test.mjs\"",
     "test:e2e": "node scripts/run-e2e.cjs",
     "audit:build": "ng build --configuration=production,audit",
-    "audit:browser": "firebase emulators:exec --config firebase.test.json --only auth,firestore --project demo-cumbre20 --non-interactive \"node scripts/audit-browser.mjs\""
+    "audit:browser": "firebase emulators:exec --config firebase.test.json --only auth,firestore --project demo-cumbre20 --non-interactive \"node scripts/audit-browser.mjs\"",
+    "serve:ssr:rol-mendoza": "node dist/rol-mendoza/server/server.mjs",
+    "build:ssrtest": "ng build --configuration=production,ssrtest",
+    "test:e2e:production": "npm run build:ssrtest && node scripts/run-e2e.cjs"
   },
   "private": true,
   "dependencies": {
@@ -25,7 +28,10 @@
     "@angular/core": "^22.2.5",
     "@angular/forms": "^22.2.5",
     "@angular/platform-browser": "^22.2.5",
+    "@angular/platform-server": "^22.2.5",
     "@angular/router": "^22.2.5",
+    "@angular/ssr": "^22.2.6",
+    "express": "^5.1.0",
     "firebase": "13.2.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
@@ -38,6 +44,8 @@
     "@axe-core/playwright": "4.14.0",
     "@firebase/rules-unit-testing": "6.0.0",
     "@playwright/test": "1.65.0",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.12.0",
     "autoprefixer": "^10.4.20",
     "firebase-tools": "15.35.0",
     "jsdom": "^31.0.0",

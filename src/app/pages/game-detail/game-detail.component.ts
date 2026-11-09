@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
+import { RESPONSE_INIT, Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,6 +22,7 @@ import { SeoService } from '../../core/services/seo.service';
     standalone: false
 })
 export class GameDetailComponent {
+  private readonly response = inject(RESPONSE_INIT, { optional: true });
   private readonly destroyRef = inject(DestroyRef);
   game?: Game;
   comments: PublicComment[] = [];
@@ -237,14 +238,24 @@ export class GameDetailComponent {
     });
   }
 
+  gameLoadError = '';
+
+  retryGame(): void { this.loadingGame = true; this.gameLoadError = ''; this.loadGame(); }
+
   private loadGame(): void {
-    this.community.getGame(this.gameId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(game => {
+    this.community.getGame(this.gameId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: game => {
+      this.gameLoadError = '';
       this.game = game;
+      if (!game && this.response) this.response.status = 404;
       this.loadingGame = false;
       if (game) this.seo.setGameMetadata(game);
       if (this.isAuthenticated) this.loadDmProfile();
       void this.loadApprovedDmContact();
-    });
+    }, error: () => {
+      this.loadingGame = false;
+      if (this.response) this.response.status = 503;
+      this.gameLoadError = 'No pudimos cargar la partida. Revisá tu conexión e intentá nuevamente.';
+    }});
   }
 
   private loadDmProfile(): void {

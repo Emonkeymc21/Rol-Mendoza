@@ -21,10 +21,7 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "outputPath": {
-              "base": "dist/rol-mendoza",
-              "browser": ""
-            },
+            "outputPath": "dist/rol-mendoza",
             "index": "src/index.html",
             "polyfills": [
               "zone.js"
@@ -34,14 +31,25 @@
             "assets": [
               "src/favicon.ico",
               "src/robots.txt",
-              "src/sitemap.xml",
               "src/assets"
             ],
             "styles": [
               "src/styles.scss"
             ],
             "scripts": [],
-            "browser": "src/main.ts"
+            "browser": "src/main.ts",
+            "server": "src/main.server.ts",
+            "outputMode": "server",
+            "security": {
+              "allowedHosts": [
+                "rol-mendoza-2026.vercel.app",
+                "localhost",
+                "127.0.0.1"
+              ]
+            },
+            "ssr": {
+              "entry": "src/server.ts"
+            }
           },
           "configurations": {
             "production": {
@@ -78,7 +86,11 @@
               "polyfills": [
                 "zone.js",
                 "zone.js/testing"
-              ]
+              ],
+              "server": false,
+              "ssr": false,
+              "prerender": false,
+              "outputMode": "static"
             },
             "e2e": {
               "optimization": false,
@@ -88,13 +100,30 @@
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.e2e.ts"
                 }
-              ]
+              ],
+              "server": false,
+              "ssr": false,
+              "prerender": false,
+              "outputMode": "static"
             },
             "audit": {
               "outputPath": {
                 "base": "dist/audit",
                 "browser": ""
               },
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.e2e.ts"
+                }
+              ],
+              "server": false,
+              "ssr": false,
+              "prerender": false,
+              "outputMode": "static"
+            },
+            "ssrtest": {
+              "outputPath": "dist/ssr-test",
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",

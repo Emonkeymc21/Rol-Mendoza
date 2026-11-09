@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, PendingTasks, inject } from '@angular/core';
 import type { DocumentData } from 'firebase/firestore';
 import { defer, map, Observable, shareReplay } from 'rxjs';
 import { CommunityActivity, CommunityAdminRequestInput, RoleCommunity } from '../models/role-community.model';
@@ -7,6 +7,7 @@ import { FirebaseService } from './firebase.service';
 
 @Injectable({ providedIn: 'root' })
 export class RoleCommunityService {
+  private readonly pending = inject(PendingTasks);
   private published$?: Observable<RoleCommunity[]>;
 
   constructor(private firebase: FirebaseService, private auth: AuthService) {}
@@ -14,6 +15,8 @@ export class RoleCommunityService {
   getPublished(): Observable<RoleCommunity[]> {
     if (!this.published$) {
       this.published$ = defer(async () => {
+        const done = this.pending.add();
+        try {
         const { api, database } = await this.loadFirestore();
         const query = api.query(
           api.collection(database, 'roleCommunities'),
@@ -24,6 +27,7 @@ export class RoleCommunityService {
         return snapshot.docs
           .map(item => this.mapCommunity(item.id, item.data()))
           .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+        } finally { done(); }
       }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
     }
     return this.published$;

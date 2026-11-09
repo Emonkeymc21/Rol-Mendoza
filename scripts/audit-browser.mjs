@@ -4,7 +4,7 @@ import {chromium} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import lighthouse from 'lighthouse';
 import * as chromeLauncher from 'chrome-launcher';
-const directory='audit-results';await mkdir(directory,{recursive:true});
+const directory='audit-results/'+(process.env.CUMBRE20_AUDIT_LABEL||'after');await mkdir(directory,{recursive:true});
 const children=['tests/isolated-server.cjs','scripts/serve-audit.cjs'].map(file=>spawn(process.execPath,[file],{stdio:'inherit',env:{...process.env,CUMBRE20_TEST_MODE:'1'}}));
 async function ready(url){for(let n=0;n<100;n++){try{if((await fetch(url)).ok)return;}catch{}await new Promise(r=>setTimeout(r,200));}throw Error('Server did not start: '+url);}
 try{
