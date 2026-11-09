@@ -47,7 +47,8 @@ export class HeaderComponent {
     this.syncMobileScrollLock();
   }
   private syncMobileScrollLock(): void {
-    const mobile = this.document.defaultView?.matchMedia('(max-width: 767px)').matches ?? false;
+    const view = this.document.defaultView;
+    const mobile = typeof view?.matchMedia === 'function' && view.matchMedia('(max-width: 767px)').matches;
     this.document.body.classList.toggle('c20-mobile-menu-open', this.menuOpen && mobile);
   }
   @HostListener('window:resize')
@@ -55,7 +56,8 @@ export class HeaderComponent {
   @HostListener('document:keydown.tab', ['$event'])
   trapMobileNavigationFocus(event: Event): void {
     const keyEvent = event as KeyboardEvent;
-    if (!this.menuOpen || !this.document.defaultView?.matchMedia('(max-width: 767px)').matches) return;
+    const view = this.document.defaultView;
+    if (!this.menuOpen || typeof view?.matchMedia !== 'function' || !view.matchMedia('(max-width: 767px)').matches) return;
     const items = Array.from(this.document.querySelectorAll<HTMLElement>('#mobile-navigation a, #mobile-navigation button:not([disabled])'));
     const first = items[0];
     const last = items[items.length - 1];
