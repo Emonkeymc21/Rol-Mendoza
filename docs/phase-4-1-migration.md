@@ -62,3 +62,7 @@ Firebase 12.19.0 presentó TS2503 en `Timestamp.fromInstant/toInstant`. Se habil
 ### Firebase 12
 
 SDK 12.19.0, rules-unit-testing 5.0.0. Instalación, compilación de producción, 19 pruebas Vitest, contratos de compartir/regresión, 27 pruebas Auth/Firestore/Apps Script y `npm ls --all` aprobados. No se modificaron reglas, estructura de datos, configuración de producción ni Apps Script.
+
+### Firebase 13
+
+SDK 13.2.0, rules-unit-testing 6.0.0. Instalación, compilación de producción, 19 pruebas Vitest, contratos de compartir/regresión, 27 pruebas Auth/Firestore/Apps Script y `npm ls --all` aprobados. No se modificaron reglas, estructura de datos, configuración de producción ni Apps Script.
