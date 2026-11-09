@@ -66,3 +66,31 @@ El primer E2E híbrido detectó errores del entorno aislado y una ruta SSR: el m
 La segunda ejecución híbrida aprobó filtros, recuperación de error, Google emulado y regresión visual de Home, pero detectó dos problemas del arnés: el proxy de compartir no conservaba el host de origen (redirigía al puerto 4401), y una aserción no contemplaba los comentarios de hidratación entre h1 y su texto. Se preserva x-forwarded-host en el proxy demo y se analiza el HTML recibido con JSDOM para comprobar el texto real del h1. No se altera la respuesta ni la lógica de compartir de producción.
 
 La lectura pública de comunidades recibe un límite explícito de 8 s y recuperación, comprobado con una consulta que nunca responde y un reintento posterior. Sus temporizadores internos se ejecutan fuera de NgZone; PendingTasks registra sólo la lectura pendiente. Una demora de Firestore no debe sostener el render hasta el límite de 30 s de Vercel. Ante error el directorio devuelve 503; no presenta la indisponibilidad como ausencia confirmada de comunidades.
+
+
+## Resultado de medición híbrida (run 42644612040)
+
+Tres navegaciones por variante en el mismo runner Ubuntu 24.04, Lighthouse 13.6, Chromium 158, preset móvil predeterminado, caché fría y gzip. Referencia c733dd6 frente a candidato c5686ea; los cambios posteriores de proxy de pruebas y límite de comunidades se verifican en otro CI. Valores medianos:
+
+| Métrica | Antes CSR | Después híbrido |
+|---|---:|---:|
+| Performance | 73 | 83 |
+| Accessibility | 96 | 100 |
+| Best Practices | 100 | 100 |
+| SEO Lighthouse | 100 | 100 |
+| LCP | 3.909 ms | 3.192 ms |
+| FCP | 635 ms | 799 ms |
+| TBT | 589 ms | 422 ms |
+| CLS | 0,0130 | 0,0044 |
+| TTFB de laboratorio local | 2 ms | 3 ms |
+| Transferencia total medida | 599.214 bytes | 575.672 bytes |
+
+Se comprueba mejora de LCP/TBT/CLS, sin prometer que se alcanzó la meta: Performance todavía queda por debajo de 90 y LCP supera 2,5 s. FCP aumenta 164 ms por el HTML prerenderizado más completo. El score SEO anterior era 100 aun con shell vacío: la prueba HTTP independiente es la que demuestra ahora el contenido inicial. Los tiempos locales no son TTFB de Vercel ni CWV de usuarios reales. No hay una medición de INP p75 suficiente; queda pendiente recopilarla con tráfico real. No se habilitan servicios pagos para producir datos.
+
+Axe y overflow: 72 combinaciones aprobadas, seis rutas públicas × seis tamaños × dos temas, con WCAG A/AA 2.0/2.1/2.2. Esto no equivale a certificar WCAG completa: lector de pantalla físico y teclado virtual real siguen en checklist. Capturas y reportes completos: artefacto performance-accessibility-visual del run 42644612040 (ID 13687106955, retención 14 días).
+
+## Límites y recuperación
+
+Se mantienen pendientes: objetivo Performance 90/LCP 2,5 s; advertencia Home SCSS 15,98/13 kB; INP y CWV p75 reales; OAuth con cuenta Google real; dispositivos Android/iPhone y lector de pantalla físico. No se afirma que lo emulado reemplace estas comprobaciones. El control de código/Node/SDK, reglas y recorridos se comprueba en CI del PR #25 antes del merge. Consultar el PR para su último run, SHA y estado real.
+
+El diseño móvil solicitado posteriormente se prepara en una rama independiente y no forma parte de esta auditoría. Su condición específica es preservar la apariencia de escritorio. Debe partir del main que resulte validado y registrar nuevamente esa base.
