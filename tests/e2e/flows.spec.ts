@@ -14,6 +14,8 @@ async function isolate(context:BrowserContext) {
       return route.fulfill({response:result});
     }
     if(['127.0.0.1','localhost'].includes(url.hostname)||['data:','blob:'].includes(url.protocol))return route.continue();
+    // Firebase's mobile popup resolver loads Google's static bootstrap even on the Auth emulator.
+    if(url.hostname==='apis.google.com' && route.request().resourceType()==='script')return route.continue();
     if(['fonts.googleapis.com','fonts.gstatic.com'].includes(url.hostname))return route.fulfill({status:200,body:'',contentType:'text/css'});
     throw new Error(`External access forbidden in isolated QA: ${url.origin}`);
   });
@@ -32,7 +34,7 @@ async function register(page:Page,name:string,role:'DM'|'PLAYER',returnUrl='/per
   await control(page,'firstName').fill(name);await control(page,'lastName').fill('Aislada');
   await control(page,'city').selectOption('Guaymallén');
   await page.getByRole('button',{name:'Continuar',exact:true}).click();
-  await page.locator(`[formcontrolname="role"][value="${role}"]`).check();
+  await page.getByRole('radio',{name:role==='DM'?/Dungeon Master \/ DM/:/Jugador\/a/}).check();
   await page.getByRole('button',{name:'Continuar',exact:true}).click();
   await control(page,'whatsapp').fill('2615551234');
   await page.getByRole('button',{name:'Continuar',exact:true}).click();

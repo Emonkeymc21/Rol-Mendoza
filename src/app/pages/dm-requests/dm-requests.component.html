@@ -33,7 +33,7 @@
           @if (playerWhatsappUrl(); as whatsapp) {
             <a [href]="whatsapp" target="_blank" rel="noopener noreferrer" class="contact-action whatsapp"><app-icon name="whatsapp" [size]="18"></app-icon> Escribir por WhatsApp</a>
           }
-          @if (playerContact?.instagramUrl; as instagram) {
+          @if (playerContact.instagramUrl; as instagram) {
             <a [href]="instagram" target="_blank" rel="noopener noreferrer" class="contact-action"><app-icon name="instagram" [size]="18"></app-icon> Ver Instagram</a>
           }
         </div>

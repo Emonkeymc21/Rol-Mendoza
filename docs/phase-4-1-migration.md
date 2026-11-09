@@ -72,3 +72,7 @@ SDK 13.2.0, rules-unit-testing 6.0.0. Instalación, compilación de producción,
 Las auditorías completas y de producción alcanzaron cero vulnerabilidades de toda severidad el 2026-11-09. Se actualizaron también las herramientas de pruebas; overrides analizados para gRPC 1.14.7, glob 14.0.4, uuid 11.1.1 y Pub/Sub 6.3.2. `npm update undici` corrigió el último aviso de las herramientas sin forzar una versión mayor. El emulador ejecutó correctamente sus contratos con este árbol.
 
 Playwright contiene 12 escenarios (desktop Chromium/WebKit, Android Chromium e iPhone WebKit). `--list` sólo comprueba descubrimiento, no equivale a ejecución aprobada. Se configuró CI para ejecutar navegadores en Ubuntu con Java 21 y Node 24. El servidor local y Firebase demo rechazan configuraciones de producción.
+
+### Carga diferida
+
+Se conservaron NgModules. Home permanece en la carga inicial; el resto de páginas utiliza módulos por ruta. Las rutas, guards y metadatos originales se conservan. Se adaptó la detección de edición de perfil al padre de la ruta vacía del módulo. Producción: 697.30 kB iniciales / 175.68 kB de transferencia estimada frente a 852.00 / 190.79 originales. Ya no aparece la advertencia inicial de 750 kB. Permanece Home SCSS 15.98 kB frente al presupuesto de 13 kB; los límites no cambiaron. Se descartó una alternativa de CSS que aumentaba el tamaño. Vitest y contratos existentes siguen aprobados.

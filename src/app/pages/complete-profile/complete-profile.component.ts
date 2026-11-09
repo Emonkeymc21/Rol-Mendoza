@@ -63,7 +63,7 @@ export class CompleteProfileComponent implements OnInit {
     route: ActivatedRoute,
     private router: Router
   ) {
-    this.editing = route.snapshot.routeConfig?.path === 'perfil/editar';
+    this.editing = (route.snapshot.routeConfig?.path || route.parent?.snapshot.routeConfig?.path) === 'perfil/editar';
     const requested = route.snapshot.queryParamMap.get('returnUrl') || '/';
     this.returnUrl = requested.startsWith('/') && !requested.startsWith('//') ? requested : '/';
     this.form.controls.city.valueChanges.subscribe(() => this.updateOtherCityValidation());
