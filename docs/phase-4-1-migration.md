@@ -48,3 +48,7 @@ Pendiente de completar con los resultados observados en cada etapa.
 
 - Angular 22: la instalación inicial se interrumpió durante la resolución/instalación. La recuperación regeneró el lockfile a partir del manifiesto objetivo revisado (sin force ni legacy-peer-deps) y ejecutó las migraciones oficiales `--migrate-only --from 21.2.29/21.2.26 --to 22.2.6/22.2.5`. Los controles de etapa pasaron. Se quitaron `baseUrl`, `downlevelIteration` y las supresiones añadidas por la migración; se conserva strictTemplates.
 - Se ejecutaron las migraciones oficiales `use-application-builder`, `migrate-karma-to-vitest` y `refactor-jasmine-vitest`. Build moderno aprobado y 2/2 pruebas originales aprobadas en Vitest. El AppModule se conserva; bootstrap usa platformBrowser, recomendado por Angular. Se retiraron Karma/Jasmine y los paquetes Angular de animaciones/plataforma dinámica sin uso en la aplicación. Se mantiene la carpeta de salida previa mediante outputPath.browser vacío.
+
+### Firebase 10: referencia funcional con emuladores
+
+Se incorporaron 27 pruebas ejecutables contra Auth/Firestore y el código real de Apps Script con planillas locales; pasaron 27/27 con Firebase 10.14.1. Vitest amplía las dos pruebas originales a 19: guards, contactos y continuidad del acceso. No se conectan estos tests a producción. El proyecto `demo-cumbre20` y hosts de loopback son obligatorios.
