@@ -407,17 +407,31 @@
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
   }
-  app-share-game .share-game .share-menu-header {
-    display: flex;
+  app-share-game .share-game .share-menu .share-menu-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
     align-items: center;
-    justify-content: space-between;
     gap: .7rem;
     margin-bottom: .65rem;
     border-bottom: 1px solid var(--mobile-copper-line);
     padding-bottom: .7rem;
   }
-  app-share-game .share-menu-header strong { min-width: 0; font: 750 1rem/1.35 Cinzel,Georgia,serif; }
-  app-share-game .share-menu-header .share-close { min-width: 44px; width: 44px; height: 44px; min-height: 44px; padding: .5rem; justify-content: center; border: 1px solid var(--mobile-copper-line); }
+  app-share-game .share-game .share-menu .share-menu-header strong {
+    min-width: 0;
+    font: 750 1rem/1.35 Cinzel,Georgia,serif;
+  }
+  app-share-game .share-game .share-menu .share-menu-header .share-close {
+    display: flex;
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: .5rem;
+    justify-content: center;
+    border: 1px solid var(--mobile-copper-line);
+  }
   app-share-game .share-game .share-menu > button, app-share-game .share-game .share-menu > a {
     min-height: 57px;
     border-radius: 8px;
