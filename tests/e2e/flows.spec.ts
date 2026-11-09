@@ -86,6 +86,11 @@ test('public pages, filters, share sheet and safe mobile layout',async({page},in
 test('DM publishes, player registers and requests, DM accepts and manages, player sees private contact',async({page},info)=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await register(page,'Master','DM');
+  // Exercise resuming a cached document with the real SDK before more writes.
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pagehide', {persisted:true}));
+    window.dispatchEvent(new PageTransitionEvent('pageshow', {persisted:true}));
+  });
   await menu(page);
   const light=page.getByRole('button',{name:/^(Claro|Usar tema claro)$/});await light.click();await expect(page.locator('html')).toHaveAttribute('data-theme','light');
   await page.getByRole('button',{name:/^(Oscuro|Usar tema oscuro)$/}).click();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');

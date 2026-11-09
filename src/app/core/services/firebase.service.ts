@@ -49,6 +49,7 @@ export class FirebaseService {
     return this.firestoreReady ??= import('./firestore-api').then(api => {
       const database = api.getFirestore(app);
       if (this.emulators) api.connectFirestoreEmulator(database, this.emulators.host, this.emulators.firestorePort);
+      api.bindFirestorePageLifecycle(database);
       return { api, database };
     });
   }
