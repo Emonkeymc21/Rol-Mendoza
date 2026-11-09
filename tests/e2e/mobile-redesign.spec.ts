@@ -53,7 +53,7 @@ async function assertFits(page: Page, width: number) {
         // panels. Only overflowing usable actions are regressions.
         return style.display !== 'none' && style.visibility !== 'hidden' &&
           box.width > 0 && box.height > 0 &&
-          (box.right > innerWidth + 2 || box.left < -2);
+          (box.right > expectedWidth + 2 || box.left < -2);
       })
       .slice(0, 12)
       .map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 100) })),
@@ -84,7 +84,7 @@ async function assertFits(page: Page, width: number) {
   expect(state.root.bodyScroll, 'Body content stays within the viewport').toBeLessThanOrEqual(width + 1);
   expect(state.overflowElements, 'Visible elements must not overflow horizontally').toEqual([]);
   expect(state.scrollBy, 'Horizontal scrolling must be impossible').toBe(0);
-  expect(state.viewport, JSON.stringify({width, outsideExpected:state.outsideExpected, root:state.root})).toBe(width);
+  expect(state.root.client, JSON.stringify({width, outsideExpected:state.outsideExpected, root:state.root})).toBe(width);
 }
 
 for (const [width, height] of widths) {
