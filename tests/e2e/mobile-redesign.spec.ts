@@ -16,7 +16,7 @@ async function hideEmulatorOnlyBanner(page: Page) {
   // Firebase Auth emulator injects a fixed test warning that does not exist
   // in production. Omit this diagnostic overlay from visual evidence only.
   await page.locator('.firebase-emulator-warning').evaluateAll(elements => {
-    for (const element of elements) (element as HTMLElement).style.visibility = 'hidden';
+    for (const element of elements) (element as HTMLElement).style.display = 'none';
   });
 }
 
@@ -38,6 +38,10 @@ async function captureRealPage(page: Page, path: string) {
 }
 
 async function assertFits(page: Page, width: number) {
+  // Firebase emulator injects an out-of-tree, fixed warning in a shadow root.
+  // It can increase documentElement.scrollWidth at 320px even when body fits
+  // and horizontal scrollX is impossible. Exclude it, never app content.
+  await hideEmulatorOnlyBanner(page);
   const state = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     viewport: window.innerWidth,
