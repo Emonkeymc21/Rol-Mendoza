@@ -52,3 +52,7 @@ Pendiente de completar con los resultados observados en cada etapa.
 ### Firebase 10: referencia funcional con emuladores
 
 Se incorporaron 27 pruebas ejecutables contra Auth/Firestore y el código real de Apps Script con planillas locales; pasaron 27/27 con Firebase 10.14.1. Vitest amplía las dos pruebas originales a 19: guards, contactos y continuidad del acceso. No se conectan estos tests a producción. El proyecto `demo-cumbre20` y hosts de loopback son obligatorios.
+
+### Firebase 11
+
+SDK 11.10.0, rules-unit-testing 4.0.1. Instalación, compilación de producción, 19 pruebas Vitest, contratos de compartir/regresión, 27 pruebas Auth/Firestore/Apps Script y `npm ls --all` aprobados. No se modificaron reglas, estructura de datos, configuración de producción ni Apps Script.

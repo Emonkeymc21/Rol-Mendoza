@@ -22,24 +22,24 @@
     "@angular/forms": "^22.2.5",
     "@angular/platform-browser": "^22.2.5",
     "@angular/router": "^22.2.5",
-    "firebase": "^10.14.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.1"
+    "zone.js": "~0.15.1",
+    "firebase": "11.10.0"
   },
   "devDependencies": {
     "@angular/build": "^22.2.6",
     "@angular/cli": "^22.2.6",
     "@angular/compiler-cli": "^22.2.5",
+    "@firebase/rules-unit-testing": "4.0.1",
+    "@playwright/test": "1.65.0",
     "autoprefixer": "^10.4.20",
+    "firebase-tools": "15.35.0",
     "jsdom": "^31.0.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.0",
-    "firebase-tools": "15.35.0",
-    "@firebase/rules-unit-testing": "3.0.4",
-    "@playwright/test": "1.65.0"
+    "vitest": "^5.0.0"
   },
   "engines": {
     "node": "24.x"
