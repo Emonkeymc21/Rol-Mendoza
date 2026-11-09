@@ -24,6 +24,15 @@
     background: radial-gradient(ellipse 110% 38rem at 85% -5%, color-mix(in srgb, var(--surface-brand) 38%, transparent), transparent 74%), var(--bg-primary);
   }
   body.c20-mobile-menu-open { overflow: hidden; }
+  /* SDK Firebase: aviso exclusivamente del emulador, no existe en producción.
+     Debe poder leerse, pero no tapar acciones ni provocar scroll horizontal. */
+  .firebase-emulator-warning {
+    box-sizing: border-box;
+    max-width: calc(100vw - 8px) !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    pointer-events: none !important;
+  }
   .page-shell { padding-inline: clamp(12px, 4vw, 18px); }
   .section-space { padding-block: 2rem; }
   .page-hero-dnd { padding-block: 2rem !important; border-bottom-color: var(--mobile-copper-line); }
