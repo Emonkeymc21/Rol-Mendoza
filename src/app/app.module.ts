@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -35,46 +35,39 @@ import { CommunitiesComponent } from './pages/communities/communities.component'
 import { RequestCommunityComponent } from './pages/request-community/request-community.component';
 import { ShareGameComponent } from './shared/components/share-game/share-game.component';
 
-@NgModule({
-  declarations: [
-    AppComponent,
-    HeaderComponent,
-    FooterComponent,
-    PlayerCardComponent,
-    GameCardComponent,
-    HomeComponent,
-    PlayersComponent,
-    PlayerDetailComponent,
-    GamesComponent,
-    GameDetailComponent,
-    CreateGameComponent,
-    RegisterComponent,
-    HowItWorksComponent,
-    NotFoundComponent,
-    LoginComponent,
-    AccountComponent,
-    CompleteProfileComponent,
-    MyGamesComponent,
-    ClassAvatarComponent,
-    AboutComponent,
-    MyRequestsComponent,
-    DmRequestsComponent,
-    NotificationsComponent,
-    CustomCursorComponent,
-    RevealDirective,
-    LegalComponent,
-    CommunitiesComponent,
-    RequestCommunityComponent,
-    ShareGameComponent
-  ],
-  imports: [
-    BrowserModule,
-    HttpClientModule,
-    ReactiveFormsModule,
-    IconComponent,
-    AppRoutingModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
-})
+@NgModule({ declarations: [
+        AppComponent,
+        HeaderComponent,
+        FooterComponent,
+        PlayerCardComponent,
+        GameCardComponent,
+        HomeComponent,
+        PlayersComponent,
+        PlayerDetailComponent,
+        GamesComponent,
+        GameDetailComponent,
+        CreateGameComponent,
+        RegisterComponent,
+        HowItWorksComponent,
+        NotFoundComponent,
+        LoginComponent,
+        AccountComponent,
+        CompleteProfileComponent,
+        MyGamesComponent,
+        ClassAvatarComponent,
+        AboutComponent,
+        MyRequestsComponent,
+        DmRequestsComponent,
+        NotificationsComponent,
+        CustomCursorComponent,
+        RevealDirective,
+        LegalComponent,
+        CommunitiesComponent,
+        RequestCommunityComponent,
+        ShareGameComponent
+    ],
+    bootstrap: [AppComponent], imports: [BrowserModule,
+        ReactiveFormsModule,
+        IconComponent,
+        AppRoutingModule], providers: [provideHttpClient(withInterceptorsFromDi())] })
 export class AppModule { }
