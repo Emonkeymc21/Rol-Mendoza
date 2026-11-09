@@ -133,3 +133,5 @@ El estado READY acredita el build de Vercel; no se cuenta como prueba funcional 
 La ejecución de navegador confirmó el rechazo de una reapertura en menos de tres segundos, previsto por `rateLimit_`. La prueba ahora avanza únicamente el reloj de la caché local y espera estado Activa antes de logout. Una prueba adicional de backend exige rechazo rápido y éxito tras ese período. No se modificó ni desactivó el límite real. También se incorporó un recorrido Google `signInWithPopup` contra la UI del Auth emulator; su resultado se registra con CI.
 
 Lockfile migrado SHA-256: `b08f39484f4f8563a564d8655707adfa7aedc09cefc8e69d82e50ecb49d8dc05`.
+
+Las acciones oficiales de CI se fijaron por SHA en sus versiones actuales con runtime Node 24 (checkout/setup-node/upload-artifact v6 y setup-java v5); sus manifests oficiales se verificaron antes del cambio. Se eliminó el doble disparo push+PR sobre la rama, conservando PR y push a main.
