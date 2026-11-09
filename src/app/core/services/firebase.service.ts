@@ -28,8 +28,14 @@ export class FirebaseService {
       return;
     }
     this.app = getApps().length ? getApps()[0] : initializeApp(config);
+    if (this.emulators && this.app.options.projectId !== 'demo-cumbre20') {
+      throw new Error('El entorno de pruebas no puede reutilizar una aplicación Firebase real.');
+    }
     this.auth = getAuth(this.app);
-    if (this.emulators) connectAuthEmulator(this.auth, `http://${this.emulators.host}:${this.emulators.authPort}`);
+    if (this.emulators) {
+      connectAuthEmulator(this.auth, `http://${this.emulators.host}:${this.emulators.authPort}`);
+      document.documentElement.dataset['emulatorProject'] = this.app.options.projectId;
+    }
     this.persistenceReady = setPersistence(this.auth, browserLocalPersistence).catch(error => {
       // El acceso sigue funcionando con la persistencia disponible en el navegador.
       // Dejamos el detalle en consola para diagnóstico sin bloquear el inicio de sesión.

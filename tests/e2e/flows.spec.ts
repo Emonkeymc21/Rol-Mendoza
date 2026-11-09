@@ -2,18 +2,16 @@ import {test, expect, BrowserContext, Page} from '@playwright/test';
 const password='Emulator-only-123!';
 const api='http://127.0.0.1:4401';
 const app='http://127.0.0.1:4200';
+const unexpectedRequests=new WeakMap<BrowserContext,string[]>();
 async function isolate(context:BrowserContext) {
-  await context.route(url=>!['127.0.0.1','localhost'].includes(url.hostname),async route=>{
-    const url=new URL(route.request().url());
-    if(url.hostname==='script.google.com'&&url.pathname==='/macros/s/EMULATOR_ONLY/exec') {
-      const result=await route.fetch({url:`${api}/apps-script${url.search}`});
-      return route.fulfill({response:result});
-    }
-    if(['127.0.0.1','localhost'].includes(url.hostname)||['data:','blob:'].includes(url.protocol))return route.continue();
-    // Public font assets and Firebase's mobile popup resolver bootstrap. Auth/data endpoints remain forbidden.
-    if(['apis.google.com','fonts.googleapis.com','fonts.gstatic.com'].includes(url.hostname)&&route.request().method()==='GET')return route.continue();
-    if(url.hostname==='unpkg.com'&&/^\/material-components-web@10(?:\.\d+\.\d+)?\/dist\/material-components-web\.min\.(js|css)$/.test(url.pathname)&&route.request().method()==='GET')return route.continue();
-    throw new Error(`External access forbidden in isolated QA: ${url.origin}${url.pathname} (${route.request().resourceType()})`);
+  const unexpected:string[]=[];unexpectedRequests.set(context,unexpected);
+  // Observe without interception: WebKit's driver otherwise pauses every local stream.
+  context.on('request',request=>{
+    const url=new URL(request.url());
+    if(['127.0.0.1','localhost'].includes(url.hostname)||['data:','blob:'].includes(url.protocol))return;
+    if(['apis.google.com','fonts.googleapis.com','fonts.gstatic.com'].includes(url.hostname)&&request.method()==='GET')return;
+    if(url.hostname==='unpkg.com'&&/^\/material-components-web@10(?:\.\d+\.\d+)?\/dist\/material-components-web\.min\.(js|css)$/.test(url.pathname)&&request.method()==='GET')return;
+    unexpected.push(`${request.method()} ${url.origin}${url.pathname}`);
   });
 }
 const control=(page:Page,name:string)=>page.locator(`[formcontrolname="${name}"]`);
@@ -58,10 +56,14 @@ async function login(page:Page,name:string,returnUrl='/perfil'){
 async function fits(page:Page){
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
 }
-test.beforeEach(async({context,request})=>{
+test.beforeEach(async({context,request,page})=>{
   expect((await request.post(`${api}/reset`)).ok()).toBeTruthy();
   await isolate(context);
+  await page.goto('/');
+  // Fail before any registration/mutation if the isolated build was not selected.
+  await expect(page.locator('html')).toHaveAttribute('data-emulator-project','demo-cumbre20');
 });
+test.afterEach(async({context})=>expect(unexpectedRequests.get(context)||[]).toEqual([]));
 test('public pages, filters, share sheet and safe mobile layout',async({page},info)=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/');await expect(page.locator('app-home h1')).toBeVisible();await fits(page);

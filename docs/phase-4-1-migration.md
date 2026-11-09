@@ -75,7 +75,7 @@ Playwright contiene 12 escenarios (desktop Chromium/WebKit, Android Chromium e i
 
 ### Carga diferida
 
-Se conservaron NgModules. Home permanece en la carga inicial; el resto de páginas utiliza módulos por ruta. Las rutas, guards y metadatos originales se conservan. Se adaptó la detección de edición de perfil al padre de la ruta vacía del módulo. Producción: 697.30 kB iniciales / 175.68 kB de transferencia estimada frente a 852.00 / 190.79 originales. Ya no aparece la advertencia inicial de 750 kB. Permanece Home SCSS 15.98 kB frente al presupuesto de 13 kB; los límites no cambiaron. Se descartó una alternativa de CSS que aumentaba el tamaño. Vitest y contratos existentes siguen aprobados.
+Se conservaron NgModules. Home permanece en la carga inicial; el resto de páginas utiliza módulos por ruta. Las rutas, guards y metadatos originales se conservan. Se adaptó la detección de edición de perfil al padre de la ruta vacía del módulo. Producción: 697.74 kB iniciales / 175.94 kB de transferencia estimada frente a 852.00 / 190.79 originales. Ya no aparece la advertencia inicial de 750 kB. Permanece Home SCSS 15.98 kB frente al presupuesto de 13 kB; los límites no cambiaron. Se descartó una alternativa de CSS que aumentaba el tamaño. Vitest y contratos existentes siguen aprobados.
 
 ## Resultado de dependencias
 
@@ -95,7 +95,7 @@ Se conservaron NgModules. Home permanece en la carga inicial; el resto de págin
 
 ## Alcance de pruebas
 
-- 22 pruebas Vitest ejecutadas: se conservaron las dos originales y se agregaron guards, normalización de contactos, continuidad tras email/Google y Web Share/copiar/WhatsApp.
+- 28 pruebas Vitest ejecutadas: se conservaron las dos originales y se agregaron guards, normalización de contactos, continuidad tras email/Google y Web Share/copiar/WhatsApp; seis casos adicionales comprueban los límites del API local de QA.
 - 28 pruebas con emuladores: tres SDK Auth/Firestore, once de operaciones Apps Script y catorce de reglas Firestore. Las primeras 27 se ejecutaron con Firebase 10, 11, 12 y 13; la prueba adicional de rate limit se ejecutó con Firebase 13. Auth registra/verifica email, recupera contraseñas, inicia/cierra sesión y fuerza renovación de token. Google se prueba con un token emulado, sin OAuth real.
 - Las reglas se ejecutan en el emulador, no sólo mediante patrones de texto: visitante, perfil ajeno, escrituras backend protegidas, solicitudes, notificaciones, contacto habilitado sólo a la pareja aprobada, revocación por bloqueo, perfiles incompletos/inactivos y comunidades.
 - Apps Script ejecuta el `Code.gs` versionado. Solamente se adaptan SpreadsheetApp, caché, lock y transporte a infraestructura local. Publicar, editar, solicitar, duplicados, aceptar/rechazar, último cupo, eliminación de participante, estados y compensación de Sheets ante error Firestore se prueban con Auth/Firestore emulados. No equivale a ejecutar la infraestructura alojada de Google Sheets/Apps Script.
@@ -104,7 +104,7 @@ Se conservaron NgModules. Home permanece en la carga inicial; el resto de págin
 
 ### Aislamiento
 
-No se modificaron `firestore.rules`, índices, `Code.gs`, entornos de producción ni el contrato API 8.0.0. No se crearon datos de prueba en producción. Los tests Node exigen hosts 127.0.0.1 y el SDK de UI sólo activa emuladores con compilación e2e, proyecto `demo-cumbre20` y URL local. Playwright bloquea otros endpoints; permite los assets públicos de fuentes, el bootstrap de Google requerido por Firebase móvil y los assets Material de la UI oficial del Auth emulator. Los tokens y las cuentas en trazas son exclusivamente emulados.
+No se modificaron `firestore.rules`, índices, `Code.gs`, entornos de producción ni el contrato API 8.0.0. No se crearon datos de prueba en producción. Los tests Node exigen hosts 127.0.0.1 y el SDK de UI sólo activa emuladores con compilación e2e, proyecto `demo-cumbre20` y URL local. Playwright observa todas las solicitudes y rechaza pruebas con endpoints inesperados; permite los assets públicos de fuentes, el bootstrap de Google requerido por Firebase móvil y los assets Material de la UI oficial del Auth emulator. Los tokens y las cuentas en trazas son exclusivamente emulados.
 
 ### Incidencias de la infraestructura de pruebas resueltas
 
@@ -114,12 +114,12 @@ La primera ejecución Chromium pasó las páginas públicas y compartir, pero de
 
 | Medida de build de producción | Angular 16 / Firebase 10 | Angular 22 / Firebase 13 |
 |---|---:|---:|
-| Inicial, Home incluido | 852.00 kB | 697.30 kB |
-| Transferencia inicial estimada por CLI | 190.79 kB | 175.68 kB |
+| Inicial, Home incluido | 852.00 kB | 697.74 kB |
+| Transferencia inicial estimada por CLI | 190.79 kB | 175.94 kB |
 | Firestore diferido | 340.81 kB | 474.51 kB |
 | SCSS Home | 15.92 kB | 15.98 kB |
 
-El inicial baja 18.2% y su transferencia estimada 7.9%. Firestore moderno crece 39.2%; sigue en un chunk separado y se limita mediante exportaciones modulares explícitas. No se presenta esa subida como una mejora. La carga diferida evita descargar los formularios y pantallas secundarias al entrar en Home. No se cambiaron presupuestos. Permanece una advertencia SCSS de Home, 2.98 kB sobre 13 kB. No hay una medición de Core Web Vitals de usuarios reales ni una comparación de latencia móvil física; los tamaños no equivalen a esas métricas.
+El inicial baja 18.1% y su transferencia estimada 7.8%. Firestore moderno crece 39.2%; sigue en un chunk separado y se limita mediante exportaciones modulares explícitas. No se presenta esa subida como una mejora. La carga diferida evita descargar los formularios y pantallas secundarias al entrar en Home. No se cambiaron presupuestos. Permanece una advertencia SCSS de Home, 2.98 kB sobre 13 kB. No hay una medición de Core Web Vitals de usuarios reales ni una comparación de latencia móvil física; los tamaños no equivalen a esas métricas.
 
 ## Límites que requieren acceso real
 
@@ -168,3 +168,9 @@ La revisión de la traza WebKit anterior al proxy encontró 90 respuestas Firest
 `get_runtime_errors` de Vercel, con el proyecto y equipo correctos y ventana de 24 horas, también devolvió 403. Por ello no se certifica ausencia de errores privados de producción.
 
 La alternativa de proxy Firestore no eliminó los avisos WebKit, incluso siendo mismo origen, y se descartó. Se restableció la conexión directa al emulador :8080. La prueba ahora intercepta únicamente tráfico externo que necesita adaptación; las solicitudes locales recorren el navegador sin interceptación Playwright. Se conservan el bloqueo de endpoints de producción y la aserción de cero pageerror. Este cambio permite aislar la intervención del driver sobre streams de Firestore, sin atribuir el problema a permisos o configuración de producción.
+
+Se comprobó en el driver WebKit de Playwright 1.65 que cualquier route activa `Network.addInterception` con patrón `.*`, aun cuando el callback excluya loopback. Por ello el último ajuste retira completamente la interceptación del navegador: Apps Script usa un endpoint local opt-in en el build demo, proxy HTTP al Code.gs real y observación pasiva de solicitudes. Se comprueba que no aparezcan endpoints externos no autorizados; siguen las aserciones de cero pageerror. La configuración local exige proyecto demo, emuladores, origen/puerto fijos y production=false; se agregaron pruebas de esos límites. El build de producción conserva la URL alojada y su validación original.
+
+Antes de cualquier registro o mutación, cada E2E abre Home y exige la marca DOM del Firebase demo conectado. Un build equivocado no llega a crear cuentas ni partidas. FirebaseService impide reutilizar una app de proyecto real en modo emulado. Esta validación reemplaza la interceptación como protección de aislamiento, junto a los hosts/proyecto obligatorios del servidor y los emuladores.
+
+La compilación de producción final aprobó con 697.74 kB iniciales y 175.94 kB de transferencia estimada. Se comprobó que los assets referidos existan y que no aparezca la API key demo del entorno e2e en los archivos JS de producción.
