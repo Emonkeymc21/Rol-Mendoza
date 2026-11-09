@@ -12,6 +12,7 @@ async function isolate(context:BrowserContext) {
     if(['127.0.0.1','localhost'].includes(url.hostname)||['data:','blob:'].includes(url.protocol))return route.continue();
     // Public font assets and Firebase's mobile popup resolver bootstrap. Auth/data endpoints remain forbidden.
     if(['apis.google.com','fonts.googleapis.com','fonts.gstatic.com'].includes(url.hostname)&&route.request().method()==='GET')return route.continue();
+    if(url.hostname==='unpkg.com'&&/^\/material-components-web@10(?:\.\d+\.\d+)?\/dist\/material-components-web\.min\.(js|css)$/.test(url.pathname)&&route.request().method()==='GET')return route.continue();
     throw new Error(`External access forbidden in isolated QA: ${url.origin}${url.pathname} (${route.request().resourceType()})`);
   });
 }
@@ -24,6 +25,9 @@ async function register(page:Page,name:string,role:'DM'|'PLAYER',returnUrl='/per
   await control(page,'confirmPassword').fill(password);
   await control(page,'terms').check();
   await page.getByRole('button',{name:'Crear cuenta y completar perfil'}).click();
+  await completeProfile(page,name,role,returnUrl);
+}
+async function completeProfile(page:Page,name:string,role:'DM'|'PLAYER',returnUrl:string){
   await expect(page).toHaveURL(/completar-perfil/);
   await expect(control(page,'firstName')).toBeVisible();
   await control(page,'firstName').fill(name);await control(page,'lastName').fill('Aislada');
@@ -112,7 +116,10 @@ test('DM publishes, player registers and requests, DM accepts and manages, playe
   await control(page,'title').fill('Aventura QA verificada');await page.getByRole('button',{name:'Guardar cambios',exact:true}).click();await expect(page).toHaveURL(/mis-partidas/);
   entry=page.locator('.my-game-entry').filter({hasText:'Aventura QA verificada'});
   await entry.getByRole('button',{name:'Cerrar inscripciones',exact:true}).click();await expect(entry).toContainText('Inscripciones pausadas');
+  expect((await page.request.post(`${api}/advance-cache-clock`)).ok()).toBeTruthy();
   await entry.getByRole('button',{name:'Reabrir inscripciones',exact:true}).click();
+  await expect(entry.locator('.status-pill')).toHaveText('Activa');
+  await expect(entry.getByRole('button',{name:'Cerrar inscripciones',exact:true})).toBeEnabled();
   await logout(page);await login(page,'Player',`/partidas/${id}`);
   await expect(page.getByText('¡Te aceptaron en esta partida!',{exact:false})).toBeVisible();
   await expect(page.getByRole('link',{name:/Escribir por WhatsApp/})).toHaveAttribute('href',/https:\/\/wa.me\/5492615551234/);
@@ -128,4 +135,19 @@ test('consecutive bots and humans keep no-store and never disclose private data'
   }
   const missing=await request.get(`${api}/compartir/partida/PRT-MISSING`,{headers:{'User-Agent':'WhatsApp'},maxRedirects:0});expect(missing.status()).toBe(404);
   const invalid=await request.get(`${api}/compartir/partida/ab`,{maxRedirects:0});expect(invalid.status()).toBe(400);expect(invalid.headers()['cache-control']).toBe('private, no-store');
+});
+
+test('Google popup and browser session on Auth emulator, without real OAuth',async({page})=>{
+  await page.goto('/ingresar?returnUrl=%2Fpartidas%2FPRT-DEMO-BASE');
+  const popupPromise=page.waitForEvent('popup');
+  await page.getByRole('button',{name:'Continuar con Google',exact:false}).click();
+  const popup=await popupPromise;
+  await popup.getByRole('button',{name:'Add new account'}).click();
+  await popup.locator('#email-input').fill('google-ui@example.test');
+  await popup.locator('#display-name-input').fill('Google Aislada');
+  await popup.locator('#sign-in').click();
+  await completeProfile(page,'Google','PLAYER','/partidas/PRT-DEMO-BASE');
+  await page.reload();
+  await expect(page.getByRole('button',{name:'Solicitar unirme',exact:true})).toBeVisible();
+  await expect(page.locator('app-header')).toContainText('Google');
 });

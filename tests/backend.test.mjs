@@ -32,6 +32,16 @@ function request(who,gameId){const result=post(who,'joinGame',{gameId,message:'Q
 function resolve(requestId,status='APPROVED'){const result=post('dm','resolveJoinRequest',{requestId,status});assert.equal(result.ok,true,JSON.stringify(result));return result.data;}
 
 describe('actual Apps Script business logic with emulated Auth/Firestore and in-memory Sheets', {concurrency:false}, () => {
+  it('enforces the status rate limit and permits reopening after its cooldown', () => {
+    const id=createGame();
+    assert.equal(post('dm','setGameStatus',{gameId:id,status:'PAUSED'}).ok,true);
+    const rapid=post('dm','setGameStatus',{gameId:id,status:'ACTIVE'});
+    assert.equal(rapid.ok,false);assert.match(rapid.error,/Esperá unos segundos/);
+    api.advanceCacheTime(4000);
+    assert.equal(post('dm','setGameStatus',{gameId:id,status:'ACTIVE'}).ok,true);
+    assert.equal(api.get({action:'game',gameId:id}).data.estado,'ACTIVE');
+  });
+
   it('keeps API 8.0.0 and denies unauthenticated or player-only publication', () => {
     assert.equal(api.get({action:'health'}).data.version,'8.0.0');
     assert.equal(post('', 'createGame',gameInput).ok,false);

@@ -2,7 +2,7 @@ name: Cumbre20 quality gates
 on:
   pull_request:
   push:
-    branches: [main, codex/cumbre20-phase-4-1]
+    branches: [main]
 permissions:
   contents: read
 concurrency:

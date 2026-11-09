@@ -76,3 +76,60 @@ Playwright contiene 12 escenarios (desktop Chromium/WebKit, Android Chromium e i
 ### Carga diferida
 
 Se conservaron NgModules. Home permanece en la carga inicial; el resto de páginas utiliza módulos por ruta. Las rutas, guards y metadatos originales se conservan. Se adaptó la detección de edición de perfil al padre de la ruta vacía del módulo. Producción: 697.30 kB iniciales / 175.68 kB de transferencia estimada frente a 852.00 / 190.79 originales. Ya no aparece la advertencia inicial de 750 kB. Permanece Home SCSS 15.98 kB frente al presupuesto de 13 kB; los límites no cambiaron. Se descartó una alternativa de CSS que aumentaba el tamaño. Vitest y contratos existentes siguen aprobados.
+
+## Resultado de dependencias
+
+| Componente | Base estable | Rama migrada |
+|---|---|---|
+| Angular | 16.2.12 | 22.2.5 |
+| Angular CLI / build | 16.2.16 / build-angular | 22.2.6 / @angular/build |
+| Firebase modular | 10.14.1 | 13.2.0 |
+| TypeScript | 5.1.6 | 6.0.3 |
+| Node para despliegue y CI | no fijado en engines | 24.x |
+| Tailwind | 3.4.19 | 3.4.19 |
+| RxJS | 7.8.2 | 7.8.2 |
+| Zone.js | 0.13.3 | 0.15.1 |
+| Pruebas de componentes | Karma/Jasmine | Vitest 5.1.0 / jsdom 31.0.0 |
+
+`npm outdated` se ejecutó antes y después. Permanecen ofertas de versiones mayores de Tailwind, TypeScript y Zone.js. TypeScript 7 queda fuera del rango de Angular 22; no se requiere cambiar el diseño Tailwind ni el modo de detección de cambios para corregir la auditoría. No hay avisos de seguridad sin resolver en el árbol auditado. Ver [inventario de 75 paquetes y avisos](qa/dependency-audit.md) y JSON originales/conclusivos en `docs/qa`.
+
+## Alcance de pruebas
+
+- 22 pruebas Vitest ejecutadas: se conservaron las dos originales y se agregaron guards, normalización de contactos, continuidad tras email/Google y Web Share/copiar/WhatsApp.
+- 28 pruebas con emuladores: tres SDK Auth/Firestore, once de operaciones Apps Script y catorce de reglas Firestore. Las primeras 27 se ejecutaron con Firebase 10, 11, 12 y 13; la prueba adicional de rate limit se ejecutó con Firebase 13. Auth registra/verifica email, recupera contraseñas, inicia/cierra sesión y fuerza renovación de token. Google se prueba con un token emulado, sin OAuth real.
+- Las reglas se ejecutan en el emulador, no sólo mediante patrones de texto: visitante, perfil ajeno, escrituras backend protegidas, solicitudes, notificaciones, contacto habilitado sólo a la pareja aprobada, revocación por bloqueo, perfiles incompletos/inactivos y comunidades.
+- Apps Script ejecuta el `Code.gs` versionado. Solamente se adaptan SpreadsheetApp, caché, lock y transporte a infraestructura local. Publicar, editar, solicitar, duplicados, aceptar/rechazar, último cupo, eliminación de participante, estados y compensación de Sheets ante error Firestore se prueban con Auth/Firestore emulados. No equivale a ejecutar la infraestructura alojada de Google Sheets/Apps Script.
+- Los contratos del endpoint de compartir y las comprobaciones estáticas existentes se conservan como controles adicionales, separados de las pruebas reales anteriores.
+- Playwright ejecuta los flujos de UI con la aplicación, SDK, emuladores y Apps Script local. Hay 16 escenarios distribuidos en cuatro proyectos: desktop Chromium, Android Chromium, desktop WebKit e iPhone WebKit. Los resultados definitivos se registran más abajo una vez completado CI.
+
+### Aislamiento
+
+No se modificaron `firestore.rules`, índices, `Code.gs`, entornos de producción ni el contrato API 8.0.0. No se crearon datos de prueba en producción. Los tests Node exigen hosts 127.0.0.1 y el SDK de UI sólo activa emuladores con compilación e2e, proyecto `demo-cumbre20` y URL local. Playwright bloquea otros endpoints; permite los assets públicos de fuentes y el bootstrap de Google requerido por Firebase móvil. Los tokens y las cuentas en trazas son exclusivamente emulados.
+
+### Incidencias de la infraestructura de pruebas resueltas
+
+La primera ejecución Chromium pasó las páginas públicas y compartir, pero detectó un selector que asumía un atributo HTML `value` en radios con binding Angular. Se cambió a selección por rol y nombre accesible. Los navegadores móviles/WebKit activan el bootstrap de Google: se permitió ese recurso público sin habilitar endpoints reales de Auth/Firestore. WebKit no admite cumplir una ruta interceptada con 302; el endpoint se prueba con proxy HTTP real del servidor de desarrollo. Se acotó el botón de logout al encabezado porque el perfil tiene otro y el menú desktop usa role=menuitem.
+
+## Rendimiento observado
+
+| Medida de build de producción | Angular 16 / Firebase 10 | Angular 22 / Firebase 13 |
+|---|---:|---:|
+| Inicial, Home incluido | 852.00 kB | 697.30 kB |
+| Transferencia inicial estimada por CLI | 190.79 kB | 175.68 kB |
+| Firestore diferido | 340.81 kB | 474.51 kB |
+| SCSS Home | 15.92 kB | 15.98 kB |
+
+El inicial baja 18.2% y su transferencia estimada 7.9%. Firestore moderno crece 39.2%; sigue en un chunk separado y se limita mediante exportaciones modulares explícitas. No se presenta esa subida como una mejora. La carga diferida evita descargar los formularios y pantallas secundarias al entrar en Home. No se cambiaron presupuestos. Permanece una advertencia SCSS de Home, 2.98 kB sobre 13 kB. No hay una medición de Core Web Vitals de usuarios reales ni una comparación de latencia móvil física; los tamaños no equivalen a esas métricas.
+
+## Límites que requieren acceso real
+
+- Google OAuth real, entrega real de email y prueba con cuentas autorizadas conectadas a la infraestructura alojada.
+- Teclado virtual, notch/safe areas de hardware, hoja nativa de compartir y persistencia tras cerrar la app/navegador en Android/iOS físicos. [Checklist específico](qa/physical-device-checklist.md).
+- Acceso al preview protegido de Vercel: el despliegue de esta rama compiló como READY, pero `web_fetch_vercel_url` devolvió 403 en `read_protection_bypass`. No hay credenciales Vercel CLI/OIDC disponibles en este entorno. Falta autorización de la conexión para el proyecto/equipo; no se deshabilitó protección.
+- Logs privados de producción y de build Vercel: no se certifica su ausencia de errores sin acceso autorizado. La disponibilidad pública se comprueba aparte.
+
+El estado READY acredita el build de Vercel; no se cuenta como prueba funcional de su URL. El criterio de publicación exige revisar ese preview antes de integrar. Por esta limitación, el PR debe permanecer en borrador hasta completar los controles críticos.
+
+La ejecución de navegador confirmó el rechazo de una reapertura en menos de tres segundos, previsto por `rateLimit_`. La prueba ahora avanza únicamente el reloj de la caché local y espera estado Activa antes de logout. Una prueba adicional de backend exige rechazo rápido y éxito tras ese período. No se modificó ni desactivó el límite real. También se incorporó un recorrido Google `signInWithPopup` contra la UI del Auth emulator; su resultado se registra con CI.
+
+Lockfile migrado SHA-256: `b08f39484f4f8563a564d8655707adfa7aedc09cefc8e69d82e50ecb49d8dc05`.

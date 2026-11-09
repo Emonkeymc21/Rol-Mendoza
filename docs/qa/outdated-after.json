@@ -1,0 +1,23 @@
+{
+  "tailwindcss": {
+    "current": "3.4.19",
+    "wanted": "3.4.19",
+    "latest": "4.3.5",
+    "dependent": "cumbre20-phase41",
+    "location": "/workspace/scratch/3ae1204ef7d0/cumbre20-phase41/node_modules/tailwindcss"
+  },
+  "typescript": {
+    "current": "6.0.3",
+    "wanted": "6.0.3",
+    "latest": "7.0.2",
+    "dependent": "cumbre20-phase41",
+    "location": "/workspace/scratch/3ae1204ef7d0/cumbre20-phase41/node_modules/typescript"
+  },
+  "zone.js": {
+    "current": "0.15.1",
+    "wanted": "0.15.1",
+    "latest": "0.16.3",
+    "dependent": "cumbre20-phase41",
+    "location": "/workspace/scratch/3ae1204ef7d0/cumbre20-phase41/node_modules/zone.js"
+  }
+}

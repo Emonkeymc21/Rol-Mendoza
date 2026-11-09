@@ -17,6 +17,9 @@ const server=http.createServer(async (req,res) => {
       }
       api=createAppsScript();return send(res,200,{ok:true});
     }
+    if(url.pathname==='/advance-cache-clock'&&req.method==='POST') {
+      api.advanceCacheTime(4000);return send(res,200,{ok:true});
+    }
     if(url.pathname==='/apps-script') {
       const result=req.method==='POST' ? api.post(JSON.parse(await body(req))) : api.get(Object.fromEntries(url.searchParams));
       return send(res,200,result);
