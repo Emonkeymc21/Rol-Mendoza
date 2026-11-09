@@ -6,8 +6,10 @@ import lighthouse from 'lighthouse';
 import * as chromeLauncher from 'chrome-launcher';
 const directory='audit-results/'+(process.env.CUMBRE20_AUDIT_LABEL||'after');await mkdir(directory,{recursive:true});
 const children=['tests/isolated-server.cjs','scripts/serve-audit.cjs'].map(file=>spawn(process.execPath,[file],{stdio:'inherit',env:{...process.env,CUMBRE20_TEST_MODE:'1'}}));
+if(process.env.CUMBRE20_AUDIT_LABEL!=='baseline')children.push(spawn(process.execPath,['dist/audit/server/server.mjs'],{stdio:'inherit',env:{...process.env,PORT:'4300',CUMBRE20_TEST_MODE:'1'}}));
 async function ready(url){for(let n=0;n<100;n++){try{if((await fetch(url)).ok)return;}catch{}await new Promise(r=>setTimeout(r,200));}throw Error('Server did not start: '+url);}
 try{
+ if(process.env.CUMBRE20_AUDIT_LABEL!=='baseline')await ready('http://127.0.0.1:4300');
  await ready('http://127.0.0.1:4401/health');await ready('http://127.0.0.1:4200');
  if(!(await fetch('http://127.0.0.1:4401/reset',{method:'POST'})).ok)throw Error('Unable to seed demo audit');
  const metrics=[];
@@ -37,5 +39,6 @@ try{
    }
   }
  }finally{await browser.close();}
- await writeFile(`${directory}/summary.json`,JSON.stringify({metrics,checks},null,2));console.log('AUDIT_SUMMARY',JSON.stringify({metrics,checks:checks.map(c=>({name:c.name,route:c.route,fits:c.fits,violations:c.violations.map(v=>v.id)}))}));
+ await writeFile(`${directory}/summary.json`,JSON.stringify({metrics,checks},null,2));console.log('AUDIT_SUMMARY',JSON.stringify({metrics,checks:checks.map(c=>({name:c.name,theme:c.theme,route:c.route,fits:c.fits,violations:c.violations.map(v=>v.id)}))}));
+ if(process.env.CUMBRE20_AUDIT_LABEL!=='baseline' && checks.some(c=>c.fits===false || c.violations.length))throw Error('Accessibility or overflow regression: inspect summary.json');
 }finally{children.forEach(c=>c.kill('SIGTERM'));}

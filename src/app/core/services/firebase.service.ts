@@ -37,7 +37,9 @@ export class FirebaseService {
     const app = this.app;
     if (!app || typeof window === 'undefined') return Promise.reject(new Error('Auth requiere un navegador.'));
     return this.authReady ??= import('./auth-api').then(async api => {
-      const auth = api.getAuth(app);
+      // Same persistence options as getAuth, without eager OAuth iframe/GAPI work.
+      // The popup resolver is supplied explicitly when the user chooses Google.
+      const auth = api.initializeAuth(app, {persistence: [api.indexedDBLocalPersistence, api.browserLocalPersistence, api.browserSessionPersistence]});
       if (this.emulators) {
         api.connectAuthEmulator(auth, `http://${this.emulators.host}:${this.emulators.authPort}`);
         document.documentElement.dataset['emulatorProject'] = app.options.projectId;

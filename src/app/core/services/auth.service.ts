@@ -86,7 +86,7 @@ export class AuthService {
     await this.firebase.persistenceReady;
     const provider = new this.authApi!.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    const credential = await this.authApi!.signInWithPopup(this.requireAuth(), provider);
+    const credential = await this.authApi!.signInWithPopup(this.requireAuth(), provider, this.authApi!.browserPopupRedirectResolver);
     return this.finishAuthentication(credential.user);
   }
 

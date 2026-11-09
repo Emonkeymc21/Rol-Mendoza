@@ -3,12 +3,14 @@ import {observeBrowserErrors} from './browser-errors';
 const password='Emulator-only-123!';
 const api='http://127.0.0.1:4401';
 const app='http://127.0.0.1:4200';
+const observedRequests=new WeakMap<BrowserContext,string[]>();
 const unexpectedRequests=new WeakMap<BrowserContext,string[]>();
 const browserErrors=new WeakMap<Page,Awaited<ReturnType<typeof observeBrowserErrors>>>();
 async function isolate(context:BrowserContext) {
-  const unexpected:string[]=[];unexpectedRequests.set(context,unexpected);
+  const unexpected:string[]=[];unexpectedRequests.set(context,unexpected);const observed:string[]=[];observedRequests.set(context,observed);
   // Observe without interception: WebKit's driver otherwise pauses every local stream.
   context.on('request',request=>{
+    observed.push(request.url());
     const url=new URL(request.url());
     if(['127.0.0.1','localhost'].includes(url.hostname)||['data:','blob:'].includes(url.protocol))return;
     if(['apis.google.com','fonts.googleapis.com','fonts.gstatic.com'].includes(url.hostname)&&request.method()==='GET')return;
@@ -86,6 +88,7 @@ test('public pages, filters, share sheet and safe mobile layout',async({page},in
   const rect=await sheet.boundingBox();expect(rect).not.toBeNull();expect(rect!.x).toBeGreaterThanOrEqual(0);expect(rect!.x+rect!.width).toBeLessThanOrEqual(page.viewportSize()!.width+1);
   await page.screenshot({path:info.outputPath('share.png'),fullPage:true});await page.keyboard.press('Escape');await expect(sheet).toBeHidden();
   for(const route of ['/ingresar','/registrarme','/comunidades','/como-funciona']){await page.goto(route);await expect(page.locator('h1')).toBeVisible();await fits(page);}
+  expect((observedRequests.get(page.context())||[]).filter(url=>url.startsWith('https://apis.google.com/'))).toEqual([]);
 });
 test('DM publishes, player registers and requests, DM accepts and manages, player sees private contact',async({page},info)=>{
   await register(page,'Master','DM');
@@ -208,6 +211,8 @@ test('public Angular HTML is readable without JavaScript and private routes stay
  expect(html).not.toMatch(/fixture@example.test|whatsappNumber|5492615551234|idToken/);
  const list=await request.get('/partidas');expect(await list.text()).toContain('Mesa pública de prueba');
  const communities=await request.get('/comunidades');expect(await communities.text()).toContain('Espacio de rol de prueba');
+ const home=await request.get('/');expect(await home.text()).toMatch(/<h1/);
+ const publish=await request.get('/partidas/nueva');expect(publish.status()).toBe(200);expect(publish.headers()['x-robots-tag']).toBe('noindex, nofollow');
  const privatePage=await request.get('/perfil');expect(privatePage.headers()['x-robots-tag']).toBe('noindex, nofollow');expect(await privatePage.text()).not.toMatch(/fixture@example.test|whatsappNumber/);
  const missing=await request.get('/partidas/PRT-MISSING');expect(missing.status()).toBe(404);
 });

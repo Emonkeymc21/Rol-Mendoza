@@ -107,20 +107,13 @@
               "outputMode": "static"
             },
             "audit": {
-              "outputPath": {
-                "base": "dist/audit",
-                "browser": ""
-              },
+              "outputPath": "dist/audit",
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.e2e.ts"
                 }
-              ],
-              "server": false,
-              "ssr": false,
-              "prerender": false,
-              "outputMode": "static"
+              ]
             },
             "ssrtest": {
               "outputPath": "dist/ssr-test",
