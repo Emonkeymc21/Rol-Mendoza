@@ -12,7 +12,16 @@ const extendedRoutes = [
 ] as const;
 
 
+async function hideEmulatorOnlyBanner(page: Page) {
+  // Firebase Auth emulator injects a fixed test warning that does not exist
+  // in production. Omit this diagnostic overlay from visual evidence only.
+  await page.locator('.firebase-emulator-warning').evaluateAll(elements => {
+    for (const element of elements) (element as HTMLElement).style.visibility = 'hidden';
+  });
+}
+
 async function captureRealPage(page: Page, path: string) {
+  await hideEmulatorOnlyBanner(page);
   // Home sections use IntersectionObserver; reveal them by actual scrolling before
   // taking a full-page image. A full-page capture alone never triggers observers.
   await page.evaluate(async () => {
@@ -66,6 +75,7 @@ for (const [width, height] of widths) {
       await toggle.click();
       await expect(page.getByRole('navigation', { name: 'Navegación móvil' })).toBeVisible();
       await expect(page.locator('body')).toHaveClass(/c20-mobile-menu-open/);
+      await hideEmulatorOnlyBanner(page);
       await page.screenshot({ path: info.outputPath('drawer-' + width + '.png'), animations: 'disabled' });
       await page.getByRole('button', { name: 'Cerrar menú tocando fuera' }).click({ position: { x: width > 360 ? width - 12 : width - 7, y: 40 } });
       await expect(page.getByRole('navigation', { name: 'Navegación móvil' })).toBeHidden();
@@ -93,6 +103,7 @@ for (const [width, height] of widths) {
       const sheetBox = await sheet.boundingBox();
       expect(sheetBox).not.toBeNull();
       expect(Math.abs(sheetBox!.y + sheetBox!.height - height)).toBeLessThanOrEqual(2);
+      await hideEmulatorOnlyBanner(page);
       await page.screenshot({ path: info.outputPath('compartir-' + width + '.png'), animations: 'disabled' });
       await page.getByRole('menuitem', { name: 'Cerrar opciones para compartir' }).click();
       await expect(sheet).toBeHidden();
