@@ -47,9 +47,15 @@ async function assertFits(page: Page, width: number) {
         return box.right > innerWidth + 2 || box.left < -2;
       })
       .slice(0, 8)
-      .map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 100) }))
+      .map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 100) })),
+    scrollableChildren: [...document.querySelectorAll('body *')]
+      .filter(element => element.scrollWidth > element.clientWidth + 3)
+      .slice(0, 12)
+      .map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 80), scroll: element.scrollWidth, client: element.clientWidth })),
+    root: { scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth, bodyScroll: document.body.scrollWidth, bodyClient: document.body.clientWidth },
+    scrollBy: (() => {const y = scrollY; scrollTo(500, y); const x = scrollX; scrollTo(0, y); return x;})()
   }));
-  expect(state.scrollWidth, JSON.stringify(state.overflowElements)).toBeLessThanOrEqual(width + 1);
+  expect(state.scrollWidth, JSON.stringify({ overflow: state.overflowElements, children: state.scrollableChildren, root: state.root, scrollBy: state.scrollBy })).toBeLessThanOrEqual(width + 1);
   expect(state.viewport).toBe(width);
 }
 
