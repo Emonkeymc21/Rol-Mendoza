@@ -17,6 +17,7 @@ import { ThemePreference, ThemeService } from '../../../core/services/theme.serv
 export class HeaderComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
+  private readonly mobileViewportQuery = '(max-width: 767px), (min-width: 768px) and (max-width: 1023px) and (max-height: 500px) and (orientation: landscape) and (hover: none) and (pointer: coarse)';
   menuOpen = false;
   accountMenuOpen = false;
   profile: UserProfile | null = null;
@@ -48,7 +49,7 @@ export class HeaderComponent {
   }
   private syncMobileScrollLock(): void {
     const view = this.document.defaultView;
-    const mobile = typeof view?.matchMedia === 'function' && view.matchMedia('(max-width: 767px)').matches;
+    const mobile = typeof view?.matchMedia === 'function' && view.matchMedia(this.mobileViewportQuery).matches;
     this.document.body.classList.toggle('c20-mobile-menu-open', this.menuOpen && mobile);
   }
   @HostListener('window:resize')
@@ -57,7 +58,7 @@ export class HeaderComponent {
   trapMobileNavigationFocus(event: Event): void {
     const keyEvent = event as KeyboardEvent;
     const view = this.document.defaultView;
-    if (!this.menuOpen || typeof view?.matchMedia !== 'function' || !view.matchMedia('(max-width: 767px)').matches) return;
+    if (!this.menuOpen || typeof view?.matchMedia !== 'function' || !view.matchMedia(this.mobileViewportQuery).matches) return;
     const items = Array.from(this.document.querySelectorAll<HTMLElement>('#mobile-navigation a, #mobile-navigation button:not([disabled])'));
     const first = items[0];
     const last = items[items.length - 1];
