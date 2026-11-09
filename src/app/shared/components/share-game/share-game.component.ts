@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Game } from '../../../core/models/game.model';
 import { GameShareService } from '../../../core/services/game-share.service';
 
@@ -10,6 +10,7 @@ import { GameShareService } from '../../../core/services/game-share.service';
     standalone: false
 })
 export class ShareGameComponent {
+  @ViewChild('shareTrigger') private shareTrigger?: ElementRef<HTMLButtonElement>;
   @Input({ required: true }) game!: Game;
   @Input() compact = false;
   open = false;
@@ -43,6 +44,12 @@ export class ShareGameComponent {
     }
   }
 
+  closeAndRestoreFocus(event: MouseEvent): void {
+    event.stopPropagation();
+    this.open = false;
+    this.shareTrigger?.nativeElement.focus();
+  }
+
   stop(event: MouseEvent): void {
     event.stopPropagation();
   }
@@ -54,6 +61,8 @@ export class ShareGameComponent {
 
   @HostListener('document:keydown.escape')
   closeWithKeyboard(): void {
+    const wasOpen = this.open;
     this.open = false;
+    if (wasOpen) this.shareTrigger?.nativeElement.focus();
   }
 }
