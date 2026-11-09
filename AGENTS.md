@@ -15,6 +15,8 @@
 - Home sigue en la carga inicial. Las páginas secundarias usan NgModules con carga diferida; conservar guards y datos de rutas. Perfil/editar detecta el path del padre del módulo.
 - No integrar una migración con comprobaciones críticas fallidas o sin acceso al preview. Las comprobaciones físicas pendientes se registran en `docs/qa/physical-device-checklist.md`.
 
-- Estado Fase 4.1 al 2026-11-09: PR #24 borrador, Angular 22/Firebase 13 y auditorías cero en la rama. Pendientes de cierre: errores WebKit Listen/Write del emulador reproducidos en Linux/macOS y acceso Vercel 403. Conservar CI estricto; no publicar hasta resolverlos o verificar técnicamente su alcance.
+- Fase 4.1: Angular 22/Firebase 13 y auditorías cero. El usuario autorizó integrar y publicar después del QA. Consultar PR #24, CI y Vercel para el SHA/estado actual; no asumir que una referencia histórica sigue siendo producción.
 
-- Reverificación 9/11: acceso Vercel habilitado. Se corrigió el hash CSP del script Beasties generado, que dejaba CSS en media=print en el preview. Ejecutar `npm run build:prod` y `npm run test:production-csp` juntos; conservar CSP estricta y critical CSS. WebKit sigue pendiente; consultar el último CI/preview del PR #24.
+- Reverificación 9/11: acceso Vercel habilitado. Se corrigió el hash CSP del script Beasties generado, que dejaba CSS en media=print en el preview. Ejecutar `npm run build:prod` y `npm run test:production-csp` juntos; conservar CSP estricta y critical CSS. Consultar el último CI/preview del PR #24 para el estado de aceptación.
+
+- WebKit: el detector E2E comprueba ErrorEvent y unhandledrejection reales en todas las páginas, conserva cada pageerror y rechaza los inesperados. Sólo separa el diagnóstico nativo Fetch API cannot load http de canales Firestore del proyecto demo en loopback, confirmado por evidencia y Firebase #4527. No ampliar esa clasificación. El control negativo provoca una excepción con texto idéntico y una promesa rechazada y exige que el detector falle. No usar flags privados del SDK ni cambios de permisos para estos avisos.

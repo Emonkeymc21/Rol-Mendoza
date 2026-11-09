@@ -1,0 +1,36 @@
+{
+  "workflowRun": 42629948055,
+  "commit": "462d7110881933893f6014e4079d935b18630d4f",
+  "job": 129203348930,
+  "artifact": 13679379419,
+  "scope": "WebKit macOS, desktop + iPhone preset, before final scoped classification",
+  "functionalNativeExceptions": 0,
+  "recordedProtocolDiagnostics": 44,
+  "protocolKind": "Fetch API cannot load http",
+  "counts": {
+    "desktopPublic": 0,
+    "desktopPlayerDM": 16,
+    "desktopShare": 0,
+    "desktopGoogle": 4,
+    "iphonePublic": 2,
+    "iphonePlayerDM": 17,
+    "iphoneShare": 0,
+    "iphoneGoogle": 5
+  },
+  "negativeControls": {
+    "desktop": {
+      "nativeExceptions": 2,
+      "gateRejected": true,
+      "testPassed": true
+    },
+    "iphone": {
+      "nativeExceptions": 2,
+      "gateRejected": true,
+      "testPassed": true
+    }
+  },
+  "chromium": "10/10 passed",
+  "productionCodeChangedFrom5142b3a": false,
+  "diagnosticsSuppressed": false,
+  "explanation": "WebKit JavaScript-source network console diagnostics are promoted by Playwright to pageerror; no native ErrorEvent or unhandledrejection in the functional flows."
+}

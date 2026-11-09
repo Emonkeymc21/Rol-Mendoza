@@ -165,12 +165,15 @@ test('browser error gate rejects real exceptions and unhandled promises',async({
   const probe=await observeBrowserErrors(checked,info,'probe-negative-control');
   await checked.goto('data:text/html,<title>Isolated error probe</title>');
   await checked.evaluate(()=>{
-    setTimeout(()=>{throw new Error('CUMBRE20_EXPECTED_EXCEPTION');},0);
+    // A genuine exception with identical network-diagnostic text must fail too.
+    const lookalike=new Error('/127.0.0.1:8080/google.firestore.v1.Firestore/Listen/channel?database=projects%2Fdemo-cumbre20%2Fdatabases%2F(default) due to access control checks.');
+    lookalike.name='Fetch API cannot load http';
+    setTimeout(()=>{throw lookalike;},0);
     setTimeout(()=>{void Promise.reject(new Error('CUMBRE20_EXPECTED_REJECTION'));},0);
   });
   await expect.poll(()=>probe.exceptions.length).toBe(2);
   expect(probe.exceptions.map(error=>error.kind).sort()).toEqual(['error','unhandledrejection']);
-  expect(probe.protocol.some(error=>error.message.includes('CUMBRE20_EXPECTED_EXCEPTION'))).toBe(true);
+  expect(probe.protocol.some(error=>error.message.includes('due to access control checks.'))).toBe(true);
   await expect(probe.assertClean()).rejects.toThrow();
   await checked.close();
 });

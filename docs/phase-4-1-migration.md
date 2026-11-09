@@ -1,10 +1,10 @@
 # CUMBRE20 — Fase 4.1
 
-**Estado al 2026-11-09: migración implementada en rama; lanzamiento pendiente.** Angular 22.2.5, Firebase 13.2.0, TypeScript 6.0.3 y auditorías completas/de producción en cero.
+**Estado técnico al 2026-11-09: migración implementada y publicación autorizada, sujeta al CI de aceptación.** Angular 22.2.5, Firebase 13.2.0, TypeScript 6.0.3 y auditorías completas/de producción en cero.
 
-El PR #24 permanece en borrador. WebKit conserva errores de transporte reproducidos en Linux y macOS. El acceso a Vercel se habilitó en la reverificación del 9/11; permitió detectar y corregir el bloqueo de CSS generado por Angular 22 bajo la CSP existente. Ver la sección de reverificación y el CI del PR para el resultado final. No se declara aprobado el QA integral.
+La revisión final identificó que WebKit/Playwright estaba clasificando diagnósticos de red gestionados como excepciones de la aplicación. El detector ahora comprueba también eventos nativos y promesas rechazadas y tiene un control negativo que exige rechazar errores reales, incluso con texto idéntico. Los diagnósticos completos se conservan. Vercel ya está autorizado y se corrigió la regresión CSS/CSP. Consultar el PR #24 para el CI, SHA y despliegue de aceptación; los registros anteriores se conservan como historial. OAuth real y hardware físico siguen fuera del alcance demostrado.
 
-Producción y main siguen en `7e6a0039f4cf9413fa035ac1e65a29c4702ee02d`. El trabajo y el procedimiento para continuar quedan preservados en esta rama.
+La base estable previa a integrar es `7e6a0039f4cf9413fa035ac1e65a29c4702ee02d`. El PR y Vercel registran el estado actual de publicación. La referencia recuperable conserva esa base y el lockfile original.
 
 ## Base y recuperación
 
@@ -187,7 +187,7 @@ WebKit macOS reprodujo los mismos errores, por lo que no se considera un problem
 
 La traza del timeout intermitente del popup Android mostró que Add new account se pulsaba antes de que el JavaScript externo de la UI oficial del emulador instalara sus handlers: el input seguía oculto y `fill` agotaba el tiempo. Se espera carga completa de la URL local del widget antes del click. No se aumentaron tiempos ni se añadieron reintentos para ocultarlo.
 
-## Decisión de cierre técnico
+## Decisión de cierre técnico anterior (historial, reemplazada por la aceptación posterior)
 
 La alternativa pública de long polling no eliminó los errores WebKit y se retiró, junto con sus siete casos unitarios de selección de transporte que habían pasado. Las pruebas funcionales fallidas se mantienen intactas y siguen bloqueando CI. No se conserva una configuración experimental sin beneficio verificado. El código final utiliza el transporte predeterminado del SDK.
 
@@ -228,3 +228,20 @@ La observación real del preview encontró la hoja global en `media=print`, sin 
 Se agrega únicamente ese SHA-256 a script-src. Se conservan critical CSS, todos los orígenes y restricciones, sin unsafe-inline/unsafe-eval para scripts ni nonce fijo. No cambia el bundle. Se incorpora `npm run test:production-csp` después del build en CI: analiza los scripts y handlers efectivamente emitidos y exige autorización exacta en la CSP de Vercel. Detecta futuros cambios del bundler que rompan esa autorización; el servidor e2e de desarrollo no cubría este caso. La prueba falló antes y pasó después de la corrección. Referencia oficial: https://angular.dev/best-practices/security#static-hosting-without-per-response-nonces .
 
 El SHA y los resultados del nuevo preview/CI se registran en el PR #24. El acceso 403 deja de ser un pendiente; WebKit y OAuth/dispositivos reales continúan abiertos. Esta corrección se conserva en la misma rama de migración y no se integra en producción con CI crítico fallido.
+
+
+## Corrección del detector WebKit y aceptación para publicación
+
+El usuario autorizó corregir los fallos y publicar la migración. La alternativa de pausar/restablecer Firestore en pagehide/pageshow pasó 32 pruebas unitarias, pero no eliminó los diagnósticos en WebKit. Se retiró completamente, con sus cuatro pruebas específicas; se conservan las 28 pruebas originales de la rama. El código de aplicación vuelve al transporte normal del SDK, sin flags privados, cambios de reglas ni de datos.
+
+La ejecución 42629948055 añadió observación de `window.error` y `unhandledrejection` en todos los documentos, además de conservar los eventos pageerror de Playwright. Los ocho escenarios funcionales WebKit completaron sus aserciones de UI con **cero excepciones nativas**. Se registraron 44 diagnósticos Fetch API cannot load http de canales demo, que Playwright convertía en pageerror. Las pilas pertenecen a la llamada fetch de WebChannel/Zone, no a una excepción lanzada. El control negativo de ambos proyectos WebKit capturó dos errores nativos provocados y rechazó la comprobación, como se esperaba. Chromium aprobó 10/10 en esa ejecución. El registro de esta etapa fallida permite comprobar que los avisos no fueron borrados: `docs/qa/webkit-error-classification.json`.
+
+Se verificó el código de WebKit y de Playwright: los mensajes de consola de origen JavaScript y nivel error se promueven a pageerror aunque no se haya emitido ErrorEvent. Firebase ya documenta estos avisos gestionados al abandonar documentos en su incidencia #4527. Esta evidencia explica el falso criterio de aceptación; no se lo atribuye a permisos de Firestore.
+
+La aceptación final conserva todos los recorridos, reglas, escrituras y comprobaciones de privacidad. El observador rechaza toda excepción o promesa rechazada real y cualquier error de protocolo inesperado. Separa exclusivamente el diagnóstico con tipo Fetch API cannot load http, URL del emulador 127.0.0.1:8080, canal Listen/Write y proyecto demo-cumbre20, en un motor WebKit real. Fuera de ese alcance sigue fallando. La evidencia JSON incluye los eventos originales, los diagnósticos separados y los errores inesperados.
+
+Hay 20 escenarios en cuatro proyectos (10 Chromium y 10 WebKit). El caso adicional por proyecto provoca una excepción con el mismo nombre/texto de red y una promesa rechazada y exige que el detector falle: la clasificación de protocolo no puede ocultar una excepción real. No se usa preventDefault, no se parchea Firebase, no se rebajan las reglas ni se deshabilita CORS. Se comprueba el motor real del navegador, porque los presets de dispositivos especifican defaultBrowserType y no necesariamente browserName en la configuración.
+
+El CI de aceptación, los artifacts y el deployment definitivo quedan enlazados en el PR #24. Publicar sólo después de aprobar los tres jobs y verificar el preview del mismo SHA. La publicación cambia dependencias/código estático; no migra documentos ni usuarios. La observación física y OAuth con cuentas reales siguen pendientes en el checklist y no se presentan como pruebas aprobadas.
+
+Fuentes primarias: https://github.com/firebase/firebase-js-sdk/issues/4527 y WebKit ThreadableLoader / Playwright WebKit _onConsoleMessage. Los diagnósticos de red conservados no se declaran eliminados del motor; se corrigió su clasificación como fallos no controlados de CUMBRE20.

@@ -24,12 +24,13 @@ export async function observeBrowserErrors(page: Page, info: TestInfo, artifact 
 
   // WebKit reports handled WebChannel network shutdown messages as JavaScript
   // console errors; Playwright promotes every such message to pageerror. They
-  // are not ErrorEvents/unhandledrejections. Keep all evidence and reject every
-  // other protocol error, including matching messages with a real JS stack.
+  // are not ErrorEvents/unhandledrejections. Their stacks describe the fetch
+  // call, not a thrown exception. Keep all evidence and reject every other
+  // protocol error; native exceptions always fail even with matching text.
   // https://github.com/firebase/firebase-js-sdk/issues/4527
   // playwright-core/lib/coreBundle.js: WebKit _onConsoleMessage
   const isWebKitChannelDiagnostic = (error: BrowserError) =>
-    info.project.use.browserName === 'webkit' && !error.stack &&
+    page.context().browser()?.browserType().name() === 'webkit' && error.kind === 'Fetch API cannot load http' &&
     /^\/{1,2}127\.0\.0\.1:8080\/google\.firestore\.v1\.Firestore\/(Listen|Write)\/channel\?/.test(error.message) &&
     error.message.includes('projects%2Fdemo-cumbre20%2Fdatabases%2F(default)') &&
     error.message.endsWith(' due to access control checks.');
