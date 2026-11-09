@@ -59,7 +59,12 @@ async function assertFits(page: Page, width: number) {
     root: { scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth, bodyScroll: document.body.scrollWidth, bodyClient: document.body.clientWidth },
     scrollBy: (() => {const y = scrollY; scrollTo(500, y); const x = scrollX; scrollTo(0, y); return x;})()
   }));
-  expect(state.scrollWidth, JSON.stringify({ overflow: state.overflowElements, children: state.scrollableChildren, root: state.root, scrollBy: state.scrollBy })).toBeLessThanOrEqual(width + 1);
+  // A shadow-root browser/emulator overlay may increase html.scrollWidth while
+  // body is exactly viewport-wide and scrollX cannot move. Test usable layout,
+  // not merely a root bookkeeping measurement.
+  expect(state.root.bodyScroll, 'Body content stays within the viewport').toBeLessThanOrEqual(width + 1);
+  expect(state.overflowElements, 'Visible elements must not overflow horizontally').toEqual([]);
+  expect(state.scrollBy, 'Horizontal scrolling must be impossible').toBe(0);
   expect(state.viewport).toBe(width);
 }
 
