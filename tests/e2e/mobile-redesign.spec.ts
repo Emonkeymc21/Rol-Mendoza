@@ -42,7 +42,7 @@ async function assertFits(page: Page, width: number) {
   // It can increase documentElement.scrollWidth at 320px even when body fits
   // and horizontal scrollX is impossible. Exclude it, never app content.
   await hideEmulatorOnlyBanner(page);
-  const state = await page.evaluate(() => ({
+  const state = await page.evaluate((expectedWidth) => ({
     scrollWidth: document.documentElement.scrollWidth,
     viewport: window.innerWidth,
     overflowElements: [...document.querySelectorAll('main a,main button,main input,main select,main textarea,app-header a,app-header button,app-footer a,app-footer button')]
@@ -62,15 +62,29 @@ async function assertFits(page: Page, width: number) {
       .slice(0, 12)
       .map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 80), scroll: element.scrollWidth, client: element.clientWidth })),
     root: { scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth, bodyScroll: document.body.scrollWidth, bodyClient: document.body.clientWidth },
-    scrollBy: (() => {const y = scrollY; scrollTo(500, y); const x = scrollX; scrollTo(0, y); return x;})()
-  }));
+    scrollBy: (() => {const y = scrollY; scrollTo(500, y); const x = scrollX; scrollTo(0, y); return x;})(),
+    outsideExpected: [...document.querySelectorAll('body *')].map((element) => {
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        tag: element.tagName,
+        className: String(element.className).slice(0, 70),
+        x: Math.round(rect.x), right: Math.round(rect.right),
+        width: Math.round(rect.width),
+        scroll: element.scrollWidth,
+        client: element.clientWidth,
+        position: style.position,
+        overflow: style.overflowX
+      };
+    }).filter(x => x.right > expectedWidth + 2 && x.width > 0).slice(0, 32)
+  }), width);
   // A shadow-root browser/emulator overlay may increase html.scrollWidth while
   // body is exactly viewport-wide and scrollX cannot move. Test usable layout,
   // not merely a root bookkeeping measurement.
   expect(state.root.bodyScroll, 'Body content stays within the viewport').toBeLessThanOrEqual(width + 1);
   expect(state.overflowElements, 'Visible elements must not overflow horizontally').toEqual([]);
   expect(state.scrollBy, 'Horizontal scrolling must be impossible').toBe(0);
-  expect(state.viewport).toBe(width);
+  expect(state.viewport, JSON.stringify({width, outsideExpected:state.outsideExpected, root:state.root})).toBe(width);
 }
 
 for (const [width, height] of widths) {
