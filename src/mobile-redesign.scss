@@ -87,8 +87,11 @@
   /* Header y panel lateral: mantiene el mismo árbol de navegación y rutas. */
   app-header .site-header.site-header {
     border-bottom: 1px solid var(--mobile-copper-line);
-    background: color-mix(in srgb, var(--bg-primary) 96%, transparent);
-    backdrop-filter: blur(18px);
+    background: var(--bg-primary);
+    /* A filter creates a containing block for fixed descendants in Safari/Chrome;
+       the off-canvas drawer must use the viewport instead. */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
   app-header .site-header.site-header .header-row { min-height: 64px; gap: .45rem; padding-inline: clamp(10px, 3.5vw, 16px); }
   app-header .site-header.site-header .brand { gap: .5rem; }
