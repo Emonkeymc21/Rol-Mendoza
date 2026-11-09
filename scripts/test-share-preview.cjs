@@ -36,21 +36,30 @@ function responseRecorder() {
   await handler({ query: { gameId: 'PRT-123' }, headers: { host: 'cumbre20.test', 'user-agent': 'Mozilla/5.0' } }, redirect);
   assert.equal(redirect.statusCode, 302);
   assert.equal(redirect.headers.Location, 'https://cumbre20.test/partidas/PRT-123');
+  assert.equal(redirect.headers['Cache-Control'], 'private, no-store');
 
   global.fetch = async () => ({ ok: true, json: async () => ({ ok: true, data: game }) });
   for (const userAgent of ['WhatsApp/2.0', 'TelegramBot/1.0', 'Discordbot/2.0']) {
     const preview = responseRecorder();
     await handler({ query: { gameId: 'PRT-123' }, headers: { host: 'cumbre20.test', 'user-agent': userAgent } }, preview);
     assert.equal(preview.statusCode, 200);
+    assert.equal(preview.headers['Cache-Control'], 'private, no-store', 'la vista previa no debe quedar en una caché compartida con visitantes humanos');
     assert.match(preview.body, /Sombras &lt;del Aconcagua&gt;/);
     assert.match(preview.body, /summary_large_image/);
     assert.doesNotMatch(preview.body, /privado@example\.com|5492610000000|wa\.me/i);
   }
 
+  const humanAfterPreview = responseRecorder();
+  await handler({ query: { gameId: 'PRT-123' }, headers: { host: 'cumbre20.test', 'user-agent': 'Mozilla/5.0' } }, humanAfterPreview);
+  assert.equal(humanAfterPreview.statusCode, 302);
+  assert.equal(humanAfterPreview.headers.Location, 'https://cumbre20.test/partidas/PRT-123');
+  assert.equal(humanAfterPreview.headers['Cache-Control'], 'private, no-store');
+
   global.fetch = async () => ({ ok: true, json: async () => ({ ok: true, data: { ...game, estado: 'CANCELLED' } }) });
   const cancelled = responseRecorder();
   await handler({ query: { gameId: 'PRT-123' }, headers: { host: 'cumbre20.test', 'user-agent': 'WhatsApp/2.0' } }, cancelled);
   assert.equal(cancelled.statusCode, 404);
+  assert.equal(cancelled.headers['Cache-Control'], 'private, no-store');
   assert.match(cancelled.body, /Partida no disponible/);
   assert.match(cancelled.body, /noindex,nofollow/);
 
@@ -58,11 +67,13 @@ function responseRecorder() {
   const missing = responseRecorder();
   await handler({ query: { gameId: 'PRT-404' }, headers: { host: 'cumbre20.test', 'user-agent': 'TelegramBot/1.0' } }, missing);
   assert.equal(missing.statusCode, 404);
+  assert.equal(missing.headers['Cache-Control'], 'private, no-store');
   assert.match(missing.body, /Buscar otras partidas/);
 
   const invalid = responseRecorder();
   await handler({ query: { gameId: '../private' }, headers: { host: 'cumbre20.test' } }, invalid);
   assert.equal(invalid.statusCode, 400);
+  assert.equal(invalid.headers['Cache-Control'], 'private, no-store');
   console.log('Share preview tests passed.');
 })().catch(error => {
   console.error(error);

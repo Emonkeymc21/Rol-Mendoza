@@ -86,6 +86,8 @@ async function fetchGame(gameId) {
 }
 
 async function handler(req, res) {
+  // La misma URL responde distinto a bots y personas: no compartir su caché.
+  res.setHeader('Cache-Control', 'private, no-store');
   const query = req.query || {};
   const gameId = cleanText(Array.isArray(query.gameId) ? query.gameId[0] : query.gameId);
   if (!/^[A-Za-z0-9_-]{3,120}$/.test(gameId)) {
@@ -98,7 +100,6 @@ async function handler(req, res) {
   if (!SOCIAL_BOT.test(req.headers['user-agent'] || '')) {
     res.statusCode = 302;
     res.setHeader('Location', `${origin}/partidas/${encodeURIComponent(gameId)}`);
-    res.setHeader('Cache-Control', 'private, no-store');
     return res.end();
   }
 
@@ -106,9 +107,6 @@ async function handler(req, res) {
   const unavailable = !game || ['cancelada', 'cancelled'].includes(normalizeStatus(game.estado));
   res.statusCode = unavailable ? 404 : 200;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.setHeader('Cache-Control', unavailable
-    ? 'public, s-maxage=60, stale-while-revalidate=300'
-    : 'public, s-maxage=300, stale-while-revalidate=1800');
   return res.end(renderPage({ origin, gameId, game, unavailable }));
 }
 
