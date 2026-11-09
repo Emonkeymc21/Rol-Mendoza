@@ -10,8 +10,8 @@
 .meta-badge,.status-badge { border:1px solid var(--border);border-radius:var(--radius-xs);background:transparent;padding:.27rem .58rem;color:var(--text-secondary);font-size:.65rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase; }
 .status-active { border-color:var(--success-border);color:var(--success); }
 .status-full { border-color:var(--warning-border);color:var(--warning); }
-.game-card h3 { transition:color .2s ease; }
-.game-card:hover h3 { color:var(--brand-secondary); }
+.game-card .game-card-title { transition:color .2s ease; }
+.game-card:hover .game-card-title { color:var(--brand-secondary); }
 .game-meta { display:grid;gap:.9rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1rem 0; }
 .game-meta > div { display:flex;min-width:0;align-items:flex-start;gap:.7rem;color:var(--brand-primary); }
 .game-meta span { min-width:0; }
@@ -29,7 +29,7 @@
 @media(min-width:768px) {
   .game-meta { grid-template-columns:repeat(2,minmax(0,1fr)); }
   :host-context(.home-game-layout):first-child .card-art { height:255px; }
-  :host-context(.home-game-layout):first-child .game-card h3 { font-size:clamp(1.8rem,3vw,2.55rem); }
+  :host-context(.home-game-layout):first-child .game-card .game-card-title { font-size:clamp(1.8rem,3vw,2.55rem); }
 }
 
 @media(max-width:430px) {

@@ -22,7 +22,7 @@ if (!environment.production && environment.firebase.projectId === 'demo-cumbre20
   if (process.env['CUMBRE20_TEST_CSP']) app.use((_req,res,next)=>{res.setHeader('Content-Security-Policy',process.env['CUMBRE20_TEST_CSP']!);next();});
   app.use('/apps-script', async (req, res, next) => {
     try {
-      const response = await fetch('http://127.0.0.1:4401/apps-script' + (req.url === '/' ? '' : req.url), {method:req.method, body:req.method === 'GET' ? undefined : await new Promise<string>(resolve => {let raw='';req.on('data',chunk=>raw+=chunk);req.on('end',()=>resolve(raw));})});
+      const response = await fetch('http://127.0.0.1:4401/apps-script' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''), {method:req.method, body:req.method === 'GET' ? undefined : await new Promise<string>(resolve => {let raw='';req.on('data',chunk=>raw+=chunk);req.on('end',()=>resolve(raw));})});
       res.status(response.status).type('application/json').send(await response.text());
     } catch (error) {next(error);}
   });

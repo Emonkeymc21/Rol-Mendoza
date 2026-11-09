@@ -46,3 +46,9 @@ Run Actions 42638518692 (commit de instrumentación 291374a): verify, Chromium, 
 Capturas base en el artefacto performance-accessibility-visual de ese run; doce recortes de viewport se conservan en tests/visual para regresión Playwright de Home (mismo Chromium/Ubuntu, ambas paletas). Tolerancia del 1% de píxeles; las diferencias se revisan, no se regeneran referencias para ocultar fallos. Se conservan también capturas completas antes/después de las seis rutas públicas.
 
 Presupuesto Home: se ensayó ViewEncapsulation.None con ámbito app-home; aumentó CSS a 17,64 kB. Se descartó y restauró encapsulación original. No se elevan límites. El aviso original de 15,98/13 kB sigue pendiente de una reducción real que preserve el diseño.
+
+### Ajuste tras verificar Vercel
+
+El preview confirmó HTML completo en detalle y comunidades, pero la raíz estática de Vercel aún entregaba el shell CSR. Se cambia Home a prerender: contenido fijo completo, contadores desconocidos y skeleton honesto, con una única consulta real de actividad al hidratar. Las partidas no se congelan en el build. Esto elimina la dependencia de Apps Script del TTFB de la portada y evita coste de función en esa ruta. Listado y detalles conservan SSR actual por petición. Se comprobó búsqueda GUAYMALLEN, URL resultante y recarga desde Chrome en el preview, además de la apariencia y navegación al detalle.
+
+Lighthouse detectó además WCAG 2.5.3 en la marca del encabezado: aria-label omitía parte del texto visible. Se elimina el aria-label redundante y se conserva el nombre nativo completo. Axe se amplía explícitamente a WCAG 2.1 A y 2.2 A, además de AA. Las tarjetas del listado usan h2; en Home conservan h3 bajo el h2 de su sección, sin cambiar apariencia.

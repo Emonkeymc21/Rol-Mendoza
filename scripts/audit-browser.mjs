@@ -27,7 +27,7 @@ try{
    const requests=[];page.on('request',r=>requests.push(r.url()));
    for(const route of ['/','/partidas','/partidas/PRT-DEMO-BASE','/comunidades','/ingresar','/registrarme']){
     await page.goto('http://127.0.0.1:4200'+route);await page.locator('h1').first().waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1200);
-    const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();
+    const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22a','wcag22aa']).analyze();
     const fits=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1);
     const key=route==='/'?'home':route.replaceAll('/','_');
     await page.screenshot({path:`${directory}/${name}-${key}-${theme}.png`,fullPage:true,animations:'disabled'});

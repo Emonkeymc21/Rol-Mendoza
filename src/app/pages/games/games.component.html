@@ -37,7 +37,7 @@
     <div class="results-ledger mt-8 flex items-center justify-between"><p class="text-sm text-mist"><strong class="text-parchment">{{ (error$ | async) && !allGames.length ? '—' : games.length }}</strong> partidas disponibles</p><span class="inline-flex items-center gap-2 text-sm text-mist"><app-icon name="check" [size]="17"></app-icon> Publicadas por la comunidad</span></div>
     @if (games.length) {
       <div class="mt-5 grid gap-5 lg:grid-cols-2">@for (game of games; track trackGame($index, game)) {
-        <app-game-card [game]="game"></app-game-card>
+        <app-game-card [headingLevel]="2" [game]="game"></app-game-card>
       }</div>
     } @else if (!(error$ | async)) {
       <div class="glass-panel mt-5 rounded-2xl p-10 text-center">

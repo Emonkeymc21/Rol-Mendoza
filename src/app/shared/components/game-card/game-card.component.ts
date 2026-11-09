@@ -10,6 +10,7 @@ import { ProfileService } from '../../../core/services/profile.service';
     standalone: false
 })
 export class GameCardComponent implements OnInit {
+  @Input() headingLevel: 2 | 3 = 3;
   @Input({ required: true }) game!: Game;
   dmProfile?: UserProfile;
 

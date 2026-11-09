@@ -2,7 +2,7 @@ import { Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
-import { take } from 'rxjs';
+import { of, take } from 'rxjs';
 import { Game } from '../../core/models/game.model';
 import { Player } from '../../core/models/player.model';
 import { UserProfile } from '../../core/models/user-profile.model';
@@ -29,7 +29,7 @@ export class HomeComponent {
   private allPlayers: Player[] = [];
   private allGames: Game[] = [];
   readonly gamesError$ = this.community.gamesError$;
-  readonly gamesLoading$ = this.community.gamesLoading$;
+  readonly gamesLoading$ = typeof window === 'undefined' ? of(true) : this.community.gamesLoading$;
   searchForm = this.fb.nonNullable.group({ type: 'partidas', query: '', mode: 'Cualquier modalidad' });
 
   constructor(
@@ -48,7 +48,8 @@ export class HomeComponent {
     this.community.playersLoading$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(loading => {
       if (!loading && this.isAuthenticated && !this.community.playersErrorState.value) this.playerCount = this.allPlayers.length;
     });
-    this.community.getGames().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(games => {
+    // Home is static HTML with honest placeholders; live activity loads once in the browser.
+    if (typeof window !== 'undefined') this.community.getGames().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(games => {
       this.allGames = games;
       this.gameCount = games.length;
       this.games = games.slice(0, 3);
