@@ -11,6 +11,23 @@ const extendedRoutes = [
   ['/registrarme', 'registro'], ['/ingresar', 'login']
 ] as const;
 
+
+async function captureRealPage(page: Page, path: string) {
+  // Home sections use IntersectionObserver; reveal them by actual scrolling before
+  // taking a full-page image. A full-page capture alone never triggers observers.
+  await page.evaluate(async () => {
+    const step = Math.max(240, Math.round(innerHeight * .75));
+    const maxY = document.documentElement.scrollHeight;
+    for (let y = 0; y < maxY; y += step) {
+      scrollTo(0, y);
+      await new Promise<void>(resolve => setTimeout(resolve, 65));
+    }
+    scrollTo(0, 0);
+  });
+  await page.waitForTimeout(300);
+  await page.screenshot({ path, fullPage: true, animations: 'disabled' });
+}
+
 async function assertFits(page: Page, width: number) {
   const state = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
@@ -18,8 +35,7 @@ async function assertFits(page: Page, width: number) {
     overflowElements: [...document.querySelectorAll('body *')]
       .filter(element => {
         const box = element.getBoundingClientRect();
-        const style = getComputedStyle(element);
-        return box.right > innerWidth + 2 && style.position !== 'fixed' && style.position !== 'absolute';
+        return box.right > innerWidth + 2 || box.left < -2;
       })
       .slice(0, 8)
       .map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 100) }))
@@ -36,7 +52,7 @@ for (const [width, height] of widths) {
 
     const seeded = await request.post('http://127.0.0.1:4401/reset');
     expect(seeded.ok()).toBeTruthy();
-    const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+    const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, colorScheme: 'dark' });
     const page = await context.newPage();
     const errors = await observeBrowserErrors(page, info, 'browser-errors-' + width);
     try {
@@ -44,7 +60,7 @@ for (const [width, height] of widths) {
       await expect(page.locator('app-home h1')).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
       await assertFits(page, width);
-      await page.screenshot({ path: info.outputPath('home-' + width + '.png'), fullPage: true, animations: 'disabled' });
+      await captureRealPage(page, info.outputPath('home-' + width + '.png'));
 
       const toggle = page.getByRole('button', { name: 'Abrir menú', exact: true });
       await toggle.click();
@@ -65,12 +81,12 @@ for (const [width, height] of widths) {
       expect(art).not.toBeNull();
       expect(content).not.toBeNull();
       expect(art!.x + art!.width).toBeLessThanOrEqual(content!.x + 2);
-      await page.screenshot({ path: info.outputPath('partidas-' + width + '.png'), fullPage: true, animations: 'disabled' });
+      await captureRealPage(page, info.outputPath('partidas-' + width + '.png'));
 
       await page.goto('/partidas/PRT-DEMO-BASE');
       await expect(page.locator('h1').first()).toBeVisible();
       await assertFits(page, width);
-      await page.screenshot({ path: info.outputPath('detalle-' + width + '.png'), fullPage: true, animations: 'disabled' });
+      await captureRealPage(page, info.outputPath('detalle-' + width + '.png'));
       await page.getByRole('button', { name: 'Compartir partida', exact: true }).click();
       const sheet = page.getByRole('menu', { name: 'Opciones para compartir' });
       await expect(sheet).toBeVisible();
@@ -84,14 +100,14 @@ for (const [width, height] of widths) {
       await page.goto('/comunidades');
       await expect(page.locator('h1').first()).toBeVisible();
       await assertFits(page, width);
-      await page.screenshot({ path: info.outputPath('comunidades-' + width + '.png'), fullPage: true, animations: 'disabled' });
+      await captureRealPage(page, info.outputPath('comunidades-' + width + '.png'));
 
       if (width === 393) {
         for (const [route, slug] of extendedRoutes) {
           await page.goto(route);
           await expect(page.locator('h1').first()).toBeVisible();
           await assertFits(page, width);
-          await page.screenshot({ path: info.outputPath(slug + '-' + width + '.png'), fullPage: true, animations: 'disabled' });
+          await captureRealPage(page, info.outputPath(slug + '-' + width + '.png'));
         }
       }
       await errors.assertClean();
@@ -110,7 +126,7 @@ test('Viewport isolation: tablet and desktop retain original CSS and no mobile n
       await page.goto('/');
       await expect(page.locator('app-home h1')).toBeVisible();
       await assertFits(page, width);
-      await page.screenshot({ path: info.outputPath('home-unmodified-' + width + '.png'), fullPage: true, animations: 'disabled' });
+      await captureRealPage(page, info.outputPath('home-unmodified-' + width + '.png'));
       expect(await page.evaluate(() => matchMedia('(max-width: 767px)').matches)).toBe(false);
       expect(await page.evaluate(() => document.body.classList.contains('c20-mobile-menu-open'))).toBe(false);
     } finally {
