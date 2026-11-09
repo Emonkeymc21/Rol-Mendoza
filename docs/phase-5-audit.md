@@ -94,3 +94,7 @@ Axe y overflow: 72 combinaciones aprobadas, seis rutas públicas × seis tamaño
 Se mantienen pendientes: objetivo Performance 90/LCP 2,5 s; advertencia Home SCSS 15,98/13 kB; INP y CWV p75 reales; OAuth con cuenta Google real; dispositivos Android/iPhone y lector de pantalla físico. No se afirma que lo emulado reemplace estas comprobaciones. El control de código/Node/SDK, reglas y recorridos se comprueba en CI del PR #25 antes del merge. Consultar el PR para su último run, SHA y estado real.
 
 El diseño móvil solicitado posteriormente se prepara en una rama independiente y no forma parte de esta auditoría. Su condición específica es preservar la apariencia de escritorio. Debe partir del main que resulte validado y registrar nuevamente esa base.
+
+La comprobación HTML independiente detectó un defecto real del candidato SSR: metadatos correctos, pero cuerpo de detalle todavía en skeleton. Angular 22 inicia el servidor NgModule con detección basada en notificaciones; el cliente existente usa Zone explícitamente. Las suscripciones imperativas de detalle/listado no notificaban esos cambios. Se añade markForCheck en los límites asíncronos relevantes, manteniendo la configuración del cliente y sus NgModules. No se considera resuelto hasta que el HTTP del servidor contenga h1 y datos reales, y el CI completo apruebe.
+
+Los contadores de perfiles se prueban además con el template real de Home: carga/error muestran —, cero sólo después de éxito, y volver a Home con perfiles ya cargados muestra el número real. No se consultan perfiles privados para visitantes.

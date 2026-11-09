@@ -41,12 +41,12 @@ export class HomeComponent {
   ) {
     this.community.getPlayers().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(players => {
       this.allPlayers = players;
-      if (this.isAuthenticated) this.playerCount = players.length;
+      if (this.isAuthenticated) this.playerCount = this.profile?.profileCompleted && !this.community.playersErrorState.value ? players.length : null;
       this.players = players.slice(0, 3);
       this.updateSystemCount();
     });
     this.community.playersLoading$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(loading => {
-      if (!loading && this.isAuthenticated && !this.community.playersErrorState.value) this.playerCount = this.allPlayers.length;
+      if (!loading && this.isAuthenticated && this.profile?.profileCompleted && !this.community.playersErrorState.value) this.playerCount = this.allPlayers.length;
     });
     // Home is static HTML with honest placeholders; live activity loads once in the browser.
     if (typeof window !== 'undefined') this.community.getGames().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(games => {
@@ -64,6 +64,7 @@ export class HomeComponent {
           next: profile => {
             this.profile = profile;
             this.profileReady = true;
+            if (profile?.profileCompleted && !this.community.playersLoadingState.value && !this.community.playersErrorState.value) this.playerCount = this.allPlayers.length;
           },
           error: () => {
             this.profile = null;

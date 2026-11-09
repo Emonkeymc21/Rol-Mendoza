@@ -1,5 +1,5 @@
 import { bindFilterUrl } from '../../core/data/filter-url-state';
-import { Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectorRef, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,6 +16,7 @@ import { AuthService } from '../../core/services/auth.service';
     standalone: false
 })
 export class GamesComponent {
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   readonly locations = MENDOZA_LOCATIONS;
   readonly loading$ = this.gameService.loading$;
@@ -51,5 +52,6 @@ export class GamesComponent {
       (frequency === 'Todas' || game.frequency === frequency) &&
       (level === 'Todos' || game.level.toLowerCase().includes(level.toLowerCase()))
     );
+    this.changeDetector.markForCheck();
   }
 }
