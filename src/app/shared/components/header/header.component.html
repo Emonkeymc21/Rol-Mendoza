@@ -61,6 +61,7 @@
 </div>
 
 @if (menuOpen) {
+  <button type="button" class="mobile-menu-backdrop hidden" tabindex="-1" aria-label="Cerrar menú" (click)="closeMenu()"></button>
   <div id="mobile-navigation" class="mobile-menu px-4 pb-5 pt-3 xl:hidden">
     <nav class="mx-auto flex max-w-7xl flex-col gap-1" aria-label="Navegación móvil">
       <a routerLink="/" class="mobile-link"><app-icon name="home" [size]="19"></app-icon> Inicio</a>
