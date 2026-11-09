@@ -959,3 +959,13 @@
   app-game-card .game-card.game-card .card-art { grid-column: 1; width: auto; }
   app-game-card .game-card.game-card .game-card-body { grid-column: 2; width: auto; min-width: 0; }
 }
+
+/* El host Angular necesita su propio nivel de apilado en Safari: de otro
+   modo el fondo del drawer queda debajo del documento principal y el tap
+   fuera se lo lleva <html>. El z-index se limita al layout móvil. */
+@media screen and (max-width: 767px),
+       screen and (min-width: 768px) and (max-width: 1023px) and (max-height: 500px)
+       and (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  app-header { display: block; position: relative; z-index: 100; }
+  app-header .mobile-menu-backdrop.mobile-menu-backdrop { touch-action: manipulation; }
+}
