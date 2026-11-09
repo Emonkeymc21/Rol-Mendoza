@@ -34,6 +34,7 @@ async function register(page:Page,name:string,role:'DM'|'PLAYER',returnUrl='/per
 async function completeProfile(page:Page,name:string,role:'DM'|'PLAYER',returnUrl:string){
   await expect(page).toHaveURL(/completar-perfil/);
   await expect(control(page,'firstName')).toBeVisible();
+  await page.screenshot({path:test.info().outputPath('completar-perfil.png'),fullPage:true,animations:'disabled'});
   await control(page,'firstName').fill(name);await control(page,'lastName').fill('Aislada');
   await control(page,'city').selectOption('Guaymallén');
   await page.getByRole('button',{name:'Continuar',exact:true}).click();
@@ -93,10 +94,12 @@ test('public pages, filters, share sheet and safe mobile layout',async({page},in
 });
 test('DM publishes, player registers and requests, DM accepts and manages, player sees private contact',async({page},info)=>{
   await register(page,'Master','DM');
+  await page.screenshot({path:info.outputPath('perfil-usuario.png'),fullPage:true,animations:'disabled'});
   await menu(page);
   const light=page.getByRole('button',{name:/^(Claro|Usar tema claro)$/});await light.click();await expect(page.locator('html')).toHaveAttribute('data-theme','light');
   await page.getByRole('button',{name:/^(Oscuro|Usar tema oscuro)$/}).click();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
   await page.goto('/partidas/nueva');
+  await page.screenshot({path:info.outputPath('publicar-formulario.png'),fullPage:true,animations:'disabled'});
   await control(page,'title').fill('Aventura QA definitiva');await control(page,'system').fill('Fate');
   await control(page,'summary').fill('Una aventura aislada para comprobar publicación, inscripciones y contactos sin usar datos reales.');
   await control(page,'tone').fill('Aventura');await control(page,'city').selectOption('Guaymallén');await control(page,'location').selectOption('Discord');
@@ -105,6 +108,7 @@ test('DM publishes, player registers and requests, DM accepts and manages, playe
   await fits(page);await page.screenshot({path:info.outputPath('publish.png'),fullPage:true});
   await page.getByRole('button',{name:'Publicar partida',exact:true}).click();await expect(page).toHaveURL(/mis-partidas/);
   await expect(page.locator('.my-game-entry')).toContainText('Aventura QA definitiva');
+  await page.screenshot({path:info.outputPath('mis-partidas.png'),fullPage:true,animations:'disabled'});
   const games=await page.request.get(`${api}/apps-script?action=games`).then(r=>r.json());
   const id=games.data.find((g:any)=>g.titulo==='Aventura QA definitiva').partida_id;
   await logout(page);
@@ -119,10 +123,12 @@ test('DM publishes, player registers and requests, DM accepts and manages, playe
   await expect(page.getByRole('link',{name:/Escribir por WhatsApp/})).toHaveCount(0);
   await page.goto('/partidas/nueva');await expect(page).toHaveURL(/perfil\?dmRequired=1/);
   await logout(page);await login(page,'Master','/solicitudes');
+  await page.screenshot({path:info.outputPath('solicitudes-jugadores.png'),fullPage:true,animations:'disabled'});
   await page.locator('.inbox-item').filter({hasText:'Aventura QA definitiva'}).click();
   await page.getByRole('button',{name:'Aceptar',exact:true}).click();await expect(page.getByText('Solicitud aceptada',{exact:true})).toBeVisible();
   await page.goto('/mis-partidas');let entry=page.locator('.my-game-entry').filter({hasText:'Aventura QA definitiva'});
   await expect(entry).toContainText('1 / 4');await entry.getByRole('link',{name:'Editar',exact:true}).click();
+  await page.screenshot({path:info.outputPath('editar-partida.png'),fullPage:true,animations:'disabled'});
   await control(page,'title').fill('Aventura QA verificada');await page.getByRole('button',{name:'Guardar cambios',exact:true}).click();await expect(page).toHaveURL(/mis-partidas/);
   entry=page.locator('.my-game-entry').filter({hasText:'Aventura QA verificada'});
   await entry.getByRole('button',{name:'Cerrar inscripciones',exact:true}).click();await expect(entry).toContainText('Inscripciones pausadas');
