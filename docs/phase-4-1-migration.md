@@ -11,7 +11,7 @@
 ## Secuencia aprobada
 
 1. Auditar instalación, dependencias y bundle originales.
-2. Angular: 16 → 17 → 18 → 19 con Node 18.20.8, compatible con esas etapas; 19 → 20 → 21 → 22 con Node 24.22.1. Cada paso aplica `ng update`, compila, prueba y se registra en un commit.
+2. Angular: 16 → 17 y 17 → 18 con Node 18.20.8; desde la validación de Angular 18, Node 22.22.3 (compatible con Angular 18 a 22). Vercel y el QA definitivo usarán Node 24.x. Cada paso aplica `ng update`, compila, prueba y se registra en un commit.
 3. Firebase: 10 → 11 → 12 → 13 en etapas separadas, leyendo las notas oficiales y probando Auth/Firestore. No incorporar AngularFire ni cambiar usuarios, documentos o reglas de producción.
 4. Agregar pruebas reales de reglas contra Firebase Emulator Suite y flujos aislados de jugador/DM; Chromium/WebKit y CI. No utilizar el proyecto real para generar fixtures.
 5. Resolver avisos restantes y presupuestos sin elevar sus límites. Auditar nuevamente instalación completa y producción.
@@ -45,3 +45,6 @@ Pendiente de completar con los resultados observados en cada etapa.
 - Angular 21: core 21.2.26, CLI 21.2.29, TypeScript 5.9.3, Node v22.22.3. Migraciones oficiales aplicadas; build, test:ci y compilación de las pruebas Jasmine aprobados. Karma/E2E se validan en la infraestructura ampliada de esta fase.
 
 - Angular 22: core 22.2.5, CLI 22.2.6, TypeScript 6.0.3, Node v22.22.3. Migraciones oficiales aplicadas; build, test:ci y compilación de las pruebas Jasmine aprobados. Karma/E2E se validan en la infraestructura ampliada de esta fase.
+
+- Angular 22: la instalación inicial se interrumpió durante la resolución/instalación. La recuperación regeneró el lockfile a partir del manifiesto objetivo revisado (sin force ni legacy-peer-deps) y ejecutó las migraciones oficiales `--migrate-only --from 21.2.29/21.2.26 --to 22.2.6/22.2.5`. Los controles de etapa pasaron. Se quitaron `baseUrl`, `downlevelIteration` y las supresiones añadidas por la migración; se conserva strictTemplates.
+- Se ejecutaron las migraciones oficiales `use-application-builder`, `migrate-karma-to-vitest` y `refactor-jasmine-vitest`. Build moderno aprobado y 2/2 pruebas originales aprobadas en Vitest. El AppModule se conserva; bootstrap usa platformBrowser, recomendado por Angular. Se retiraron Karma/Jasmine y los paquetes Angular de animaciones/plataforma dinámica sin uso en la aplicación. Se mantiene la carpeta de salida previa mediante outputPath.browser vacío.
