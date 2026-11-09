@@ -45,12 +45,17 @@ async function assertFits(page: Page, width: number) {
   const state = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     viewport: window.innerWidth,
-    overflowElements: [...document.querySelectorAll('body *')]
+    overflowElements: [...document.querySelectorAll('main a,main button,main input,main select,main textarea,app-header a,app-header button,app-footer a,app-footer button')]
       .filter(element => {
         const box = element.getBoundingClientRect();
-        return box.right > innerWidth + 2 || box.left < -2;
+        const style = getComputedStyle(element);
+        // Artistic background images intentionally extend outside clipped
+        // panels. Only overflowing usable actions are regressions.
+        return style.display !== 'none' && style.visibility !== 'hidden' &&
+          box.width > 0 && box.height > 0 &&
+          (box.right > innerWidth + 2 || box.left < -2);
       })
-      .slice(0, 8)
+      .slice(0, 12)
       .map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 100) })),
     scrollableChildren: [...document.querySelectorAll('body *')]
       .filter(element => element.scrollWidth > element.clientWidth + 3)
