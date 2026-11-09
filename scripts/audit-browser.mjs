@@ -30,7 +30,15 @@ try{
    for(const route of ['/','/partidas','/partidas/PRT-DEMO-BASE','/comunidades','/ingresar','/registrarme']){
     await page.goto('http://127.0.0.1:4200'+route);await page.locator('h1').first().waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1200);
     const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22a','wcag22aa']).analyze();
-    const fits=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1);
+    const fits=await page.evaluate(()=>{
+      const startX=scrollX, startY=scrollY;
+      scrollTo(10000,startY);
+      const actualHorizontal=scrollX;
+      scrollTo(startX,startY);
+      // Firebase's emulator warning lives in an out-of-tree shadow root and
+      // can inflate html.scrollWidth without making page content scrollable.
+      return document.body.scrollWidth<=innerWidth+1 && actualHorizontal===0;
+    });
     const key=route==='/'?'home':route.replaceAll('/','_');
     await page.screenshot({path:`${directory}/${name}-${key}-${theme}.png`,fullPage:true,animations:'disabled'});
     checks.push({name,theme,route,fits,violations:axe.violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))});
