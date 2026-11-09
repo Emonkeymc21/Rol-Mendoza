@@ -15,6 +15,8 @@ const server=http.createServer(async (req,res) => {
       for(const target of [`http://127.0.0.1:8080/emulator/v1/projects/${PROJECT_ID}/databases/(default)/documents`,`http://127.0.0.1:9099/emulator/v1/projects/${PROJECT_ID}/accounts`]) {
         const result=await fetch(target,{method:'DELETE'});if(!result.ok)throw new Error('Unable to reset demo emulators.');
       }
+      const community=await fetch(`http://127.0.0.1:8080/v1/projects/${PROJECT_ID}/databases/(default)/documents/roleCommunities/demo-public`, {method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer owner'},body:JSON.stringify({fields:{name:{stringValue:'Espacio de rol de prueba'},description:{stringValue:'Espacio ficticio de pruebas aisladas para verificar el directorio público.'},zone:{stringValue:'Guaymallén'},status:{stringValue:'PUBLISHED'},active:{booleanValue:true},websiteUrl:{stringValue:'https://example.test'}}})});
+      if(!community.ok)throw Error('Unable to seed public demo community');
       api=createAppsScript();return send(res,200,{ok:true});
     }
     if(url.pathname==='/advance-cache-clock'&&req.method==='POST') {

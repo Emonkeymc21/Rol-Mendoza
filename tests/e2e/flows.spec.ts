@@ -207,7 +207,7 @@ test('public Angular HTML is readable without JavaScript and private routes stay
  expect(html).toContain('<title>Mesa pública de prueba | Cumbre20</title>');expect(html).toContain('https://rol-mendoza-2026.vercel.app/partidas/PRT-DEMO-BASE');
  expect(html).not.toMatch(/fixture@example.test|whatsappNumber|5492615551234|idToken/);
  const list=await request.get('/partidas');expect(await list.text()).toContain('Mesa pública de prueba');
- const communities=await request.get('/comunidades');expect(await communities.text()).toMatch(/<h1/);
+ const communities=await request.get('/comunidades');expect(await communities.text()).toContain('Espacio de rol de prueba');
  const privatePage=await request.get('/perfil');expect(privatePage.headers()['x-robots-tag']).toBe('noindex, nofollow');expect(await privatePage.text()).not.toMatch(/fixture@example.test|whatsappNumber/);
  const missing=await request.get('/partidas/PRT-MISSING');expect(missing.status()).toBe(404);
 });

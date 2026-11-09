@@ -1,18 +1,28 @@
-import { Injectable, PendingTasks, inject } from '@angular/core';
+import { Injectable, PendingTasks, inject, TransferState, makeStateKey } from '@angular/core';
 import type { DocumentData } from 'firebase/firestore';
-import { defer, map, Observable, shareReplay } from 'rxjs';
+import { defer, map, Observable, shareReplay, of } from 'rxjs';
 import { CommunityActivity, CommunityAdminRequestInput, RoleCommunity } from '../models/role-community.model';
 import { AuthService } from './auth.service';
 import { FirebaseService } from './firebase.service';
 
 @Injectable({ providedIn: 'root' })
 export class RoleCommunityService {
+  private readonly transfer = inject(TransferState);
+  private readonly publicKey = makeStateKey<RoleCommunity[]>('cumbre20-published-communities');
   private readonly pending = inject(PendingTasks);
   private published$?: Observable<RoleCommunity[]>;
 
   constructor(private firebase: FirebaseService, private auth: AuthService) {}
 
   getPublished(): Observable<RoleCommunity[]> {
+    if (this.transfer.hasKey(this.publicKey)) {
+      const data = this.transfer.get(this.publicKey, []);
+      this.transfer.remove(this.publicKey);
+      this.published$ = of(data.map(community => ({...community,
+        updatedAt: community.updatedAt ? new Date(community.updatedAt) : undefined,
+        activities: community.activities.map(activity => ({...activity, date: activity.date ? new Date(activity.date) : undefined}))
+      } as RoleCommunity)));
+    }
     if (!this.published$) {
       this.published$ = defer(async () => {
         const done = this.pending.add();
@@ -24,9 +34,11 @@ export class RoleCommunityService {
           api.where('active', '==', true)
         );
         const snapshot = await api.getDocs(query);
-        return snapshot.docs
+        const published = snapshot.docs
           .map(item => this.mapCommunity(item.id, item.data()))
           .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+        if (typeof window === 'undefined') this.transfer.set(this.publicKey, published);
+        return published;
         } finally { done(); }
       }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
     }

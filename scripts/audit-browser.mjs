@@ -9,6 +9,7 @@ const children=['tests/isolated-server.cjs','scripts/serve-audit.cjs'].map(file=
 async function ready(url){for(let n=0;n<100;n++){try{if((await fetch(url)).ok)return;}catch{}await new Promise(r=>setTimeout(r,200));}throw Error('Server did not start: '+url);}
 try{
  await ready('http://127.0.0.1:4401/health');await ready('http://127.0.0.1:4200');
+ if(!(await fetch('http://127.0.0.1:4401/reset',{method:'POST'})).ok)throw Error('Unable to seed demo audit');
  const metrics=[];
  for(let run=1;run<=3;run++){
   const chrome=await chromeLauncher.launch({chromePath:chromium.executablePath(),chromeFlags:['--headless','--no-sandbox']});
@@ -21,19 +22,19 @@ try{
  const browser=await chromium.launch();const checks=[];
  try{
   for(const [name,width,height]of[['compact',320,568],['android',393,851],['large',430,932],['iphone',390,844],['tablet',768,1024],['desktop',1440,900]]){
-   const context=await browser.newContext({viewport:{width,height},colorScheme:'dark'});const page=await context.newPage();
+   for(const theme of ['dark','light']) {
+   const context=await browser.newContext({viewport:{width,height},colorScheme:theme});const page=await context.newPage();
    const requests=[];page.on('request',r=>requests.push(r.url()));
    for(const route of ['/','/partidas','/partidas/PRT-DEMO-BASE','/comunidades','/ingresar','/registrarme']){
     await page.goto('http://127.0.0.1:4200'+route);await page.locator('h1').first().waitFor();await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1200);
     const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();
     const fits=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1);
     const key=route==='/'?'home':route.replaceAll('/','_');
-    await page.screenshot({path:`${directory}/${name}-${key}-dark.png`,fullPage:true,animations:'disabled'});
-    checks.push({name,route,fits,violations:axe.violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))});
+    await page.screenshot({path:`${directory}/${name}-${key}-${theme}.png`,fullPage:true,animations:'disabled'});
+    checks.push({name,theme,route,fits,violations:axe.violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))});
    }
-   await page.emulateMedia({colorScheme:'light'});await page.goto('http://127.0.0.1:4200/');await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1200);await page.screenshot({path:`${directory}/${name}-home-light.png`,fullPage:true,animations:'disabled'});
-   const axe=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();checks.push({name,route:'/?theme=system-light',violations:axe.violations});
    await context.close();
+   }
   }
  }finally{await browser.close();}
  await writeFile(`${directory}/summary.json`,JSON.stringify({metrics,checks},null,2));console.log('AUDIT_SUMMARY',JSON.stringify({metrics,checks:checks.map(c=>({name:c.name,route:c.route,fits:c.fits,violations:c.violations.map(v=>v.id)}))}));
