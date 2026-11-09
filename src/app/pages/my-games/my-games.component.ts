@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { Game, GameStatus } from '../../core/models/game.model';
@@ -14,6 +14,7 @@ import { AuthService } from '../../core/services/auth.service';
     selector: 'app-my-games',
     templateUrl: './my-games.component.html',
     styleUrls: ['./my-games.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class MyGamesComponent implements OnInit {

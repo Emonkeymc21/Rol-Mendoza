@@ -1,4 +1,4 @@
-import { Component, DestroyRef, HostListener, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { catchError, filter, Observable, of, switchMap } from 'rxjs';
@@ -10,6 +10,7 @@ import { ThemePreference, ThemeService } from '../../../core/services/theme.serv
 
 @Component({
     selector: 'app-header', templateUrl: './header.component.html', styleUrls: ['./header.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class HeaderComponent {

@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { AvatarClass, avatarClassLabel, isAvatarClass } from '../../../core/data/avatar-classes';
 
 @Component({
     selector: 'app-class-avatar',
     templateUrl: './user-avatar.component.html',
     styleUrls: ['./user-avatar.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ClassAvatarComponent {

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { catchError, of } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { RoleCommunityService } from '../../core/services/role-community.service';
@@ -7,6 +7,7 @@ import { RoleCommunityService } from '../../core/services/role-community.service
     selector: 'app-communities',
     templateUrl: './communities.component.html',
     styleUrls: ['./communities.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CommunitiesComponent {

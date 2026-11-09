@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { GameJoinRequest, JoinRequestStatus, requestStatusLabel } from '../../core/models/join-request.model';
@@ -9,6 +9,7 @@ import { ContactNormalizerService } from '../../core/services/contact-normalizer
 
 @Component({
     selector: 'app-dm-requests', templateUrl: './dm-requests.component.html', styleUrls: ['./dm-requests.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class DmRequestsComponent {

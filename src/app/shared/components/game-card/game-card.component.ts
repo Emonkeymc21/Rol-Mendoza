@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Game } from '../../../core/models/game.model';
 import { UserProfile } from '../../../core/models/user-profile.model';
 import { AuthService } from '../../../core/services/auth.service';
@@ -6,6 +6,7 @@ import { ProfileService } from '../../../core/services/profile.service';
 
 @Component({
     selector: 'app-game-card', templateUrl: './game-card.component.html', styleUrls: ['./game-card.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class GameCardComponent implements OnInit {

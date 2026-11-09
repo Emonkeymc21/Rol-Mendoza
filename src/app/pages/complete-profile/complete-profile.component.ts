@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, FormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AVATAR_CLASS_OPTIONS, AvatarClass, avatarClassForUid } from '../../core/data/avatar-classes';
@@ -15,6 +15,7 @@ const exactLocationValidator = (): ValidatorFn => (control: AbstractControl): Va
     selector: 'app-complete-profile',
     templateUrl: './complete-profile.component.html',
     styleUrls: ['./complete-profile.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CompleteProfileComponent implements OnInit {

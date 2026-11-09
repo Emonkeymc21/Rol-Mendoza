@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
 import { RoleCommunityService } from '../../core/services/role-community.service';
@@ -7,6 +7,7 @@ import { RoleCommunityService } from '../../core/services/role-community.service
     selector: 'app-request-community',
     templateUrl: './request-community.component.html',
     styleUrls: ['./request-community.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class RequestCommunityComponent {

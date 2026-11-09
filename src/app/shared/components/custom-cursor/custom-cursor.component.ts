@@ -1,9 +1,10 @@
-import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'app-custom-cursor',
     templateUrl: './custom-cursor.component.html',
     styleUrls: ['./custom-cursor.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CustomCursorComponent implements AfterViewInit, OnDestroy {

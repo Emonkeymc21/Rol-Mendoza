@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GameJoinRequest, requestStatusLabel } from '../../core/models/join-request.model';
 import { NotificationService } from '../../core/services/notification.service';
@@ -8,6 +8,7 @@ import { ContactNormalizerService } from '../../core/services/contact-normalizer
 
 @Component({
     selector: 'app-my-requests', templateUrl: './my-requests.component.html', styleUrls: ['./my-requests.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class MyRequestsComponent {
