@@ -6,5 +6,5 @@ export const environment = {
     apiKey:'emulator-only-key',authDomain:'demo-cumbre20.firebaseapp.com',
     projectId:'demo-cumbre20',appId:'1:123:web:emulator-only'
   },
-  emulators: {host:'127.0.0.1',authPort:9099,firestorePort:4200}
+  emulators: {host:'127.0.0.1',authPort:9099,firestorePort:8080}
 };

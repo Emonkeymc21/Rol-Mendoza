@@ -162,3 +162,9 @@ La documentación histórica `docs/phase-4-audit.md` se conserva. `AGENTS.md` in
 | Rutas con carga diferida | Guards/metadatos conservados; edición de perfil reconoce la ruta del padre. Los escenarios de UI comprueban publicación, edición y continuidad del destino. |
 
 WebKit completó el recorrido funcional y el popup Google emulado, pero su comprobación de errores detectó rechazos CORS de los canales HTTP del emulador Firestore al navegar. Se añadió un proxy HTTP de QA hacia el puerto 8080 y el SDK de QA usa el puerto local de la aplicación. No se desactivó seguridad del navegador, reglas ni comprobación de errores. Esta adaptación sólo aplica al entorno e2e y no certifica CORS de los servicios alojados; se mantiene pendiente la revisión del preview.
+
+La revisión de la traza WebKit anterior al proxy encontró 90 respuestas Firestore HTTP 200 y seis canales sin respuesta completada al navegar. Las respuestas recibidas incluían ACAO para el origen local y Allow-Credentials. Los flujos y las concesiones de contacto sí terminaron. No se atribuye el aviso a una pérdida de datos ni se afirma una causa de producción demostrada; se valida la alternativa de transporte local manteniendo las aserciones de errores.
+
+`get_runtime_errors` de Vercel, con el proyecto y equipo correctos y ventana de 24 horas, también devolvió 403. Por ello no se certifica ausencia de errores privados de producción.
+
+La alternativa de proxy Firestore no eliminó los avisos WebKit, incluso siendo mismo origen, y se descartó. Se restableció la conexión directa al emulador :8080. La prueba ahora intercepta únicamente tráfico externo que necesita adaptación; las solicitudes locales recorren el navegador sin interceptación Playwright. Se conservan el bloqueo de endpoints de producción y la aserción de cero pageerror. Este cambio permite aislar la intervención del driver sobre streams de Firestore, sin atribuir el problema a permisos o configuración de producción.

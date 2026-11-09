@@ -3,7 +3,7 @@ const password='Emulator-only-123!';
 const api='http://127.0.0.1:4401';
 const app='http://127.0.0.1:4200';
 async function isolate(context:BrowserContext) {
-  await context.route('**/*',async route=>{
+  await context.route(url=>!['127.0.0.1','localhost'].includes(url.hostname),async route=>{
     const url=new URL(route.request().url());
     if(url.hostname==='script.google.com'&&url.pathname==='/macros/s/EMULATOR_ONLY/exec') {
       const result=await route.fetch({url:`${api}/apps-script${url.search}`});
