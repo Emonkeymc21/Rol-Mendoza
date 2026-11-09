@@ -56,3 +56,9 @@ Se incorporaron 27 pruebas ejecutables contra Auth/Firestore y el código real d
 ### Firebase 11
 
 SDK 11.10.0, rules-unit-testing 4.0.1. Instalación, compilación de producción, 19 pruebas Vitest, contratos de compartir/regresión, 27 pruebas Auth/Firestore/Apps Script y `npm ls --all` aprobados. No se modificaron reglas, estructura de datos, configuración de producción ni Apps Script.
+
+Firebase 12.19.0 presentó TS2503 en `Timestamp.fromInstant/toInstant`. Se habilitó la biblioteca de tipos `ESNext.Temporal` incluida en TypeScript 6, conservando target ES2022. No se silenció skipLibCheck ni se introdujo uso de Temporal en la aplicación. Referencias: https://firebase.google.com/docs/reference/js/firestore.timestamp y https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html .
+
+### Firebase 12
+
+SDK 12.19.0, rules-unit-testing 5.0.0. Instalación, compilación de producción, 19 pruebas Vitest, contratos de compartir/regresión, 27 pruebas Auth/Firestore/Apps Script y `npm ls --all` aprobados. No se modificaron reglas, estructura de datos, configuración de producción ni Apps Script.
