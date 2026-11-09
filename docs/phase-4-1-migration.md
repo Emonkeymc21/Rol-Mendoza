@@ -104,7 +104,7 @@ Se conservaron NgModules. Home permanece en la carga inicial; el resto de págin
 
 ### Aislamiento
 
-No se modificaron `firestore.rules`, índices, `Code.gs`, entornos de producción ni el contrato API 8.0.0. No se crearon datos de prueba en producción. Los tests Node exigen hosts 127.0.0.1 y el SDK de UI sólo activa emuladores con compilación e2e, proyecto `demo-cumbre20` y URL local. Playwright bloquea otros endpoints; permite los assets públicos de fuentes y el bootstrap de Google requerido por Firebase móvil. Los tokens y las cuentas en trazas son exclusivamente emulados.
+No se modificaron `firestore.rules`, índices, `Code.gs`, entornos de producción ni el contrato API 8.0.0. No se crearon datos de prueba en producción. Los tests Node exigen hosts 127.0.0.1 y el SDK de UI sólo activa emuladores con compilación e2e, proyecto `demo-cumbre20` y URL local. Playwright bloquea otros endpoints; permite los assets públicos de fuentes, el bootstrap de Google requerido por Firebase móvil y los assets Material de la UI oficial del Auth emulator. Los tokens y las cuentas en trazas son exclusivamente emulados.
 
 ### Incidencias de la infraestructura de pruebas resueltas
 
@@ -135,3 +135,30 @@ La ejecución de navegador confirmó el rechazo de una reapertura en menos de tr
 Lockfile migrado SHA-256: `b08f39484f4f8563a564d8655707adfa7aedc09cefc8e69d82e50ecb49d8dc05`.
 
 Las acciones oficiales de CI se fijaron por SHA en sus versiones actuales con runtime Node 24 (checkout/setup-node/upload-artifact v6 y setup-java v5); sus manifests oficiales se verificaron antes del cambio. Se eliminó el doble disparo push+PR sobre la rama, conservando PR y push a main.
+
+Angular 22 usa la política oficial Baseline del 2026-05-07 para navegadores (https://angular.dev/reference/versions#browser-support). Los proyectos de Playwright ejercitan motores actuales; no certifican todas las versiones mínimas de esa política ni teléfonos antiguos.
+
+## Producción y continuidad
+
+La consulta final de `main` sigue en `7e6a0039f4cf9413fa035ac1e65a29c4702ee02d`. Las rutas públicas `/`, `/partidas`, `/ingresar` y `/registrarme` respondieron HTTP 200. El logo WebP respondió 200 (12.388 bytes). La API alojada respondió health 8.0.0 / auth configured y una partida pública. Son comprobaciones de lectura: el HTML inicial de la SPA no reemplaza una prueba de interacción.
+
+Un intento adicional de compartir sobre producción terminó en timeout al establecer el túnel HTTPS del entorno; no se clasifica como fallo demostrado de la aplicación ni como prueba aprobada. La lógica y los encabezados de compartir se prueban con el handler real en Node/HTTP local y Playwright; el archivo `api/share-game.js` no se modificó respecto del PR #23.
+
+La documentación histórica `docs/phase-4-audit.md` se conserva. `AGENTS.md` incluye los comandos nuevos, límites de publicación, misión del proyecto y referencia a este informe. La rama recuperable conserva el estado estable previo; los commits de esta rama permiten retomar la migración sin reconstruir ni perder el trabajo.
+
+## Compatibilidad corregida
+
+| Cambio | Adaptación comprobada |
+|---|---|
+| Angular 19 cambia el valor predeterminado standalone | Las migraciones oficiales preservaron `standalone: false` y los NgModules existentes. |
+| Angular 21 y 22 cambian detección de cambios | `provideZoneChangeDetection()` y `ChangeDetectionStrategy.Eager` conservan el comportamiento previo. |
+| Angular 22 cambia el transporte HTTP predeterminado | `withXhr()` conserva XHR e interceptores existentes. |
+| Plantillas y diagnósticos actuales | Migración oficial a bloques @if/@for; se corrigieron las cuatro cadenas opcionales que ya estaban acotadas por @if. No se desactivó strictTemplates. |
+| Compilador/bundler actual | `@angular/build:application`, resolución bundler y bootstrap `platformBrowser`. Sin compiler dinámico ni paquete de animaciones sin uso. |
+| Salida del bundler moderno | `outputPath.browser` vacío mantiene `dist/rol-mendoza`, sin cambiar rewrites ni directorio Vercel. |
+| Tipos Firestore recientes | Biblioteca `ESNext.Temporal` de TypeScript 6; no se introdujo uso runtime de Temporal ni se omitió la revisión de tipos. |
+| Pruebas Karma | Migraciones oficiales a Vitest y revisión de las dos pruebas originales; tests ejecutables ampliados, sin quitar cobertura. |
+| SDK Firebase modular diferido | Acceso Firestore central con una promesa por instancia; exportaciones explícitas. Emuladores conectados antes de cualquier operación en la compilación de QA. |
+| Rutas con carga diferida | Guards/metadatos conservados; edición de perfil reconoce la ruta del padre. Los escenarios de UI comprueban publicación, edición y continuidad del destino. |
+
+WebKit completó el recorrido funcional y el popup Google emulado, pero su comprobación de errores detectó rechazos CORS de los canales HTTP del emulador Firestore al navegar. Se añadió un proxy HTTP de QA hacia el puerto 8080 y el SDK de QA usa el puerto local de la aplicación. No se desactivó seguridad del navegador, reglas ni comprobación de errores. Esta adaptación sólo aplica al entorno e2e y no certifica CORS de los servicios alojados; se mantiene pendiente la revisión del preview.
