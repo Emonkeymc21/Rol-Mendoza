@@ -53,18 +53,19 @@ export class HeaderComponent {
   @HostListener('window:resize')
   onViewportResize(): void { this.syncMobileScrollLock(); }
   @HostListener('document:keydown.tab', ['$event'])
-  trapMobileNavigationFocus(event: KeyboardEvent): void {
+  trapMobileNavigationFocus(event: Event): void {
+    const keyEvent = event as KeyboardEvent;
     if (!this.menuOpen || !this.document.defaultView?.matchMedia('(max-width: 767px)').matches) return;
     const items = Array.from(this.document.querySelectorAll<HTMLElement>('#mobile-navigation a, #mobile-navigation button:not([disabled])'));
     const first = items[0];
     const last = items[items.length - 1];
     if (!first || !last) return;
     const active = this.document.activeElement;
-    if (event.shiftKey && (active === first || active === this.document.querySelector('.menu-trigger'))) {
-      event.preventDefault();
+    if (keyEvent.shiftKey && (active === first || active === this.document.querySelector('.menu-trigger'))) {
+      keyEvent.preventDefault();
       last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
+    } else if (!keyEvent.shiftKey && active === last) {
+      keyEvent.preventDefault();
       first.focus();
     }
   }
