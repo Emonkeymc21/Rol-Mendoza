@@ -4,9 +4,10 @@ import { AuthService } from '../../core/services/auth.service';
 import { RoleCommunityService } from '../../core/services/role-community.service';
 
 @Component({
-  selector: 'app-communities',
-  templateUrl: './communities.component.html',
-  styleUrls: ['./communities.component.scss']
+    selector: 'app-communities',
+    templateUrl: './communities.component.html',
+    styleUrls: ['./communities.component.scss'],
+    standalone: false
 })
 export class CommunitiesComponent {
   loadError = '';

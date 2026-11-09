@@ -6,7 +6,10 @@ import { NotificationService } from '../../core/services/notification.service';
 import { UserProfile } from '../../core/models/user-profile.model';
 import { ProfileService } from '../../core/services/profile.service';
 
-@Component({ selector: 'app-notifications', templateUrl: './notifications.component.html', styleUrls: ['./notifications.component.scss'] })
+@Component({
+    selector: 'app-notifications', templateUrl: './notifications.component.html', styleUrls: ['./notifications.component.scss'],
+    standalone: false
+})
 export class NotificationsComponent {
   private readonly destroyRef = inject(DestroyRef);
   notifications: AppNotification[] = [];

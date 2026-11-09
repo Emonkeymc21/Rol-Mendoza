@@ -4,7 +4,10 @@ import { BlockedUser, roleLabel, UserPrivateProfile, UserProfile } from '../../c
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 
-@Component({ selector: 'app-account', templateUrl: './account.component.html', styleUrls: ['./account.component.scss'] })
+@Component({
+    selector: 'app-account', templateUrl: './account.component.html', styleUrls: ['./account.component.scss'],
+    standalone: false
+})
 export class AccountComponent implements OnInit {
   readonly user$ = this.auth.user$;
   profile?: UserProfile;

@@ -4,7 +4,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 
-@Component({ selector: 'app-register', templateUrl: './register.component.html', styleUrls: ['./register.component.scss'] })
+@Component({
+    selector: 'app-register', templateUrl: './register.component.html', styleUrls: ['./register.component.scss'],
+    standalone: false
+})
 export class RegisterComponent {
   saving = false;
   googleSaving = false;

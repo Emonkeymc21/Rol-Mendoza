@@ -3,9 +3,10 @@ import { AuthService } from './core/services/auth.service';
 import { SeoService } from './core/services/seo.service';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    standalone: false
 })
 export class AppComponent {
   title = 'Cumbre20';

@@ -4,7 +4,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
 
-@Component({ selector: 'app-login', templateUrl: './login.component.html', styleUrls: ['./login.component.scss'] })
+@Component({
+    selector: 'app-login', templateUrl: './login.component.html', styleUrls: ['./login.component.scss'],
+    standalone: false
+})
 export class LoginComponent {
   saving = false;
   googleSaving = false;

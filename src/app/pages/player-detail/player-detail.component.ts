@@ -6,7 +6,10 @@ import { AuthService } from '../../core/services/auth.service';
 import { CommunityService } from '../../core/services/community.service';
 import { ProfileService } from '../../core/services/profile.service';
 
-@Component({ selector: 'app-player-detail', templateUrl: './player-detail.component.html', styleUrls: ['./player-detail.component.scss'] })
+@Component({
+    selector: 'app-player-detail', templateUrl: './player-detail.component.html', styleUrls: ['./player-detail.component.scss'],
+    standalone: false
+})
 export class PlayerDetailComponent {
   player?: Player;
   targetProfile?: UserProfile;

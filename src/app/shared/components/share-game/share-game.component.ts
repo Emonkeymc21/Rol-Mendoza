@@ -3,9 +3,10 @@ import { Game } from '../../../core/models/game.model';
 import { GameShareService } from '../../../core/services/game-share.service';
 
 @Component({
-  selector: 'app-share-game',
-  templateUrl: './share-game.component.html',
-  styleUrls: ['./share-game.component.scss']
+    selector: 'app-share-game',
+    templateUrl: './share-game.component.html',
+    styleUrls: ['./share-game.component.scss'],
+    standalone: false
 })
 export class ShareGameComponent {
   @Input({ required: true }) game!: Game;

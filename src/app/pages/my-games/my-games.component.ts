@@ -11,9 +11,10 @@ import { GameParticipantService } from '../../core/services/game-participant.ser
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
-  selector: 'app-my-games',
-  templateUrl: './my-games.component.html',
-  styleUrls: ['./my-games.component.scss']
+    selector: 'app-my-games',
+    templateUrl: './my-games.component.html',
+    styleUrls: ['./my-games.component.scss'],
+    standalone: false
 })
 export class MyGamesComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);

@@ -6,7 +6,10 @@ import { matchesLocation, MENDOZA_LOCATIONS } from '../../core/data/mendoza-loca
 import { Player } from '../../core/models/player.model';
 import { CommunityService } from '../../core/services/community.service';
 
-@Component({ selector: 'app-players', templateUrl: './players.component.html', styleUrls: ['./players.component.scss'] })
+@Component({
+    selector: 'app-players', templateUrl: './players.component.html', styleUrls: ['./players.component.scss'],
+    standalone: false
+})
 export class PlayersComponent {
   private readonly destroyRef = inject(DestroyRef);
   allPlayers: Player[] = [];

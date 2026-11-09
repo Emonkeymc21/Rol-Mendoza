@@ -6,7 +6,10 @@ import { UserPrivateProfile, UserProfile } from '../../core/models/user-profile.
 import { ProfileService } from '../../core/services/profile.service';
 import { ContactNormalizerService } from '../../core/services/contact-normalizer.service';
 
-@Component({ selector: 'app-my-requests', templateUrl: './my-requests.component.html', styleUrls: ['./my-requests.component.scss'] })
+@Component({
+    selector: 'app-my-requests', templateUrl: './my-requests.component.html', styleUrls: ['./my-requests.component.scss'],
+    standalone: false
+})
 export class MyRequestsComponent {
   private readonly destroyRef = inject(DestroyRef);
   requests: GameJoinRequest[] = [];

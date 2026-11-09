@@ -9,7 +9,10 @@ import { GameService } from '../../core/services/game.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { AuthService } from '../../core/services/auth.service';
 
-@Component({ selector: 'app-games', templateUrl: './games.component.html', styleUrls: ['./games.component.scss'] })
+@Component({
+    selector: 'app-games', templateUrl: './games.component.html', styleUrls: ['./games.component.scss'],
+    standalone: false
+})
 export class GamesComponent {
   private readonly destroyRef = inject(DestroyRef);
   readonly locations = MENDOZA_LOCATIONS;

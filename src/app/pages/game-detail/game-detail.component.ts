@@ -16,7 +16,10 @@ import { ContactNormalizerService } from '../../core/services/contact-normalizer
 import { take } from 'rxjs';
 import { SeoService } from '../../core/services/seo.service';
 
-@Component({ selector: 'app-game-detail', templateUrl: './game-detail.component.html', styleUrls: ['./game-detail.component.scss'] })
+@Component({
+    selector: 'app-game-detail', templateUrl: './game-detail.component.html', styleUrls: ['./game-detail.component.scss'],
+    standalone: false
+})
 export class GameDetailComponent {
   private readonly destroyRef = inject(DestroyRef);
   game?: Game;

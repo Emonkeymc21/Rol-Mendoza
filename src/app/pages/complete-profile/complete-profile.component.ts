@@ -12,9 +12,10 @@ const exactLocationValidator = (): ValidatorFn => (control: AbstractControl): Va
   MENDOZA_LOCATIONS.includes(String(control.value || '').trim()) ? null : { location: true };
 
 @Component({
-  selector: 'app-complete-profile',
-  templateUrl: './complete-profile.component.html',
-  styleUrls: ['./complete-profile.component.scss']
+    selector: 'app-complete-profile',
+    templateUrl: './complete-profile.component.html',
+    styleUrls: ['./complete-profile.component.scss'],
+    standalone: false
 })
 export class CompleteProfileComponent implements OnInit {
   readonly locations = MENDOZA_LOCATIONS;

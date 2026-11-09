@@ -4,9 +4,10 @@ import { MENDOZA_LOCATIONS } from '../../core/data/mendoza-locations';
 import { RoleCommunityService } from '../../core/services/role-community.service';
 
 @Component({
-  selector: 'app-request-community',
-  templateUrl: './request-community.component.html',
-  styleUrls: ['./request-community.component.scss']
+    selector: 'app-request-community',
+    templateUrl: './request-community.component.html',
+    styleUrls: ['./request-community.component.scss'],
+    standalone: false
 })
 export class RequestCommunityComponent {
   readonly zones = [...MENDOZA_LOCATIONS, 'Varias localidades', 'Toda Mendoza'];

@@ -8,7 +8,10 @@ import { ProfileService } from '../../../core/services/profile.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ThemePreference, ThemeService } from '../../../core/services/theme.service';
 
-@Component({ selector: 'app-header', templateUrl: './header.component.html', styleUrls: ['./header.component.scss'] })
+@Component({
+    selector: 'app-header', templateUrl: './header.component.html', styleUrls: ['./header.component.scss'],
+    standalone: false
+})
 export class HeaderComponent {
   private readonly destroyRef = inject(DestroyRef);
   menuOpen = false;

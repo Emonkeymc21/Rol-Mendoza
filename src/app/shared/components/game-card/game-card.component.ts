@@ -4,7 +4,10 @@ import { UserProfile } from '../../../core/models/user-profile.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileService } from '../../../core/services/profile.service';
 
-@Component({ selector: 'app-game-card', templateUrl: './game-card.component.html', styleUrls: ['./game-card.component.scss'] })
+@Component({
+    selector: 'app-game-card', templateUrl: './game-card.component.html', styleUrls: ['./game-card.component.scss'],
+    standalone: false
+})
 export class GameCardComponent implements OnInit {
   @Input({ required: true }) game!: Game;
   dmProfile?: UserProfile;

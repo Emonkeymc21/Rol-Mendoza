@@ -37,3 +37,5 @@ Pendiente de completar con los resultados observados en cada etapa.
 - Angular 17: core 17.3.12, CLI 17.3.17, TypeScript 5.4.5, Node v18.20.8. Migraciones oficiales aplicadas; build, test:ci y compilación de las pruebas Jasmine aprobados. Karma/E2E se validan en la infraestructura ampliada de esta fase.
 
 - Angular 18: core 18.2.14, CLI 18.2.21, TypeScript 5.4.5, Node v22.22.3. Migraciones oficiales aplicadas; build, test:ci y compilación de las pruebas Jasmine aprobados. Karma/E2E se validan en la infraestructura ampliada de esta fase.
+
+- Angular 19: core 19.2.25, CLI 19.2.27, TypeScript 5.8.3, Node v22.22.3. Migraciones oficiales aplicadas; build, test:ci y compilación de las pruebas Jasmine aprobados. Karma/E2E se validan en la infraestructura ampliada de esta fase.

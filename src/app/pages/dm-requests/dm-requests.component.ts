@@ -7,7 +7,10 @@ import { NotificationService } from '../../core/services/notification.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { ContactNormalizerService } from '../../core/services/contact-normalizer.service';
 
-@Component({ selector: 'app-dm-requests', templateUrl: './dm-requests.component.html', styleUrls: ['./dm-requests.component.scss'] })
+@Component({
+    selector: 'app-dm-requests', templateUrl: './dm-requests.component.html', styleUrls: ['./dm-requests.component.scss'],
+    standalone: false
+})
 export class DmRequestsComponent {
   private readonly destroyRef = inject(DestroyRef);
   requests: GameJoinRequest[] = [];

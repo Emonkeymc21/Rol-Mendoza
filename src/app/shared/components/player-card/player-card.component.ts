@@ -1,7 +1,10 @@
 import { Component, Input } from '@angular/core';
 import { Player } from '../../../core/models/player.model';
 
-@Component({ selector: 'app-player-card', templateUrl: './player-card.component.html', styleUrls: ['./player-card.component.scss'] })
+@Component({
+    selector: 'app-player-card', templateUrl: './player-card.component.html', styleUrls: ['./player-card.component.scss'],
+    standalone: false
+})
 export class PlayerCardComponent {
   @Input({ required: true }) player!: Player;
   expanded = false;

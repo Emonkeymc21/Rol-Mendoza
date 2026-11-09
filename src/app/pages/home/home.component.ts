@@ -10,7 +10,10 @@ import { AuthService } from '../../core/services/auth.service';
 import { CommunityService } from '../../core/services/community.service';
 import { ProfileService } from '../../core/services/profile.service';
 
-@Component({ selector: 'app-home', templateUrl: './home.component.html', styleUrls: ['./home.component.scss'] })
+@Component({
+    selector: 'app-home', templateUrl: './home.component.html', styleUrls: ['./home.component.scss'],
+    standalone: false
+})
 export class HomeComponent {
   private readonly destroyRef = inject(DestroyRef);
   players: Player[] = [];

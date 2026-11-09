@@ -4,9 +4,10 @@ import { ActivatedRoute } from '@angular/router';
 type LegalDocument = 'privacy' | 'terms';
 
 @Component({
-  selector: 'app-legal',
-  templateUrl: './legal.component.html',
-  styleUrls: ['./legal.component.scss']
+    selector: 'app-legal',
+    templateUrl: './legal.component.html',
+    styleUrls: ['./legal.component.scss'],
+    standalone: false
 })
 export class LegalComponent {
   readonly document: LegalDocument;

@@ -7,7 +7,10 @@ import { AuthService } from '../../core/services/auth.service';
 import { GameService } from '../../core/services/game.service';
 import { ProfileService } from '../../core/services/profile.service';
 
-@Component({ selector: 'app-create-game', templateUrl: './create-game.component.html', styleUrls: ['./create-game.component.scss'] })
+@Component({
+    selector: 'app-create-game', templateUrl: './create-game.component.html', styleUrls: ['./create-game.component.scss'],
+    standalone: false
+})
 export class CreateGameComponent implements OnInit {
   readonly locations = MENDOZA_LOCATIONS;
   readonly otherLocation = OTHER_LOCATION;
