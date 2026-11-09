@@ -33,7 +33,7 @@ jobs:
         env:
           FIREBASE_CLI_DISABLE_MOTD: 'true'
   browsers:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.engine == 'webkit' && 'macos-15' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     strategy:
       fail-fast: false

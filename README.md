@@ -1,6 +1,6 @@
 # Cumbre20
 
-Aplicación responsive en Angular 16 para conectar jugadores, Dungeon Masters y partidas de rol en Mendoza.
+Aplicación responsive en Angular 22.2 con Firebase modular 13.2 para conectar jugadores, Dungeon Masters y partidas de rol en Mendoza.
 
 Identidad pública: **Cumbre20 — Encontrá tu próxima mesa.** Los nombres técnicos del proyecto Firebase, el repositorio y la planilla se mantienen para no interrumpir integraciones existentes.
 
@@ -41,25 +41,29 @@ No se utiliza Google Forms ni existe chat interno.
 
 ## Identidad visual
 
-- `src/assets/cumbre20-logo.svg`: marca compacta Mendoza + d20 usada en navbar y favicon.
+- `src/assets/cumbre20-logo-256.webp`: logo optimizado incorporado en encabezado, footer y acceso.
+- `src/assets/cumbre20-favicon-64.png` y `src/favicon.ico`: favicon actualizado.
 - `src/assets/mendoza-silhouette-reference.png`: referencia original aportada para conservar la forma real de la provincia y facilitar una futura vectorización definitiva.
 - La combinación actual usa carbón, bordó, dorado apagado y crema mediante tokens CSS para los temas claro y oscuro.
 
 ## Requisitos
 
-- Node.js 18.13 o superior.
-- npm 9 o superior.
+- Node.js 24.x, como mínimo 24.15.0 (CI usa la versión mantenida de esa línea).
+- npm incluido con Node 24.
+- Java 21 para Firebase Emulator Suite. No se requiere Java para ejecutar sólo Angular.
 
 ## Instalar y ejecutar
 
 ```bash
-npm install
+npm ci
 npm start
 ```
 
 Abrí `http://localhost:4200`.
 
 ## Firebase
+
+La migración Fase 4.1 conserva usuarios, datos, reglas e índices; no requiere volver a desplegarlos. Las instrucciones de configuración siguientes corresponden a una instalación nueva.
 
 En Firebase Console habilitá:
 
@@ -185,3 +189,23 @@ src/app/
 ```
 
 Cada componente mantiene separados sus archivos `.ts`, `.html` y `.scss`.
+
+## QA aislado y mantenimiento
+
+```bash
+npm run build:prod
+npm run test:unit
+npm run test:ci
+npm run test:emulators
+npx playwright install --with-deps chromium webkit
+npm run test:e2e
+npm audit
+npm audit --omit=dev
+npm ls --all
+```
+
+`test:e2e` inicia los emuladores demo y los servidores HTTP locales. Exige el proyecto demo conectado antes de registrar cuentas y verifica que no aparezcan endpoints inesperados. Usa el `Code.gs` real con planillas locales; no crea fixtures en producción. `npm start` conserva la configuración habitual de servicios alojados; para QA con datos ficticios usá los comandos aislados.
+
+Los workflows ejecutan instalación, auditorías, build, Vitest, contratos, reglas y recorridos Chromium/WebKit. Leer [el informe Fase 4.1](docs/phase-4-1-migration.md), [el inventario de dependencias](docs/qa/dependency-audit.md), [el checklist físico](docs/qa/physical-device-checklist.md) y `AGENTS.md` antes de continuar.
+
+La migración se prepara en `codex/cumbre20-phase-4-1`, PR #24. El informe registra si ya fue integrada; no asumir que coincide con producción. La referencia `recovery/phase-4-1-base-7e6a003` conserva la versión estable anterior y el lockfile original.
