@@ -1,5 +1,11 @@
 # CUMBRE20 — Fase 4.1
 
+**Estado al 2026-11-09: migración implementada en rama; lanzamiento pendiente.** Angular 22.2.5, Firebase 13.2.0, TypeScript 6.0.3 y auditorías completas/de producción en cero.
+
+El PR #24 permanece en borrador. WebKit conserva errores de transporte reproducidos en Linux y macOS; Vercel devuelve 403 al revisar el preview protegido y los registros privados. No se declara aprobado el QA integral.
+
+Producción y main siguen en `7e6a0039f4cf9413fa035ac1e65a29c4702ee02d`. El trabajo y el procedimiento para continuar quedan preservados en esta rama.
+
 ## Base y recuperación
 
 - Base verificada en GitHub y producción: `7e6a0039f4cf9413fa035ac1e65a29c4702ee02d` (PR #23).
@@ -178,3 +184,30 @@ La compilación de producción final aprobó con 697.74 kB iniciales y 175.94 kB
 La conexión HTTP nativa también completó los flujos en Linux WebKit pero no eliminó los avisos de control de acceso al cerrar/recrear canales. No se confirmó la interceptación como causa única. Se conserva la ejecución sin interceptación y se comprueba WebKit en macOS 15, plataforma más cercana a Safari. Se verificó en la documentación oficial de GitHub que los runners estándar son gratuitos para este repositorio público (https://docs.github.com/en/actions/reference/runners/github-hosted-runners). La ejecución Linux fallida queda registrada, sin filtrado ni supresión de errores.
 
 WebKit macOS reprodujo los mismos errores, por lo que no se considera un problema exclusivo del driver Linux. Se investigó la incidencia oficial Firebase #9789 y las opciones públicas `FirestoreSettings`. Se prueba `initializeFirestore` con `experimentalForceLongPolling: true` sólo en WebKit, manteniendo transporte predeterminado en Blink/Gecko y Node. No se usa la opción privada useFetchStreams, no se desactiva CORS y no se filtran errores. La opción puede aumentar peticiones/latencia y sólo se conservará si los recorridos de lectura/escritura/notificaciones pasan sin los errores reproducidos. Se permite el GET exacto del pixel público cleardot.gif usado por el bootstrap de Google; no habilita endpoints de cuentas/datos.
+
+La traza del timeout intermitente del popup Android mostró que Add new account se pulsaba antes de que el JavaScript externo de la UI oficial del emulador instalara sus handlers: el input seguía oculto y `fill` agotaba el tiempo. Se espera carga completa de la URL local del widget antes del click. No se aumentaron tiempos ni se añadieron reintentos para ocultarlo.
+
+## Decisión de cierre técnico
+
+La alternativa pública de long polling no eliminó los errores WebKit y se retiró, junto con sus siete casos unitarios de selección de transporte que habían pasado. Las pruebas funcionales fallidas se mantienen intactas y siguen bloqueando CI. No se conserva una configuración experimental sin beneficio verificado. El código final utiliza el transporte predeterminado del SDK.
+
+Estado: **migración implementada y preservada, publicación bloqueada**. PR #24 en borrador; producción y main permanecen en `7e6a0039f4cf9413fa035ac1e65a29c4702ee02d`. Se resolvió el objetivo de dependencias en la rama (cero vulnerabilidades completas y de producción), pero no se declara cumplido el criterio integral de lanzamiento.
+
+Bloqueos comprobados:
+
+1. WebKit, tanto Linux como macOS, completa lecturas, escrituras, aprobación, cupos y contactos, pero registra errores de control de acceso en los canales Listen/Write del emulador. Se probaron proxy mismo origen, tráfico nativo sin interceptación, macOS y la opción pública de long polling. Ninguno justificó dar el problema por resuelto. Las trazas, capturas y logs quedan en los artifacts de Actions; no se desactivó el control de errores. La causa exacta y su alcance sobre Firestore alojado todavía requieren contraste.
+2. Vercel devuelve 403 para abrir el preview protegido y para leer errores privados del proyecto/equipo. El build preview es READY; no equivale a una revisión funcional de esa URL. Hace falta habilitar el acceso de la conexión a `emonkeymc21s-projects` / `rol-mendoza-2026` antes de completar ese contraste. No hay credenciales CLI/OIDC disponibles en este entorno.
+3. Google OAuth real y dispositivos físicos siguen pendientes según el checklist; los resultados con Auth emulator y tamaños de dispositivos no los sustituyen.
+
+La corrección del popup del emulador espera la carga del widget antes de usar sus controles. El detalle de la ejecución final y su enlace se registra en la descripción del PR, junto con el SHA, porque sus controles pueden volver a ejecutarse sin cambiar este informe.
+
+### Verificaciones aprobadas
+
+- Instalación reproducible en runner limpio, `npm ls --all`, `npm audit`, `npm audit --omit=dev` y compilación de producción.
+- 28 pruebas Vitest finales y 28 pruebas de SDK/Auth, reglas y Apps Script aislado. Los contratos anteriores de compartir y regresión se conservaron.
+- Chromium completó 8/8 escenarios de escritorio y tamaño Android en las ejecuciones sin el problema de carga del widget; la ejecución de cierre verifica la espera corregida.
+- El endpoint real de compartir conserva private, no-store, bots con metadatos, humanos con 302, identificadores inválidos y ausencia de datos privados en los escenarios aislados.
+
+### Retomar sin perder trabajo
+
+Leer este informe y el estado actualizado del PR #24. Habilitar Vercel, revisar el preview correspondiente al SHA de la rama y comparar sus canales Firestore con la reproducción emulada. Resolver WebKit y repetir CI antes de integrar. Completar OAuth autorizado y el checklist físico en el alcance disponible. No rehacer las migraciones ni restaurar Angular 16/Firebase 10 para continuar. Los checkpoints remotos están inventariados en `docs/qa/migration-commits.json`; la referencia estable original y el lockfile se conservan para rollback.

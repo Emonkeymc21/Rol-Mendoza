@@ -98,5 +98,15 @@
     "local": "9e77d37c0dc2ef5a0e5301a7900b442b55520aee",
     "remote": "17bfd9a88ffa8256d8c86bea351565acf769aab0",
     "message": "test: ejecutar flujos con HTTP nativo y validar aislamiento antes de escribir"
+  },
+  {
+    "local": "8a62d686855bcaa4054f372a374d753ada3932dd",
+    "remote": "83974e52c2316736bd813df026b354f671c34fd0",
+    "message": "ci: validar WebKit en macOS y actualizar guía de mantenimiento"
+  },
+  {
+    "local": "8d4d00b2bdd36d27ad8c1af4d5f1417f8f511ee0",
+    "remote": "702f1d1f50061f4cdd38863fe891b22a58a8881d",
+    "message": "fix: comprobar transporte Firestore compatible con WebKit"
   }
 ]

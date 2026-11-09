@@ -14,3 +14,5 @@
 - QA: `npm ci`, `npm ls --all`, `npm audit`, `npm audit --omit=dev`, `npm run build:prod`, `npm run test:unit`, `npm run test:ci`, `npm run test:emulators`, `npm run test:e2e`. CI usa Java 21 y navegadores Chromium/WebKit. Sólo proyectos Firebase demo en loopback para tests; `firebase.test.json` no se despliega.
 - Home sigue en la carga inicial. Las páginas secundarias usan NgModules con carga diferida; conservar guards y datos de rutas. Perfil/editar detecta el path del padre del módulo.
 - No integrar una migración con comprobaciones críticas fallidas o sin acceso al preview. Las comprobaciones físicas pendientes se registran en `docs/qa/physical-device-checklist.md`.
+
+- Estado Fase 4.1 al 2026-11-09: PR #24 borrador, Angular 22/Firebase 13 y auditorías cero en la rama. Pendientes de cierre: errores WebKit Listen/Write del emulador reproducidos en Linux/macOS y acceso Vercel 403. Conservar CI estricto; no publicar hasta resolverlos o verificar técnicamente su alcance.

@@ -145,6 +145,8 @@ test('Google popup and browser session on Auth emulator, without real OAuth',asy
   const popupPromise=page.waitForEvent('popup');
   await page.getByRole('button',{name:'Continuar con Google',exact:false}).click();
   const popup=await popupPromise;
+  // The official emulator widget paints controls before its external script attaches handlers.
+  await popup.waitForURL(/127\.0\.0\.1:9099\/emulator\/auth\/handler/, {waitUntil:'load'});
   await popup.getByRole('button',{name:'Add new account'}).click();
   await popup.locator('#email-input').fill('google-ui@example.test');
   await popup.locator('#display-name-input').fill('Google Aislada');
