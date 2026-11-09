@@ -79,6 +79,16 @@
                 "zone.js",
                 "zone.js/testing"
               ]
+            },
+            "e2e": {
+              "optimization": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.e2e.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -91,6 +101,9 @@
             },
             "development": {
               "buildTarget": "rol-mendoza:build:development"
+            },
+            "e2e": {
+              "buildTarget": "rol-mendoza:build:e2e"
             }
           },
           "defaultConfiguration": "development"

@@ -204,9 +204,7 @@ export class NotificationService {
     return uid;
   }
 
-  private async loadFirestore() {
-    if (!this.firebase.app) throw new Error('Firestore no está disponible en este momento.');
-    const api = await import('firebase/firestore');
-    return { api, database: api.getFirestore(this.firebase.app) };
+  private loadFirestore() {
+    return this.firebase.loadFirestore();
   }
 }

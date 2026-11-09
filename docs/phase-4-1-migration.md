@@ -66,3 +66,9 @@ SDK 12.19.0, rules-unit-testing 5.0.0. Instalación, compilación de producción
 ### Firebase 13
 
 SDK 13.2.0, rules-unit-testing 6.0.0. Instalación, compilación de producción, 19 pruebas Vitest, contratos de compartir/regresión, 27 pruebas Auth/Firestore/Apps Script y `npm ls --all` aprobados. No se modificaron reglas, estructura de datos, configuración de producción ni Apps Script.
+
+### Seguridad y QA de navegador
+
+Las auditorías completas y de producción alcanzaron cero vulnerabilidades de toda severidad el 2026-11-09. Se actualizaron también las herramientas de pruebas; overrides analizados para gRPC 1.14.7, glob 14.0.4, uuid 11.1.1 y Pub/Sub 6.3.2. `npm update undici` corrigió el último aviso de las herramientas sin forzar una versión mayor. El emulador ejecutó correctamente sus contratos con este árbol.
+
+Playwright contiene 12 escenarios (desktop Chromium/WebKit, Android Chromium e iPhone WebKit). `--list` sólo comprueba descubrimiento, no equivale a ejecución aprobada. Se configuró CI para ejecutar navegadores en Ubuntu con Java 21 y Node 24. El servidor local y Firebase demo rechazan configuraciones de producción.
