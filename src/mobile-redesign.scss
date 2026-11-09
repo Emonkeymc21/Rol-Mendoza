@@ -117,7 +117,7 @@
     color: var(--brand-secondary);
   }
   app-header .site-header.site-header .menu-trigger[aria-expanded='true'] { background: var(--brand-soft); }
-  app-header .site-header.site-header .mobile-menu-backdrop {
+  app-header .mobile-menu-backdrop.mobile-menu-backdrop {
     display: block;
     position: fixed;
     top: calc(64px + env(safe-area-inset-top));
@@ -129,7 +129,7 @@
     border: 0;
     background: rgba(8, 5, 7, .7);
   }
-  app-header .site-header.site-header .mobile-menu {
+  app-header .mobile-menu.mobile-menu {
     position: fixed;
     top: calc(64px + env(safe-area-inset-top));
     right: auto;
@@ -771,10 +771,10 @@
     width: 42px;
     height: 42px;
   }
-  app-header .site-header.site-header .mobile-menu-backdrop {
+  app-header .mobile-menu-backdrop.mobile-menu-backdrop {
     top: calc(54px + env(safe-area-inset-top));
   }
-  app-header .site-header.site-header .mobile-menu {
+  app-header .mobile-menu.mobile-menu {
     top: calc(54px + env(safe-area-inset-top));
     width: min(340px, 58vw);
     max-height: calc(100dvh - 54px - env(safe-area-inset-top));
@@ -936,8 +936,26 @@
 @media screen and (max-width: 767px),
        screen and (min-width: 768px) and (max-width: 1023px) and (max-height: 500px)
        and (orientation: landscape) and (hover: none) and (pointer: coarse) {
-  html { overflow-x: clip; }
+  html { overflow-x: hidden; }
   app-home .home-hero.home-hero .hero-stage.hero-stage .scroll-cue {
     display: none;
   }
+}
+
+/* Menú fuera del header sticky: fixed respecto al viewport en WebKit, no
+   respecto al contexto de pintura del header. El fondo queda detrás del drawer. */
+@media screen and (max-width: 767px),
+       screen and (min-width: 768px) and (max-width: 1023px) and (max-height: 500px)
+       and (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  app-header .mobile-menu-backdrop.mobile-menu-backdrop {
+    position: fixed;
+    z-index: 80;
+    pointer-events: auto;
+  }
+  app-header .mobile-menu.mobile-menu {
+    position: fixed;
+    z-index: 81;
+  }
+  app-game-card .game-card.game-card .card-art { grid-column: 1; width: auto; }
+  app-game-card .game-card.game-card .game-card-body { grid-column: 2; width: auto; min-width: 0; }
 }
