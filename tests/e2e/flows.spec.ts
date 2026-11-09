@@ -1,8 +1,10 @@
 import {test, expect, BrowserContext, Page} from '@playwright/test';
+import {observeBrowserErrors} from './browser-errors';
 const password='Emulator-only-123!';
 const api='http://127.0.0.1:4401';
 const app='http://127.0.0.1:4200';
 const unexpectedRequests=new WeakMap<BrowserContext,string[]>();
+const browserErrors=new WeakMap<Page,Awaited<ReturnType<typeof observeBrowserErrors>>>();
 async function isolate(context:BrowserContext) {
   const unexpected:string[]=[];unexpectedRequests.set(context,unexpected);
   // Observe without interception: WebKit's driver otherwise pauses every local stream.
@@ -57,16 +59,19 @@ async function login(page:Page,name:string,returnUrl='/perfil'){
 async function fits(page:Page){
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
 }
-test.beforeEach(async({context,request,page})=>{
+test.beforeEach(async({context,request,page},info)=>{
   expect((await request.post(`${api}/reset`)).ok()).toBeTruthy();
   await isolate(context);
+  browserErrors.set(page,await observeBrowserErrors(page,info));
   await page.goto('/');
   // Fail before any registration/mutation if the isolated build was not selected.
   await expect(page.locator('html')).toHaveAttribute('data-emulator-project','demo-cumbre20');
 });
-test.afterEach(async({context})=>expect(unexpectedRequests.get(context)||[]).toEqual([]));
+test.afterEach(async({context,page})=>{
+  expect(unexpectedRequests.get(context)||[]).toEqual([]);
+  await browserErrors.get(page)!.assertClean();
+});
 test('public pages, filters, share sheet and safe mobile layout',async({page},info)=>{
-  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/');await expect(page.locator('app-home h1')).toBeVisible();await fits(page);
   await page.screenshot({path:info.outputPath('home.png'),fullPage:true});
   const mobile=page.getByRole('button',{name:'Abrir menú',exact:true});
@@ -81,16 +86,9 @@ test('public pages, filters, share sheet and safe mobile layout',async({page},in
   const rect=await sheet.boundingBox();expect(rect).not.toBeNull();expect(rect!.x).toBeGreaterThanOrEqual(0);expect(rect!.x+rect!.width).toBeLessThanOrEqual(page.viewportSize()!.width+1);
   await page.screenshot({path:info.outputPath('share.png'),fullPage:true});await page.keyboard.press('Escape');await expect(sheet).toBeHidden();
   for(const route of ['/ingresar','/registrarme','/comunidades','/como-funciona']){await page.goto(route);await expect(page.locator('h1')).toBeVisible();await fits(page);}
-  expect(errors).toEqual([]);
 });
 test('DM publishes, player registers and requests, DM accepts and manages, player sees private contact',async({page},info)=>{
-  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await register(page,'Master','DM');
-  // Exercise resuming a cached document with the real SDK before more writes.
-  await page.evaluate(() => {
-    window.dispatchEvent(new PageTransitionEvent('pagehide', {persisted:true}));
-    window.dispatchEvent(new PageTransitionEvent('pageshow', {persisted:true}));
-  });
   await menu(page);
   const light=page.getByRole('button',{name:/^(Claro|Usar tema claro)$/});await light.click();await expect(page.locator('html')).toHaveAttribute('data-theme','light');
   await page.getByRole('button',{name:/^(Oscuro|Usar tema oscuro)$/}).click();await expect(page.locator('html')).toHaveAttribute('data-theme','dark');
@@ -132,7 +130,7 @@ test('DM publishes, player registers and requests, DM accepts and manages, playe
   await expect(page.getByText('¡Te aceptaron en esta partida!',{exact:false})).toBeVisible();
   await expect(page.getByRole('link',{name:/Escribir por WhatsApp/})).toHaveAttribute('href',/https:\/\/wa.me\/5492615551234/);
   await page.goto('/notificaciones');await expect(page.locator('app-notifications')).toContainText('Aventura');
-  await page.screenshot({path:info.outputPath('notifications.png'),fullPage:true});expect(errors).toEqual([]);
+  await page.screenshot({path:info.outputPath('notifications.png'),fullPage:true});
 });
 test('consecutive bots and humans keep no-store and never disclose private data',async({request})=>{
   for(const agent of ['WhatsApp/2.24','Mozilla/5.0','TelegramBot','Discordbot/2.0','Mozilla/5.0']){
@@ -160,4 +158,19 @@ test('Google popup and browser session on Auth emulator, without real OAuth',asy
   await page.reload();
   await expect(page.getByRole('button',{name:'Solicitar unirme',exact:true})).toBeVisible();
   await expect(page.locator('app-header')).toContainText('Google');
+});
+
+test('browser error gate rejects real exceptions and unhandled promises',async({context},info)=>{
+  const checked=await context.newPage();
+  const probe=await observeBrowserErrors(checked,info,'probe-negative-control');
+  await checked.goto('data:text/html,<title>Isolated error probe</title>');
+  await checked.evaluate(()=>{
+    setTimeout(()=>{throw new Error('CUMBRE20_EXPECTED_EXCEPTION');},0);
+    setTimeout(()=>{void Promise.reject(new Error('CUMBRE20_EXPECTED_REJECTION'));},0);
+  });
+  await expect.poll(()=>probe.exceptions.length).toBe(2);
+  expect(probe.exceptions.map(error=>error.kind).sort()).toEqual(['error','unhandledrejection']);
+  expect(probe.protocol.some(error=>error.message.includes('CUMBRE20_EXPECTED_EXCEPTION'))).toBe(true);
+  await expect(probe.assertClean()).rejects.toThrow();
+  await checked.close();
 });
