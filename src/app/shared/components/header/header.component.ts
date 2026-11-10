@@ -38,7 +38,8 @@ export class HeaderComponent {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(profile => this.profile = profile);
   }
-  toggleMenu(): void {
+  toggleMenu(event?: MouseEvent): void {
+    event?.stopPropagation();
     this.menuOpen = !this.menuOpen;
     this.accountMenuOpen = false;
     this.syncMobileScrollLock();

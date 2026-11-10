@@ -57,7 +57,7 @@
     <a routerLink="/notificaciones" class="notification-trigger" aria-label="Notificaciones"><app-icon name="bell" [size]="21"></app-icon>@if (unreadCount$ | async; as unread) {
     <span>{{ unread > 99 ? '99+' : unread }}</span>
   }</a>
-  }<button type="button" class="menu-trigger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen" aria-controls="mobile-navigation" [attr.aria-label]="menuOpen ? 'Cerrar menú' : 'Abrir menú'"><app-icon [name]="menuOpen ? 'close' : 'menu'" [size]="23"></app-icon></button></div>
+  }<button type="button" class="menu-trigger" (click)="toggleMenu($event)" [attr.aria-expanded]="menuOpen" aria-controls="mobile-navigation" [attr.aria-label]="menuOpen ? 'Cerrar menú' : 'Abrir menú'"><app-icon [name]="menuOpen ? 'close' : 'menu'" [size]="23"></app-icon></button></div>
 </div>
 
 </header>
