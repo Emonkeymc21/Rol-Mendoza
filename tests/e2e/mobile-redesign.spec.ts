@@ -113,7 +113,7 @@ for (const [width, height] of widths) {
       await page.screenshot({ path: info.outputPath('drawer-' + width + '.png'), animations: 'disabled' });
       // Tap the exposed strip to the right of the mobile drawer. Safari can
       // retarget the event to <html>; the document listener must still close.
-      await page.mouse.click(width - 6, Math.min(150, height - 24));
+      await page.touchscreen.tap(width - 6, Math.min(150, height - 24));
       await expect(page.getByRole('navigation', { name: 'Navegación móvil' })).toBeHidden();
       await expect(page.locator('body')).not.toHaveClass(/c20-mobile-menu-open/);
 
