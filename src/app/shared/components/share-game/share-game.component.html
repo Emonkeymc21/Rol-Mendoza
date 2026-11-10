@@ -1,5 +1,5 @@
 <div class="share-game" [class.compact]="compact" (click)="stop($event)">
-  <button type="button" class="share-trigger" (click)="toggle($event)" [attr.aria-expanded]="open" aria-haspopup="menu">
+  <button type="button" class="share-trigger" #shareTrigger (click)="toggle($event)" [attr.aria-expanded]="open" aria-haspopup="menu">
     <app-icon name="share" [size]="18"></app-icon>
     @if (!compact) {
       <span>Compartir partida</span>
@@ -10,7 +10,12 @@
   </button>
 
   @if (open) {
+    <button type="button" class="share-backdrop hidden" tabindex="-1" aria-label="Cerrar opciones para compartir" (click)="close()"></button>
     <div class="share-menu" role="menu" aria-label="Opciones para compartir">
+      <div class="share-menu-header hidden" role="none">
+        <strong>Compartir partida</strong>
+        <button type="button" class="share-close" role="menuitem" aria-label="Cerrar opciones para compartir" (click)="closeAndRestoreFocus($event)"><app-icon name="close" [size]="20"></app-icon></button>
+      </div>
       @if (sharing.canUseNativeShare()) {
         <button type="button" role="menuitem" (click)="shareNative($event)">
           <app-icon name="share" [size]="18"></app-icon><span><strong>Compartir</strong><small>Usar las aplicaciones de este dispositivo</small></span>
