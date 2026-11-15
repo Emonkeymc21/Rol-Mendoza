@@ -108,6 +108,11 @@ for (const [width, height] of widths) {
       await toggle.click();
       await expect(page.getByRole('navigation', { name: 'Navegación móvil' })).toBeVisible();
       await expect(page.locator('body')).toHaveClass(/c20-mobile-menu-open/);
+      expect(await page.locator('html').evaluate(el=>getComputedStyle(el).overflowY)).toBe('hidden');
+      const backgroundY = await page.evaluate(()=>scrollY);
+      await page.keyboard.press('PageDown');
+      await page.waitForTimeout(120);
+      expect(await page.evaluate(()=>scrollY)).toBe(backgroundY);
       await hideEmulatorOnlyBanner(page);
       await page.screenshot({ path: info.outputPath('drawer-' + width + '.png'), animations: 'disabled' });
       // Tap the exposed strip to the right of the mobile drawer. Safari can

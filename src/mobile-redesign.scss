@@ -23,7 +23,7 @@
   body {
     background: radial-gradient(ellipse 110% 38rem at 85% -5%, color-mix(in srgb, var(--surface-brand) 38%, transparent), transparent 74%), var(--bg-primary);
   }
-  body.c20-mobile-menu-open { overflow: hidden; }
+  html:has(body.c20-mobile-menu-open), body.c20-mobile-menu-open { overflow: hidden; }
   /* SDK Firebase: aviso exclusivamente del emulador, no existe en producción.
      Debe poder leerse, pero no tapar acciones ni provocar scroll horizontal. */
   .firebase-emulator-warning {
