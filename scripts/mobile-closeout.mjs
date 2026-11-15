@@ -42,19 +42,26 @@ async function api(actor,action,payload){const r=await post('http://127.0.0.1:44
 // to the same requested CSS width, retaining the native gutter in screenshots.
 // No styles, screenshots or comparisons are masked/changed.
 async function navigate(page,url){
- const response=await page.goto(url),target=targets.get(page);
+ let response=await page.goto(url);const target=targets.get(page);let resized=false;
  if(!target||target.width<768)return response;
  await expect.poll(()=>page.locator('link[rel=stylesheet]').evaluateAll(list=>list.length>0&&list.every(el=>el.sheet&&(!el.media||el.media==='all')))).toBe(true);
  await page.evaluate(()=>document.fonts.ready);
- for(let attempt=0;attempt<4;attempt++){
+ for(let attempt=0;attempt<6;attempt++){
   const state=await page.evaluate(expected=>{
    let lo=0,hi=4096;while(lo+1<hi){const mid=Math.floor((lo+hi)/2);if(matchMedia(`(min-width: ${mid}px)`).matches)lo=mid;else hi=mid;}
    return {css:lo,inner:innerWidth,client:document.documentElement.clientWidth,expected,matches:matchMedia(`(width: ${expected}px)`).matches};
   },target.width);
+  if(state.matches&&resized){
+   // Begin the document at its final viewport. Resizing a loaded WebKit image
+   // from the mobile logo size can retain a different resampled backing bitmap.
+   response=await page.reload();resized=false;
+   await expect.poll(()=>page.locator('link[rel=stylesheet]').evaluateAll(list=>list.length>0&&list.every(el=>el.sheet&&(!el.media||el.media==='all')))).toBe(true);
+   await page.evaluate(()=>document.fonts.ready);continue;
+  }
   if(state.matches){await appendFile(out+'/viewports.jsonl',JSON.stringify({variant,url:new URL(url).pathname,...target,...state,screenshotWidth:page.viewportSize().width})+'\n');return response;}
   const current=page.viewportSize();
   if(engine!=='webkit'||Math.abs(current.width-target.width)>11||Math.abs(state.css-target.width)>11)throw Error('Unexpected CSS viewport: '+JSON.stringify(state));
-  await page.setViewportSize({width:current.width+target.width-state.css,height:target.height});
+  await page.setViewportSize({width:current.width+target.width-state.css,height:target.height});resized=true;
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
  }
  throw Error('CSS viewport calibration did not settle: '+url);
@@ -111,6 +118,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  }
  if(!stable)throw Error('Unstable screenshot: '+key);
  const nativeSelect=baseSlug==='home'?await page.locator('app-home select').evaluate(el=>{const c=getComputedStyle(el),r=el.getBoundingClientRect();return {value:el.value,font:c.font,lineHeight:c.lineHeight,padding:c.padding,appearance:c.appearance,x:r.x,y:r.y,width:r.width,height:r.height,fonts:document.fonts.status};}):undefined;
+ const logo=baseSlug==='home'?await page.locator('.brand-mark').evaluate(el=>{const r=el.getBoundingClientRect(),c=getComputedStyle(el);return {src:el.getAttribute('src'),naturalWidth:el.naturalWidth,x:r.x,y:r.y,width:r.width,height:r.height,objectFit:c.objectFit};}):undefined;
  let comparison;
  if(width>=768&&variant==='before')refs.set(key,png);
  if(width>=768&&variant==='after'){
@@ -118,7 +126,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
   comparison=await diff(comparator,refs.get(key),png);
   if(comparison.pixels!==0){
    failures.push({key,type:'desktop-pixels',comparison});await writeFile(path+'-before.png',refs.get(key));await writeFile(path+'-after.png',png);
-   await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect},null,2));
+   await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect,logo},null,2));
    if(baseSlug==='home')throw Error('Desktop Home pixel difference: '+JSON.stringify({key,comparison,layout,nativeSelect}));
   }
  }
@@ -127,7 +135,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  let violations=[];
  if(axe){const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22a','wcag22aa']).analyze();violations=result.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}));if(violations.length)failures.push({key,type:'axe',violations});}
  if(variant==='after'&&(layout.body>layout.client+1||!layout.mediaWidth||layout.horizontal>11))failures.push({key,type:'overflow',layout});
- const record={variant,width,theme,slug,nativeSelect,url:new URL(page.url()).pathname,layout,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
+ const record={variant,width,theme,slug,nativeSelect,logo,url:new URL(page.url()).pathname,layout,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
 }
 try{
  start('tests/isolated-server.cjs');start('dist/mobile-baseline/server/server.mjs',{PORT:'4310'});start('dist/ssr-test/server/server.mjs',{PORT:'4320'});
