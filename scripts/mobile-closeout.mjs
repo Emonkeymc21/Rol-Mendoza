@@ -76,6 +76,7 @@ async function diff(page,before,after){return page.evaluate(async([a,b])=>{
  const c=document.createElement('canvas');c.width=width;c.height=x.height;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(x,0,0);const ax=ctx.getImageData(0,0,c.width,c.height).data;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(y,0,0);const ay=ctx.getImageData(0,0,c.width,c.height).data;let pixels=0;for(let i=0;i<ax.length;i+=4)if(ax[i]!==ay[i]||ax[i+1]!==ay[i+1]||ax[i+2]!==ay[i+2]||ax[i+3]!==ay[i+3])pixels++;return {pixels,width:c.width,height:c.height,windowWidths:[x.width,y.width],nativeGutters:[x.width-width,y.width-width]};
  },['data:image/png;base64,'+before.toString('base64'),'data:image/png;base64,'+after.toString('base64')]);}
 async function checkHorizontalInput(page){
+ await page.bringToFront();
  const focused=await page.evaluateHandle(()=>document.activeElement);
  const y=await page.evaluate(()=>{document.activeElement?.blur?.();scrollTo({left:0,top:scrollY,behavior:'instant'});return scrollY;});
  await page.keyboard.press('ArrowRight');await page.waitForTimeout(150);
@@ -87,11 +88,18 @@ async function checkHorizontalInput(page){
 }
 async function checkInputControl(){
  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
- try{const page=await context.newPage();await page.setContent('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>html{overflow-x:auto;scroll-behavior:auto}body{margin:0}div{width:900px;height:1800px}</style><div>Horizontal overflow negative control</div>');
- const open=await checkHorizontalInput(page);
- await page.evaluate(()=>document.documentElement.style.overflowX='hidden');const clipped=await checkHorizontalInput(page);
- const programmatic=await page.evaluate(()=>{scrollTo({left:500,top:0,behavior:'instant'});return scrollX;});
- const control={engine,open,clipped,programmatic};inputControls.push(control);await writeFile(out+'/horizontal-input-control.json',JSON.stringify(control,null,2));
+ try{const page=await context.newPage();await page.bringToFront();const nested=engine==='chromium';
+ const header='<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>html{overflow-x:auto;scroll-behavior:auto}body{margin:0}</style>';
+ await page.setContent(header+'<body tabindex="0"><div style="width:900px;height:1800px">Wide body negative control</div></body>');
+ const dimensions=await page.evaluate(()=>({body:document.body.scrollWidth,client:document.documentElement.clientWidth,inner:innerWidth}));expect(dimensions.body).toBeGreaterThan(dimensions.client);
+ if(nested)await page.setContent(header+'<div id="input-control" tabindex="0" style="width:350px;height:200px;overflow-x:auto"><div style="width:900px;height:100px">Nested input negative control</div></div>');
+ const target=page.locator(nested?'#input-control':'body');await target.click({position:{x:10,y:10}});await target.focus();
+ const read=()=>page.evaluate(nested=>nested?document.querySelector('#input-control').scrollLeft:scrollX,nested);
+ const reset=()=>page.evaluate(nested=>{if(nested)document.querySelector('#input-control').scrollTo({left:0,top:0,behavior:'instant'});else scrollTo({left:0,top:0,behavior:'instant'});},nested);
+ const input=async()=>{await reset();await page.keyboard.press('ArrowRight');await page.waitForTimeout(250);const arrow=await read();let wheel;if(engine==='chromium'){await page.mouse.move(50,50);await page.mouse.wheel(450,0);await page.waitForTimeout(250);wheel=await read();}await reset();return{arrow,wheel};};
+ const open=await input();await page.evaluate(nested=>(nested?document.querySelector('#input-control'):document.documentElement).style.overflowX='hidden',nested);const clipped=await input();
+ await page.evaluate(nested=>{if(nested)document.querySelector('#input-control').scrollTo({left:500,top:0,behavior:'instant'});else scrollTo({left:500,top:0,behavior:'instant'});},nested);const programmatic=await read();
+ const control={engine,target:nested?'nested scrollLeft':'viewport scrollX',dimensions,open,clipped,programmatic};inputControls.push(control);await writeFile(out+'/horizontal-input-control.json',JSON.stringify(control,null,2));
  expect(open.arrow,'Control must detect genuine user-scrollable overflow').toBeGreaterThan(0);expect(clipped.arrow).toBe(0);if(engine==='chromium'){expect(open.wheel).toBeGreaterThan(0);expect(clipped.wheel).toBe(0);}expect(programmatic,'Hidden clipping permits programmatic scrolling per CSS Overflow 3').toBeGreaterThan(0);
  }finally{await context.close();}
 }
