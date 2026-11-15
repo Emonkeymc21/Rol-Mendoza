@@ -17,7 +17,7 @@ const out='mobile-results/'+engine;await mkdir(out,{recursive:true});
 const original=require('../vercel.json').headers.find(x=>x.source==='/(.*)').headers.find(x=>x.key==='Content-Security-Policy').value;
 const csp=original.replace("connect-src 'self'","connect-src 'self' http://127.0.0.1:9099 http://127.0.0.1:8080").replace("frame-src 'self'","frame-src 'self' http://127.0.0.1:9099").replace('; upgrade-insecure-requests','');
 const children=[];let variant='before',laboratory=false,browser,proxy;
-const records=[],failures=[],refs=new Map(),metrics=[];
+const records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[];
 const start=(file,extra={})=>{const p=spawn(process.execPath,[file],{env:{...process.env,CUMBRE20_TEST_MODE:'1',CUMBRE20_TEST_CSP:csp,...extra},stdio:'inherit'});children.push(p);return p;};
 async function ready(url){for(let i=0;i<100;i++){try{if((await fetch(url)).ok)return;}catch{}await new Promise(r=>setTimeout(r,200));}throw Error('Not ready: '+url);}
 async function json(url,options={}){const r=await fetch(url,options),data=await r.json();if(!r.ok||data.error)throw Error(JSON.stringify({url,status:r.status,data}));return data;}
@@ -58,32 +58,53 @@ async function diff(page,before,after){return page.evaluate(async([a,b])=>{
  if(x.width!==y.width||x.height!==y.height)return {pixels:null,before:[x.width,x.height],after:[y.width,y.height]};
  const c=document.createElement('canvas');c.width=x.width;c.height=x.height;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(x,0,0);const ax=ctx.getImageData(0,0,c.width,c.height).data;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(y,0,0);const ay=ctx.getImageData(0,0,c.width,c.height).data;let pixels=0;for(let i=0;i<ax.length;i+=4)if(ax[i]!==ay[i]||ax[i+1]!==ay[i+1]||ax[i+2]!==ay[i+2]||ax[i+3]!==ay[i+3])pixels++;return {pixels,width:c.width,height:c.height};
  },['data:image/png;base64,'+before.toString('base64'),'data:image/png;base64,'+after.toString('base64')]);}
-async function capture(page,comparator,width,theme,slug,{full=true,axe=false}={}){
- await settle(page);if(full)await reveal(page);
- // Native selects can cache fallback-font ascent while CSS/fonts load. Initialize
- // the same current option in BOTH builds after font readiness. No value changes,
- // masks, style injection or ignored pixels are used for visual comparisons.
- if(slug==='home'){
-  const mode=page.locator('app-home select');await mode.selectOption(await mode.inputValue());
+async function capture(page,comparator,width,theme,slug,{full=true,axe=false,prepared=false,segment=0}={}){
+ if(!prepared)await settle(page);
+ const baseSlug=slug.split('--view-')[0];
+ if(full){
+  await reveal(page);
+  // WebKit fullPage temporarily changes the layout viewport to clientWidth,
+  // crossing 768px when its 11px native scrollbar is present. Capture genuine
+  // fixed-viewport screens while scrolling instead. No stitching or CSS masks.
+  const geometry=await page.evaluate(()=>({height:document.documentElement.scrollHeight,viewport:innerHeight}));
+  const max=Math.max(0,geometry.height-geometry.viewport),offsets=[];
+  for(let y=0;y<max;y+=geometry.viewport)offsets.push(y);offsets.push(max);
+  const geometryKey=`${width}-${theme}-${slug}`;
+  if(variant==='before')geometries.set(geometryKey,geometry);
+  else if(width>=768&&JSON.stringify(geometry)!==JSON.stringify(geometries.get(geometryKey))){
+   failures.push({key:geometryKey,type:'desktop-geometry',before:geometries.get(geometryKey),after:geometry});
+  }
+  for(let i=0;i<offsets.length;i++){
+   await page.evaluate(y=>scrollTo(0,y),offsets[i]);await page.waitForTimeout(120);
+   await capture(page,comparator,width,theme,slug+'--view-'+i,{full:false,axe:axe&&i===0,prepared:true,segment:i});
+  }
+  await page.evaluate(()=>scrollTo(0,0));return;
  }
- const layout=await page.evaluate(width=>{const y=scrollY;scrollTo(10000,y);const x=scrollX;scrollTo(0,y);return {body:document.body.scrollWidth,client:document.documentElement.clientWidth,horizontal:x,expected:width};},width);
+ const layout=await page.evaluate(width=>{const y=scrollY;scrollTo(10000,y);const x=scrollX;scrollTo(0,y);return {body:document.body.scrollWidth,client:document.documentElement.clientWidth,inner:innerWidth,horizontal:x,expected:width,y:scrollY,mediaWidth:matchMedia(`(width: ${width}px)`).matches,mobileMedia:matchMedia('(max-width: 767px)').matches};},width);
  const key=`${width}-${theme}-${slug}`,path=`${out}/${variant}-${key}`;
- let png=await page.screenshot({fullPage:full,animations:'disabled'}),stable=false;
- for(let frame=0;frame<4;frame++){await page.waitForTimeout(80);const next=await page.screenshot({fullPage:full,animations:'disabled'});if(png.equals(next)||(await diff(comparator,png,next)).pixels===0){stable=true;png=next;break;}png=next;}
+ let png=await page.screenshot({fullPage:false,animations:'disabled'}),stable=false;
+ for(let frame=0;frame<4;frame++){
+  await page.waitForTimeout(80);const next=await page.screenshot({fullPage:false,animations:'disabled'});
+  if(png.equals(next)||(await diff(comparator,png,next)).pixels===0){stable=true;png=next;break;}png=next;
+ }
  if(!stable)throw Error('Unstable screenshot: '+key);
- const nativeSelect=slug==='home'?await page.locator('app-home select').evaluate(el=>{const c=getComputedStyle(el),r=el.getBoundingClientRect();return {value:el.value,font:c.font,lineHeight:c.lineHeight,padding:c.padding,appearance:c.appearance,x:r.x,y:r.y,width:r.width,height:r.height,fonts:document.fonts.status};}):undefined;
- // The exact comparator never masks pixels or ignores antialiasing.
+ const nativeSelect=baseSlug==='home'?await page.locator('app-home select').evaluate(el=>{const c=getComputedStyle(el),r=el.getBoundingClientRect();return {value:el.value,font:c.font,lineHeight:c.lineHeight,padding:c.padding,appearance:c.appearance,x:r.x,y:r.y,width:r.width,height:r.height,fonts:document.fonts.status};}):undefined;
  let comparison;
  if(width>=768&&variant==='before')refs.set(key,png);
  if(width>=768&&variant==='after'){
+  if(!refs.has(key))throw Error('Missing baseline viewport: '+key);
   comparison=await diff(comparator,refs.get(key),png);
-  if(comparison.pixels!==0){failures.push({key,type:'desktop-pixels',comparison});await writeFile(path+'-before.png',refs.get(key));await writeFile(path+'-after.png',png);if(slug==='home')throw Error('Desktop Home pixel difference: '+JSON.stringify({key,comparison}));}
+  if(comparison.pixels!==0){
+   failures.push({key,type:'desktop-pixels',comparison});await writeFile(path+'-before.png',refs.get(key));await writeFile(path+'-after.png',png);
+   await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect},null,2));
+   if(baseSlug==='home')throw Error('Desktop Home pixel difference: '+JSON.stringify({key,comparison,layout,nativeSelect}));
+  }
  }
- if(width===390||width===1440&&['home','partidas','perfil'].includes(slug))await writeFile(path+'.png',png);
- else await page.screenshot({path:path+'.jpg',type:'jpeg',quality:72,fullPage:full,animations:'disabled'});
+ if(segment===0&&(width===390||width===1440&&['home','partidas','perfil'].includes(baseSlug)))await writeFile(path+'.png',png);
+ else await page.screenshot({path:path+'.jpg',type:'jpeg',quality:72,fullPage:false,animations:'disabled'});
  let violations=[];
  if(axe){const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22a','wcag22aa']).analyze();violations=result.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}));if(violations.length)failures.push({key,type:'axe',violations});}
- if(variant==='after'&&(layout.body>width+1||layout.client!==width||layout.horizontal>11))failures.push({key,type:'overflow',layout});
+ if(variant==='after'&&(layout.body>layout.client+1||!layout.mediaWidth||layout.horizontal>11))failures.push({key,type:'overflow',layout});
  const record={variant,width,theme,slug,nativeSelect,url:new URL(page.url()).pathname,layout,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
 }
 try{

@@ -64,9 +64,6 @@ jobs:
           FIREBASE_CLI_DISABLE_MOTD: 'true'
           CUMBRE20_BROWSER: ${{ matrix.engine }}
           CUMBRE20_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      - run: npm run test:public-smoke
-        env:
-          CUMBRE20_BROWSER: ${{ matrix.engine }}
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
@@ -109,3 +106,31 @@ jobs:
           name: performance-accessibility-visual
           path: audit-results/
           retention-days: 14
+
+  production-smoke:
+    runs-on: ${{ matrix.engine == 'webkit' && 'macos-15' || 'ubuntu-24.04' }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.x
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npm run build:prod
+      - run: npm run test:public-smoke
+        env:
+          CUMBRE20_BROWSER: ${{ matrix.engine }}
+          CUMBRE20_REQUIRE_PUBLISHED: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '1' || '0' }}
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: production-smoke-${{ matrix.engine }}
+          path: mobile-results/
+          retention-days: 7

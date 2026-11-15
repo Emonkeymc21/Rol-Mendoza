@@ -1,12 +1,24 @@
 // Read-only production check. No registration, login, form submission or writes.
 import {chromium,webkit,expect as pwExpect} from '@playwright/test';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readdir} from 'node:fs/promises';
 import {observeBrowserErrors} from '../tests/e2e/browser-errors.ts';
 const expect=pwExpect.configure({timeout:30000});
 const engine=process.env.CUMBRE20_BROWSER||'chromium';
 if(!['chromium','webkit'].includes(engine))throw Error('Unknown browser engine');
 const origin='https://rol-mendoza-2026.vercel.app',out='mobile-results/'+engine+'/production';
 await mkdir(out,{recursive:true});const checks=[];
+let expectedBootstrap;
+if(process.env.CUMBRE20_REQUIRE_PUBLISHED==='1'){
+ expectedBootstrap=(await readdir('dist/rol-mendoza/browser')).find(name=>/^main-[\w-]+\.js$/.test(name));
+ if(!expectedBootstrap)throw Error('Production bootstrap was not built');
+ let matched=false;
+ for(let i=0;i<24;i++){
+  const response=await fetch(origin+'/',{cache:'no-store',signal:AbortSignal.timeout(15000)});const html=await response.text();
+  if(response.ok&&html.includes('src="'+expectedBootstrap+'"')){matched=true;break;}
+  await new Promise(r=>setTimeout(r,5000));
+ }
+ if(!matched)throw Error('Production does not serve the exact expected bootstrap: '+expectedBootstrap);
+}
 const browser=await({chromium,webkit}[engine]).launch();
 try{
  for(const [width,height]of [[320,568],[390,844],[1440,900]]){
@@ -27,5 +39,5 @@ try{
    await errors.assertClean();
   }finally{await context.close();}
  }
-}finally{await writeFile(out+'/summary.json',JSON.stringify({engine,checkedAt:new Date().toISOString(),origin,readOnly:true,checks},null,2));await browser.close();}
+}finally{await writeFile(out+'/summary.json',JSON.stringify({engine,checkedAt:new Date().toISOString(),origin,readOnly:true,sourceHead:process.env.GITHUB_SHA,expectedBootstrap,checks},null,2));await browser.close();}
 console.log('PRODUCTION_READ_ONLY',JSON.stringify({engine,checks:checks.length}));

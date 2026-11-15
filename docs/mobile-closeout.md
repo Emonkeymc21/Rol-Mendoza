@@ -50,7 +50,7 @@ Build publicado: inicial **674,28 kB**, transferencia estimada **170,32 kB**. Pe
 
 No se probaron dispositivos físicos, VoiceOver/TalkBack, teclado virtual real, barras dinámicas reales ni Google OAuth/correos con usuarios reales. La automatización de motores y Auth Emulator cubre la lógica restante. Continuar con `docs/qa/physical-device-checklist.md`.
 
-No se modifican usuarios, Firestore, permisos, Apps Script/Sheets ni dependencias de producción. Rollback visual: revertir PR #26 y desplegar `780ebf4`; no requiere migración de datos. Para esta ampliación de QA, revertir su PR afecta únicamente pruebas/documentación.
+No se modifican usuarios, Firestore, permisos, Apps Script/Sheets ni dependencias de producción. Rollback visual: revertir PR #26 y desplegar `780ebf4`; no requiere migración de datos. Para revertir este cierre (PR #27), recuperar `79928ff`; incluye sus correcciones puntuales de menú, foco y etiqueta accesible, además de pruebas/documentación. No requiere cambios de datos.
 
 ## Correcciones incrementales de cierre
 
@@ -69,3 +69,7 @@ Para Lighthouse se omite únicamente el banner visual de diagnóstico de Auth Em
 La comparación completa de Chromium encontró seis diferencias limitadas al texto nativo del selector de modalidad del Home (1024/1440/1920, dos temas): 752–892 píxeles, exactamente un desplazamiento vertical de 1 px; bordes, icono, geometría y todas las demás pantallas coincidían. Los estilos globales activos fuera de media queries son idénticos (salvo declaración de charset). Se refuerzan precondiciones: stylesheet activo, fuentes Inter/Cinzel cargadas, misma opción del selector inicializada sin cambiar su valor y dos capturas consecutivas idénticas. Se registran fuente, padding, apariencia y geometría del selector para investigar cualquier diferencia restante. No se enmascaran controles ni se elevan tolerancias.
 
 La auditoría autenticada detectó `label-content-name-mismatch` en la campana móvil: mostraba un contador que faltaba en el nombre accesible. Se agrega ese mismo contador (incluido `99+`) al nombre accesible, sin modificar su apariencia ni las consultas de notificaciones.
+
+El smoke público corre como job independiente en cada motor. En `push` a main recompila producción y espera que el HTML público anuncie el mismo bootstrap `main-<hash>.js` antes de capturar. Esto permite detectar un alias viejo o un despliegue que no corresponde al código validado, sin tokens ni escrituras de datos. En PR sólo verifica el sitio público actual, sin confundirlo con el preview del candidato. El deployment SHA se contrasta además mediante Vercel.
+
+WebKit confirmó una limitación adicional de `fullPage`: para capturar cambia temporalmente el viewport al ancho útil sin scrollbar (768→757), activa la media query móvil y cambia la altura de Home. Se reemplaza esa técnica por capturas reales de viewport fijo en tramos sucesivos de scroll, en ambos motores. No se unen, recortan ni enmascaran imágenes. Se compara también la altura total del documento y se conserva la barra nativa. Se verifica que la media query de ancho siga coincidiendo con el ancho solicitado. Se retira la inicialización del selector: las capturas no modifican sus valores ni disparan eventos de formulario.
