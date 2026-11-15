@@ -33,6 +33,7 @@ export class CreateGameComponent implements OnInit, OnDestroy {
   private createRequestId?: string;
   private cover?: PreparedGameCover | null;
   private coverUpload?: Subscription;
+  private coverInput?: HTMLInputElement;
   private originalPreview = '';
   coverPreview = '';
   coverError = '';
@@ -191,9 +192,9 @@ export class CreateGameComponent implements OnInit, OnDestroy {
 
   chooseCover(input: HTMLInputElement): void {
     const file = input.files?.[0];
-    input.value = '';
     if (!file || this.saving) return;
     this.cancelCoverUpload();
+    this.coverInput = input;
     this.coverError = '';
     this.coverProgress = 0;
     this.coverUpload = this.covers.prepare(file, this.gameId, progress => {
@@ -202,10 +203,10 @@ export class CreateGameComponent implements OnInit, OnDestroy {
       next: cover => {
         this.cover = cover;
         this.coverPreview = this.previewUrl(cover.detail);
-        this.coverProgress = null;
+        this.resetCoverPicker();
       },
       error: error => {
-        this.coverProgress = null;
+        this.resetCoverPicker();
         this.coverError = error.message;
       }
     });
@@ -213,6 +214,12 @@ export class CreateGameComponent implements OnInit, OnDestroy {
 
   cancelCoverUpload(): void {
     this.coverUpload?.unsubscribe();
+    this.resetCoverPicker();
+  }
+
+  private resetCoverPicker(): void {
+    if (this.coverInput) this.coverInput.value = '';
+    this.coverInput = undefined;
     this.coverProgress = null;
   }
 

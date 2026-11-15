@@ -30,7 +30,7 @@ export class GameCoverService {
       };
       request.onerror = interrupted;
       request.ontimeout = interrupted;
-      void this.auth.getIdToken().then(token => {
+      void Promise.all([file.arrayBuffer(), this.auth.getIdToken()]).then(([bytes, token]) => {
         if (observer.closed) return;
         const query = gameId ? '?gameId=' + encodeURIComponent(gameId) : '';
         request.open('POST', '/api/game-cover' + query);
@@ -39,9 +39,11 @@ export class GameCoverService {
         request.setRequestHeader('Authorization', 'Bearer ' + token);
         // Use a binary envelope so the platform leaves the untrusted bytes untouched.
         request.setRequestHeader('Content-Type', 'application/octet-stream');
-        request.send(file);
-      }).catch(() => {
-        if (!observer.closed) observer.error(new Error('Volvé a iniciar sesión para cargar la portada.'));
+        request.send(bytes);
+      }).catch(error => {
+        if (!observer.closed) observer.error(new Error(error instanceof DOMException
+          ? 'No pudimos leer el archivo. Volvé a elegirlo.'
+          : 'Volvé a iniciar sesión para cargar la portada.'));
       });
       return () => request.abort();
     });
