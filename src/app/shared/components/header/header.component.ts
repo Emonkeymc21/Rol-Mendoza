@@ -19,6 +19,7 @@ export class HeaderComponent {
   private readonly document = inject(DOCUMENT);
   private readonly mobileViewportQuery = '(max-width: 767px), (min-width: 768px) and (max-width: 1023px) and (max-height: 500px) and (orientation: landscape) and (hover: none) and (pointer: coarse)';
   menuOpen = false;
+  menuOutsideHeader = false;
   accountMenuOpen = false;
   profile: UserProfile | null = null;
   loggingOut = false;
@@ -51,6 +52,7 @@ export class HeaderComponent {
   private syncMobileScrollLock(): void {
     const view = this.document.defaultView;
     const mobile = typeof view?.matchMedia === 'function' && view.matchMedia(this.mobileViewportQuery).matches;
+    this.menuOutsideHeader = Boolean(mobile);
     this.document.body.classList.toggle('c20-mobile-menu-open', this.menuOpen && mobile);
   }
   @HostListener('window:resize')
@@ -77,6 +79,7 @@ export class HeaderComponent {
     event.stopPropagation();
     this.accountMenuOpen = !this.accountMenuOpen;
   }
+  notificationLabel(unread: number): string { return unread > 0 ? `Notificaciones, ${unread > 99 ? '99+' : unread} sin leer` : 'Notificaciones'; }
   canCreateGames(): boolean { return this.profile?.role === 'DM' || this.profile?.role === 'BOTH'; }
   roleText(): string { return this.profile ? roleLabel(this.profile.role) : 'Comunidad'; }
   setTheme(preference: ThemePreference): void {

@@ -18,7 +18,7 @@
         @if (canCreateGames()) {
           <a routerLink="/partidas/nueva" class="create-game-link"><app-icon name="plus" [size]="17"></app-icon> Crear partida</a>
         }
-        <a routerLink="/notificaciones" class="notification-trigger" aria-label="Notificaciones"><app-icon name="bell" [size]="21"></app-icon>@if (unreadCount$ | async; as unread) {
+        <a routerLink="/notificaciones" class="notification-trigger" [attr.aria-label]="notificationLabel((unreadCount$ | async) || 0)"><app-icon name="bell" [size]="21"></app-icon>@if (unreadCount$ | async; as unread) {
         <span>{{ unread > 99 ? '99+' : unread }}</span>
       }</a>
       <div class="relative">
@@ -54,15 +54,22 @@
   </div>
 
   <div class="mobile-header-actions xl:hidden">@if (user$ | async) {
-    <a routerLink="/notificaciones" class="notification-trigger" aria-label="Notificaciones"><app-icon name="bell" [size]="21"></app-icon>@if (unreadCount$ | async; as unread) {
+    <a routerLink="/notificaciones" class="notification-trigger" [attr.aria-label]="notificationLabel((unreadCount$ | async) || 0)"><app-icon name="bell" [size]="21"></app-icon>@if (unreadCount$ | async; as unread) {
     <span>{{ unread > 99 ? '99+' : unread }}</span>
   }</a>
   }<button type="button" class="menu-trigger" (click)="toggleMenu($event)" [attr.aria-expanded]="menuOpen" aria-controls="mobile-navigation" [attr.aria-label]="menuOpen ? 'Cerrar menú' : 'Abrir menú'"><app-icon [name]="menuOpen ? 'close' : 'menu'" [size]="23"></app-icon></button></div>
 </div>
 
+@if (menuOpen && !menuOutsideHeader) {
+  <ng-container [ngTemplateOutlet]="mobileNavigation"></ng-container>
+}
 </header>
 
-@if (menuOpen) {
+@if (menuOpen && menuOutsideHeader) {
+  <ng-container [ngTemplateOutlet]="mobileNavigation"></ng-container>
+}
+
+<ng-template #mobileNavigation>
   <button type="button" class="mobile-menu-backdrop hidden" tabindex="-1" aria-label="Cerrar menú tocando fuera" (click)="closeMenu()"></button>
   <div id="mobile-navigation" class="mobile-menu px-4 pb-5 pt-3 xl:hidden">
     <nav class="mx-auto flex max-w-7xl flex-col gap-1" aria-label="Navegación móvil">
@@ -96,4 +103,4 @@
       }
     </nav>
   </div>
-}
+</ng-template>

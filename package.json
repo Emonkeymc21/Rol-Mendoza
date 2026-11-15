@@ -19,7 +19,9 @@
     "audit:browser": "firebase emulators:exec --config firebase.test.json --only auth,firestore --project demo-cumbre20 --non-interactive \"node scripts/audit-browser.mjs\"",
     "serve:ssr:rol-mendoza": "node dist/rol-mendoza/server/server.mjs",
     "build:ssrtest": "ng build --configuration=production,ssrtest",
-    "test:e2e:production": "npm run build:ssrtest && node scripts/run-e2e.cjs"
+    "test:e2e:production": "npm run build:ssrtest && node scripts/run-e2e.cjs",
+    "test:mobile-closeout": "firebase emulators:exec --config firebase.test.json --only auth,firestore --project demo-cumbre20 --non-interactive \"node scripts/mobile-closeout.mjs\"",
+    "test:public-smoke": "node scripts/smoke-public.mjs"
   },
   "private": true,
   "dependencies": {

@@ -23,7 +23,7 @@
   body {
     background: radial-gradient(ellipse 110% 38rem at 85% -5%, color-mix(in srgb, var(--surface-brand) 38%, transparent), transparent 74%), var(--bg-primary);
   }
-  body.c20-mobile-menu-open { overflow: hidden; }
+  html:has(body.c20-mobile-menu-open), body.c20-mobile-menu-open { overflow: hidden; }
   /* SDK Firebase: aviso exclusivamente del emulador, no existe en producción.
      Debe poder leerse, pero no tapar acciones ni provocar scroll horizontal. */
   .firebase-emulator-warning {
@@ -976,4 +976,13 @@
   app-game-card .game-card.game-card .game-card-body {
     padding-left: .9rem;
   }
+}
+
+/* La hoja de compartir es modal en celular: el fondo no puede desplazarse
+   ni tapar la hoja con el header. Fuera de estas queries no cambia PC. */
+@media screen and (max-width: 767px),
+       screen and (min-width: 768px) and (max-width: 1023px) and (max-height: 500px)
+       and (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  html:has(app-share-game .share-menu), body:has(app-share-game .share-menu) { overflow: hidden; }
+  body:has(app-share-game .share-menu) app-header { z-index: 0; }
 }
