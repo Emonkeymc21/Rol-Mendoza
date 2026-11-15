@@ -46,11 +46,12 @@ async function navigate(page,url){
  for(let attempt=0;attempt<4;attempt++){
   response=await page.goto(url);
   if(!target||target.width<768)return response;
-  await expect.poll(()=>page.locator('link[rel=stylesheet]').evaluateAll(list=>list.length>0&&list.every(el=>el.sheet&&(!el.media||el.media==='all')))).toBe(true);
-  await page.evaluate(()=>document.fonts.ready);
+  await settle(page);
+  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const state=await page.evaluate(expected=>{
+   const client=document.documentElement.clientWidth,bodyHeight=document.body.scrollHeight,rootOverflow=getComputedStyle(document.documentElement).overflow;
    let lo=0,hi=4096;while(lo+1<hi){const mid=Math.floor((lo+hi)/2);if(matchMedia(`(min-width: ${mid}px)`).matches)lo=mid;else hi=mid;}
-   return {css:lo,inner:innerWidth,client:document.documentElement.clientWidth,expected,matches:matchMedia(`(width: ${expected}px)`).matches};
+   return {css:lo,inner:innerWidth,client,bodyHeight,rootOverflow,expected,matches:matchMedia(`(width: ${expected}px)`).matches};
   },target.width);
   await appendFile(out+'/viewports.jsonl',JSON.stringify({variant,url:new URL(url).pathname,attempt,...target,...state,screenshotWidth:page.viewportSize().width})+'\n');
   if(state.matches)return response;
