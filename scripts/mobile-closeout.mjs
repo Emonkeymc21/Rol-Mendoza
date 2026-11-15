@@ -79,7 +79,9 @@ async function settle(page){
  await page.locator('.firebase-emulator-warning').evaluateAll(list=>list.forEach(el=>el.style.display='none'));
  await page.waitForTimeout(180);
 }
-async function reveal(page){await page.evaluate(async()=>{for(let y=0;y<document.body.scrollHeight;y+=Math.max(300,innerHeight*.8)){scrollTo(0,y);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));}scrollTo(0,0);});await page.waitForTimeout(100);}
+async function reveal(page){await page.evaluate(async()=>{for(let y=0;y<document.body.scrollHeight;y+=Math.max(300,innerHeight*.8)){scrollTo(0,y);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));}scrollTo(0,0);});await expect.poll(()=>page.locator('img').evaluateAll(images=>images.filter(img=>{const r=img.getBoundingClientRect();return r.width>0&&r.height>0&&r.right>0&&r.left<document.documentElement.clientWidth;}).every(img=>img.complete&&img.naturalWidth>0))).toBe(true);
+ await page.locator('img').evaluateAll(images=>Promise.all(images.filter(img=>{const r=img.getBoundingClientRect();return r.width>0&&r.height>0&&r.right>0&&r.left<document.documentElement.clientWidth;}).map(img=>img.decode())));
+ await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));}
 async function diff(page,before,after){return page.evaluate(async([a,b])=>{
  const image=async src=>{const i=new Image();i.src=src;await i.decode();return i;};const [x,y]=await Promise.all([image(a),image(b)]);
  if(x.width!==y.width||x.height!==y.height)return {pixels:null,before:[x.width,x.height],after:[y.width,y.height]};
@@ -117,6 +119,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  if(!stable)throw Error('Unstable screenshot: '+key);
  const nativeSelect=baseSlug==='home'?await page.locator('app-home select').evaluate(el=>{const c=getComputedStyle(el),r=el.getBoundingClientRect();return {value:el.value,font:c.font,lineHeight:c.lineHeight,padding:c.padding,appearance:c.appearance,x:r.x,y:r.y,width:r.width,height:r.height,fonts:document.fonts.status};}):undefined;
  const logo=baseSlug==='home'?await page.locator('.brand-mark').evaluate(el=>{const r=el.getBoundingClientRect(),c=getComputedStyle(el);return {src:el.getAttribute('src'),naturalWidth:el.naturalWidth,x:r.x,y:r.y,width:r.width,height:r.height,objectFit:c.objectFit,filter:c.filter,imageRendering:c.imageRendering,transform:c.transform,opacity:c.opacity,mixBlendMode:c.mixBlendMode};}):undefined;
+ const images=baseSlug==='home'?await page.locator('img').evaluateAll(list=>list.map(img=>({src:img.currentSrc,naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight,complete:img.complete,width:img.getBoundingClientRect().width,height:img.getBoundingClientRect().height}))):undefined;
  let comparison;
  if(width>=768&&variant==='before')refs.set(key,png);
  if(width>=768&&variant==='after'){
@@ -124,7 +127,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
   comparison=await diff(comparator,refs.get(key),png);
   if(comparison.pixels!==0){
    failures.push({key,type:'desktop-pixels',comparison});await writeFile(path+'-before.png',refs.get(key));await writeFile(path+'-after.png',png);
-   await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect,logo},null,2));
+   await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect,logo,images},null,2));
    if(baseSlug==='home'){
     // A failing comparison keeps an independent fresh-baseline control. This
     // diagnoses renderer/cache variation; it NEVER replaces the original gate.
@@ -139,7 +142,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  let violations=[];
  if(axe){const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22a','wcag22aa']).analyze();violations=result.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}));if(violations.length)failures.push({key,type:'axe',violations});}
  if(variant==='after'&&(layout.body>layout.client+1||!layout.mediaWidth||layout.horizontal>11))failures.push({key,type:'overflow',layout});
- const record={variant,width,theme,slug,nativeSelect,logo,url:new URL(page.url()).pathname,layout,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
+ const record={variant,width,theme,slug,nativeSelect,logo,images,url:new URL(page.url()).pathname,layout,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
 }
 try{
  start('tests/isolated-server.cjs');start('dist/mobile-baseline/server/server.mjs',{PORT:'4310'});start('dist/ssr-test/server/server.mjs',{PORT:'4320'});

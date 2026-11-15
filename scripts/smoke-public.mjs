@@ -21,10 +21,22 @@ if(process.env.CUMBRE20_REQUIRE_PUBLISHED==='1'){
  }
  if(!matched)throw Error('Production does not serve the exact expected bootstrap: '+expectedBootstrap);
 }
-async function ready(page){
- await expect(page.locator('h1').first()).toBeVisible();
+async function assetsReady(page){
  await expect.poll(()=>page.locator('link[rel=stylesheet]').evaluateAll(list=>list.length>0&&list.every(el=>el.sheet&&(!el.media||el.media==='all')))).toBe(true);
  await page.evaluate(()=>document.fonts.ready);
+ await page.locator('.auth-loading').waitFor({state:'hidden'});
+}
+async function ready(page){await assetsReady(page);await expect(page.locator('h1').first()).toBeVisible();}
+async function detailReady(page,width,path){
+ await assetsReady(page);
+ const upstreamError=page.getByText('No pudimos cargar la partida. Revisá tu conexión e intentá nuevamente.',{exact:true});
+ await expect(page.locator('h1').or(upstreamError).first()).toBeVisible();
+ if(await upstreamError.isVisible()){
+  checks.push({width,path,upstreamError:'Public Apps Script detail unavailable',recovery:'User-facing Reintentar button, once'});
+  await page.screenshot({path:`${out}/${width}-detalle-error.jpg`,type:'jpeg',quality:85});
+  await page.getByRole('button',{name:'Reintentar',exact:true}).click();
+ }
+ await ready(page);
 }
 const browser=await({chromium,webkit}[engine]).launch();
 try{
@@ -52,7 +64,7 @@ try{
    }
    await page.goto(origin+'/partidas');await ready(page);await expect(page.locator('.game-results-skeleton')).toHaveCount(0);
    const detail=await page.locator('.game-card-action').first().getAttribute('href');
-   if(detail){const response=await page.goto(origin+detail);expect(response.status()).toBe(200);await ready(page);await page.screenshot({path:`${out}/${width}-detalle.jpg`,type:'jpeg',quality:85,fullPage:false,animations:'disabled'});await page.getByRole('button',{name:'Compartir partida',exact:true}).click();await expect(page.getByRole('menu',{name:'Opciones para compartir'})).toBeVisible();await page.screenshot({path:`${out}/${width}-compartir.jpg`,type:'jpeg',quality:85});await page.keyboard.press('Escape');checks.push({width,path:detail,status:response.status(),share:true});}
+   if(detail){const response=await page.goto(origin+detail);expect(response.status()).toBe(200);await detailReady(page,width,detail);await page.screenshot({path:`${out}/${width}-detalle.jpg`,type:'jpeg',quality:85,fullPage:false,animations:'disabled'});await page.getByRole('button',{name:'Compartir partida',exact:true}).click();await expect(page.getByRole('menu',{name:'Opciones para compartir'})).toBeVisible();await page.screenshot({path:`${out}/${width}-compartir.jpg`,type:'jpeg',quality:85});await page.keyboard.press('Escape');checks.push({width,path:detail,status:response.status(),share:true});}
    await errors.assertClean();
   }finally{await context.tracing.stop({path:`${out}/${width}-trace.zip`});await context.close();}
  }
