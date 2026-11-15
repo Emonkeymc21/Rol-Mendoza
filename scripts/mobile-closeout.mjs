@@ -17,7 +17,7 @@ const out='mobile-results/'+engine;await mkdir(out,{recursive:true});
 const original=require('../vercel.json').headers.find(x=>x.source==='/(.*)').headers.find(x=>x.key==='Content-Security-Policy').value;
 const csp=original.replace("connect-src 'self'","connect-src 'self' http://127.0.0.1:9099 http://127.0.0.1:8080").replace("frame-src 'self'","frame-src 'self' http://127.0.0.1:9099").replace('; upgrade-insecure-requests','');
 const children=[];let variant='before',laboratory=false,browser,proxy;
-const records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[],targets=new WeakMap();
+const records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[],targets=new WeakMap(),windowRefs=new Map();
 const start=(file,extra={})=>{const p=spawn(process.execPath,[file],{env:{...process.env,CUMBRE20_TEST_MODE:'1',CUMBRE20_TEST_CSP:csp,...extra},stdio:'inherit'});children.push(p);return p;};
 async function ready(url){for(let i=0;i<100;i++){try{if((await fetch(url)).ok)return;}catch{}await new Promise(r=>setTimeout(r,200));}throw Error('Not ready: '+url);}
 async function json(url,options={}){const r=await fetch(url,options),data=await r.json();if(!r.ok||data.error)throw Error(JSON.stringify({url,status:r.status,data}));return data;}
@@ -43,6 +43,9 @@ async function api(actor,action,payload){const r=await post('http://127.0.0.1:44
 // No styles, screenshots or comparisons are masked/changed.
 async function navigate(page,url){
  const target=targets.get(page);let response;
+ const frameKey=target?`${target.width}-${new URL(url).pathname}`:'';
+ const reference=windowRefs.get(frameKey);
+ if(variant==='after'&&reference&&page.viewportSize().width!==reference.width){await page.goto('about:blank');await page.setViewportSize(reference);}
  for(let attempt=0;attempt<4;attempt++){
   response=await page.goto(url);
   if(!target||target.width<768)return response;
@@ -54,7 +57,8 @@ async function navigate(page,url){
    return {css:lo,inner:innerWidth,client,bodyHeight,rootOverflow,expected,matches:matchMedia(`(width: ${expected}px)`).matches};
   },target.width);
   await appendFile(out+'/viewports.jsonl',JSON.stringify({variant,url:new URL(url).pathname,attempt,...target,...state,screenshotWidth:page.viewportSize().width})+'\n');
-  if(state.matches)return response;
+  if(state.matches){if(variant==='before')windowRefs.set(frameKey,page.viewportSize());return response;}
+  if(variant==='after'&&reference)throw Error('Candidate changed the matched baseline viewport: '+JSON.stringify({reference,state}));
   const current=page.viewportSize();
   if(engine!=='webkit'||Math.abs(current.width-target.width)>11||Math.abs(state.css-target.width)>11)throw Error('Unexpected CSS viewport: '+JSON.stringify(state));
   // Start a fresh document at the final size. Never resize live app images:
@@ -130,7 +134,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  if(width>=768&&variant==='before')refs.set(key,png);
  if(width>=768&&variant==='after'){
   if(!refs.has(key))throw Error('Missing baseline viewport: '+key);
-  comparison=await diff(comparator,refs.get(key),png,width);
+  comparison=await diff(comparator,refs.get(key),png);
   if(comparison.pixels!==0){
    failures.push({key,type:'desktop-pixels',comparison});await writeFile(path+'-before.png',refs.get(key));await writeFile(path+'-after.png',png);
    await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect,logo,images,artwork},null,2));
@@ -138,7 +142,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
     // A failing comparison keeps an independent fresh-baseline control. This
     // diagnoses renderer/cache variation; it NEVER replaces the original gate.
     const selected=variant;let controlContext;
-    try{variant='before';controlContext=await page.context().browser().newContext({viewport:page.viewportSize(),deviceScaleFactor:1,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const control=await controlContext.newPage();targets.set(control,{width,height:page.viewportSize().height});await navigate(control,page.url());await settle(control);await reveal(control);await control.evaluate(y=>scrollTo(0,y),layout.y);const controlPng=await control.screenshot({fullPage:false,animations:'disabled'});await writeFile(path+'-baseline-control.png',controlPng);await writeFile(path+'-control.json',JSON.stringify({baselineRepeat:await diff(comparator,refs.get(key),controlPng,width),candidateVsFreshBaseline:await diff(comparator,controlPng,png,width)},null,2));}finally{variant=selected;await controlContext?.close();}
+    try{variant='before';controlContext=await page.context().browser().newContext({viewport:page.viewportSize(),deviceScaleFactor:1,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const control=await controlContext.newPage();targets.set(control,{width,height:page.viewportSize().height});await navigate(control,page.url());await settle(control);await reveal(control);await control.evaluate(y=>scrollTo(0,y),layout.y);const controlPng=await control.screenshot({fullPage:false,animations:'disabled'});await writeFile(path+'-baseline-control.png',controlPng);await writeFile(path+'-control.json',JSON.stringify({baselineRepeat:await diff(comparator,refs.get(key),controlPng),candidateVsFreshBaseline:await diff(comparator,controlPng,png)},null,2));}finally{variant=selected;await controlContext?.close();}
     console.error('Desktop Home pixel difference: '+JSON.stringify({key,comparison,layout,nativeSelect,logo}));
    }
   }
@@ -174,10 +178,11 @@ try{
   const data=await json(`http://127.0.0.1:8080/v1/projects/demo-cumbre20/databases/(default)/documents/${collection}`,{headers:{Authorization:'Bearer owner'}});
   for(const doc of data.documents||[]){for(const k of ['createdAt','updatedAt'])if(doc.fields[k])doc.fields[k]={timestampValue:fixedDate};await json('http://127.0.0.1:8080/v1/'+doc.name,{method:'PATCH',headers:{Authorization:'Bearer owner','Content-Type':'application/json'},body:JSON.stringify({fields:doc.fields})});}
  }
- browser=await({chromium,webkit}[engine]).launch();const compareContext=await browser.newContext();const comparator=await compareContext.newPage();
+ browser=await({chromium,webkit}[engine]).launch();let compareContext=await browser.newContext();let comparator=await compareContext.newPage();
  const publicRoutes=[['/','home'],['/partidas','partidas'],['/partidas/PRT-DEMO-BASE','detalle'],['/comunidades','comunidades'],['/ingresar','login'],['/registrarme','registro'],['/como-funciona','como-funciona'],['/nosotros','nosotros'],['/terminos','terminos'],['/privacidad','privacidad']];
  const privateRoutes=[['/perfil','perfil'],['/perfil/editar','editar-perfil'],['/jugadores','jugadores'],['/jugadores/'+player.uid,'perfil-jugador'],['/partidas/nueva','publicar'],['/mis-partidas','mis-partidas'],['/mis-partidas/'+game.id+'/editar','editar-partida'],['/solicitudes','solicitudes'],['/mis-solicitudes','mis-solicitudes'],['/notificaciones','notificaciones'],['/comunidades/solicitar','solicitar-comunidad']];
  for(const [width,height]of [[768,1024],[1024,900],[1440,900],[1920,1080],[390,844]]){
+  if(engine==='webkit'&&width===390){await compareContext.close();await browser.close();execFileSync('defaults',['write','NSGlobalDomain','AppleShowScrollBars','-string','WhenScrolling']);browser=await webkit.launch();compareContext=await browser.newContext();comparator=await compareContext.newPage();}
   for(const theme of ['dark','light'])for(const selected of ['before','after']){
    variant=selected;const context=await browser.newContext({viewport:{width:engine==='webkit'&&width>=768?width+11:width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const page=await context.newPage();targets.set(page,{width,height});
    const observer=await observeBrowserErrors(page,{attach:async(name,attachment)=>{await writeFile(`${out}/${selected}-${width}-${theme}-${name}.json`,attachment.body);}},'errors');

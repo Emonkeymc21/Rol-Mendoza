@@ -87,6 +87,9 @@ jobs:
           java-version: '21'
       - run: npm ci
       - run: npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Fix native macOS scrollbar mode for paired desktop captures
+        if: matrix.engine == 'webkit'
+        run: defaults write NSGlobalDomain AppleShowScrollBars -string Always
       - run: npm run build:ssrtest
       - run: node scripts/build-mobile-baseline.cjs
       - run: npm run test:mobile-closeout
