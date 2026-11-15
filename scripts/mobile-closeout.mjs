@@ -13,6 +13,9 @@ const require=createRequire(import.meta.url);
 if(process.env.FIRESTORE_EMULATOR_HOST!=='127.0.0.1:8080'||process.env.FIREBASE_AUTH_EMULATOR_HOST!=='127.0.0.1:9099')throw Error('Loopback demo emulators are mandatory');
 const engine=process.env.CUMBRE20_BROWSER||'chromium';
 if(!['chromium','webkit'].includes(engine))throw Error('Unknown engine');
+const viewportFilter=process.env.CUMBRE20_VIEWPORT;
+const viewports=[[768,1024],[1024,900],[1440,900],[1920,1080],[390,844]];
+if(viewportFilter&&!viewports.some(([w])=>String(w)===viewportFilter))throw Error('Unknown viewport shard');
 const out='mobile-results/'+engine;await mkdir(out,{recursive:true});
 const original=require('../vercel.json').headers.find(x=>x.source==='/(.*)').headers.find(x=>x.key==='Content-Security-Policy').value;
 const csp=original.replace("connect-src 'self'","connect-src 'self' http://127.0.0.1:9099 http://127.0.0.1:8080").replace("frame-src 'self'","frame-src 'self' http://127.0.0.1:9099").replace('; upgrade-insecure-requests','');
@@ -107,12 +110,12 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  let comparison;
  if(width>=1024&&variant==='before')refs.set(key,png);
  if(width>=1024&&variant==='after'){
-  if(!refs.has(key))throw Error('Missing baseline viewport: '+key);
-  comparison=await diff(comparator,refs.get(key),png);
+  const reference=refs.get(key);
+  comparison=reference?await diff(comparator,reference,png):{pixels:null,missingBaseline:true};
   if(comparison.pixels!==0){
-   failures.push({key,type:'desktop-pixels',comparison});await writeFile(path+'-before.png',refs.get(key));await writeFile(path+'-after.png',png);
+   failures.push({key,type:'desktop-pixels',comparison});if(reference)await writeFile(path+'-before.png',reference);await writeFile(path+'-after.png',png);
    await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect,logo,images,artwork},null,2));
-   if(baseSlug==='home'){
+   if(baseSlug==='home'&&reference){
     // A failing comparison keeps an independent fresh-baseline control. This
     // diagnoses renderer/cache variation; it NEVER replaces the original gate.
     const selected=variant;let controlContext;
@@ -155,8 +158,8 @@ try{
  browser=await({chromium,webkit}[engine]).launch();let compareContext=await browser.newContext();let comparator=await compareContext.newPage();
  const publicRoutes=[['/','home'],['/partidas','partidas'],['/partidas/PRT-DEMO-BASE','detalle'],['/comunidades','comunidades'],['/ingresar','login'],['/registrarme','registro'],['/como-funciona','como-funciona'],['/nosotros','nosotros'],['/terminos','terminos'],['/privacidad','privacidad']];
  const privateRoutes=[['/perfil','perfil'],['/perfil/editar','editar-perfil'],['/jugadores','jugadores'],['/jugadores/'+player.uid,'perfil-jugador'],['/partidas/nueva','publicar'],['/mis-partidas','mis-partidas'],['/mis-partidas/'+game.id+'/editar','editar-partida'],['/solicitudes','solicitudes'],['/mis-solicitudes','mis-solicitudes'],['/notificaciones','notificaciones'],['/comunidades/solicitar','solicitar-comunidad']];
- for(const [width,height]of [[768,1024],[1024,900],[1440,900],[1920,1080],[390,844]]){
-  if(engine==='webkit'&&width===390){await compareContext.close();await browser.close();execFileSync('defaults',['write','NSGlobalDomain','AppleShowScrollBars','-string','WhenScrolling']);browser=await webkit.launch();compareContext=await browser.newContext();comparator=await compareContext.newPage();}
+ for(const [width,height]of viewports.filter(([w])=>!viewportFilter||String(w)===viewportFilter)){
+  if(engine==='webkit'&&width===390){await compareContext.close();await browser.close();if(process.platform==='darwin')execFileSync('defaults',['write','NSGlobalDomain','AppleShowScrollBars','-string','WhenScrolling']);browser=await webkit.launch();compareContext=await browser.newContext();comparator=await compareContext.newPage();}
   for(const theme of ['dark','light'])for(const selected of ['before','after']){
    variant=selected;const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const page=await context.newPage();targets.set(page,{width,height});
    const observer=await observeBrowserErrors(page,{attach:async(name,attachment)=>{await writeFile(`${out}/${selected}-${width}-${theme}-${name}.json`,attachment.body);}},'errors');
@@ -173,14 +176,14 @@ try{
   }
  }
  await compareContext.close();await browser.close();browser=null;
- if(engine==='chromium'){
+ if(engine==='chromium'&&(!viewportFilter||viewportFilter==='390')){
   laboratory=true;
   const {default:lighthouse}=await import('lighthouse');const launcher=await import('chrome-launcher');
   for(const selected of ['before','after']){variant=selected;for(let run=1;run<=3;run++){const chrome=await launcher.launch({chromePath:chromium.executablePath(),chromeFlags:['--headless','--no-sandbox']});try{const result=await lighthouse('http://127.0.0.1:4200/',{port:chrome.port,output:['html','json'],onlyCategories:['performance','accessibility','best-practices','seo'],logLevel:'error'});await writeFile(`${out}/${selected}-lighthouse-${run}.html`,result.report[0]);await writeFile(`${out}/${selected}-lighthouse-${run}.json`,result.report[1]);const a=result.lhr.audits;metrics.push({variant:selected,run,categories:Object.fromEntries(Object.entries(result.lhr.categories).map(([k,v])=>[k,v.score*100])),LCP:a['largest-contentful-paint'].numericValue,CLS:a['cumulative-layout-shift'].numericValue,FCP:a['first-contentful-paint'].numericValue,TBT:a['total-blocking-time'].numericValue,bytes:a['total-byte-weight'].numericValue});}finally{await chrome.kill();}}}
  }
 } catch(error){failures.push({type:'execution',message:error.stack});throw error;}
 finally{
- await writeFile(out+'/summary.json',JSON.stringify({engine,baseline:'780ebf445a24dd8d557abcf8baeceb14c994b248',candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceHead:process.env.CUMBRE20_SOURCE_SHA,checks:records.length,comparisons:records.filter(r=>r.comparison).length,metrics,failures},null,2));
+ await writeFile(out+'/summary.json',JSON.stringify({engine,platform:process.platform,viewport:viewportFilter||'all',baseline:'780ebf445a24dd8d557abcf8baeceb14c994b248',candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceHead:process.env.CUMBRE20_SOURCE_SHA,checks:records.length,comparisons:records.filter(r=>r.comparison).length,metrics,failures},null,2));
  await browser?.close();proxy?.close();children.forEach(p=>p.kill('SIGTERM'));
 }
 expect(failures).toEqual([]);
