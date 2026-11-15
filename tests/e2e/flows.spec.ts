@@ -322,19 +322,21 @@ test('campaign cover persists, replaces and clears across owner and visitor sess
     const oldPreview = await preview.getAttribute('src');
     let releaseUpload!: () => void;
     const holdUpload = new Promise<void>(resolve => { releaseUpload = resolve; });
-    const coverRequest = page.waitForRequest('**/api/game-cover?*');
-    await page.route('**/api/game-cover?*', async route => {
+    let confirmUpload!: () => void;
+    const uploadStarted = new Promise<void>(resolve => { confirmUpload = resolve; });
+    await page.route(/\/api\/game-cover\?gameId=/, async route => {
+      confirmUpload();
       await holdUpload;
       await route.abort('aborted').catch(() => {});
     }, { times: 1 });
     await choose(tall);
-    await coverRequest;
+    await uploadStarted;
     await page.getByRole('button', { name: 'Cancelar carga' }).click();
     releaseUpload();
     await expect(preview).toHaveAttribute('src', oldPreview!);
     await expect(control(page, 'title')).toHaveValue(title);
 
-    await page.route('**/api/game-cover?*', route => route.abort('connectionreset'), { times: 1 });
+    await page.route(/\/api\/game-cover\?gameId=/, route => route.abort('connectionreset'), { times: 1 });
     await choose(tall);
     await expect(page.getByRole('alert')).toContainText('La carga se interrumpió');
     await expect(preview).toHaveAttribute('src', oldPreview!);
