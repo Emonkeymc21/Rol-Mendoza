@@ -28,9 +28,9 @@ try{
    for(const [path,slug]of [['/','home'],['/partidas','partidas'],['/ingresar','login'],['/registrarme','registro'],['/comunidades','comunidades']]){
     const response=await page.goto(origin+path);expect(response.status()).toBe(200);await expect(page.locator('h1').first()).toBeVisible();await page.evaluate(()=>document.fonts.ready);
     if(path==='/partidas')await expect(page.locator('.game-results-skeleton')).toHaveCount(0);
-    const layout=await page.evaluate(()=>({body:document.body.scrollWidth,viewport:document.documentElement.clientWidth,version:document.querySelector('[ng-version]')?.getAttribute('ng-version'),styles:[...document.querySelectorAll('link[rel=stylesheet]')].map(el=>({href:el.getAttribute('href'),media:el.getAttribute('media')}))}));
-    expect(layout.body).toBeLessThanOrEqual(width+1);expect(layout.viewport).toBe(width);expect(layout.version).toBe('22.2.5');expect(layout.styles.some(s=>!s.media||s.media==='all')).toBe(true);
-    await page.screenshot({path:`${out}/${width}-${slug}.jpg`,type:'jpeg',quality:85,fullPage:slug!=='home',animations:'disabled'});checks.push({width,path,status:response.status(),layout});
+    const layout=await page.evaluate(()=>({body:document.body.scrollWidth,viewport:document.documentElement.clientWidth,inner:innerWidth,mediaWidth:matchMedia(`(width: ${innerWidth}px)`).matches,version:document.querySelector('[ng-version]')?.getAttribute('ng-version'),styles:[...document.querySelectorAll('link[rel=stylesheet]')].map(el=>({href:el.getAttribute('href'),media:el.getAttribute('media')}))}));
+    expect(layout.body).toBeLessThanOrEqual(layout.viewport+1);expect(layout.inner).toBe(width);expect(layout.mediaWidth).toBe(true);expect(layout.version).toBe('22.2.5');expect(layout.styles.some(s=>!s.media||s.media==='all')).toBe(true);
+    await page.screenshot({path:`${out}/${width}-${slug}.jpg`,type:'jpeg',quality:85,fullPage:false,animations:'disabled'});checks.push({width,path,status:response.status(),layout});
     if(path==='/'&&width<768){await page.getByRole('button',{name:'Abrir menú',exact:true}).click();await expect(page.getByRole('navigation',{name:'Navegación móvil'})).toBeVisible();await page.screenshot({path:`${out}/${width}-menu.jpg`,type:'jpeg',quality:85});await page.getByRole('button',{name:'Cerrar menú',exact:true}).click();await expect(page.getByRole('navigation',{name:'Navegación móvil'})).toBeHidden();}
    }
    await page.goto(origin+'/partidas');await expect(page.locator('.game-results-skeleton')).toHaveCount(0);
