@@ -84,16 +84,18 @@ async function reveal(page){if((targets.get(page)?.width||0)>=768)await page.mou
  const backgrounds=await page.evaluate(()=>{const urls=new Set();for(const el of document.querySelectorAll('body *'))for(const pseudo of [null,'::before','::after']){const css=getComputedStyle(el,pseudo).backgroundImage;for(const m of css.matchAll(/url\(["']?([^"')]+)["']?\)/g))if(m[1].startsWith(location.origin+'/assets/'))urls.add(m[1]);}return [...urls];});
  await page.evaluate(urls=>Promise.all(urls.map(src=>{const image=new Image();image.src=src;return image.decode();})),backgrounds);
  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));}
-async function diff(page,before,after){return page.evaluate(async([a,b])=>{
+async function diff(page,before,after,contentWidth){return page.evaluate(async([a,b,contentWidth])=>{
  const image=async src=>{const i=new Image();i.src=src;await i.decode();return i;};const [x,y]=await Promise.all([image(a),image(b)]);
- if(x.width!==y.width||x.height!==y.height)return {pixels:null,before:[x.width,x.height],after:[y.width,y.height]};
- const c=document.createElement('canvas');c.width=x.width;c.height=x.height;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(x,0,0);const ax=ctx.getImageData(0,0,c.width,c.height).data;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(y,0,0);const ay=ctx.getImageData(0,0,c.width,c.height).data;let pixels=0;for(let i=0;i<ax.length;i+=4)if(ax[i]!==ay[i]||ax[i+1]!==ay[i+1]||ax[i+2]!==ay[i+2]||ax[i+3]!==ay[i+3])pixels++;return {pixels,width:c.width,height:c.height};
- },['data:image/png;base64,'+before.toString('base64'),'data:image/png;base64,'+after.toString('base64')]);}
+ const width=contentWidth||x.width;
+ if(x.height!==y.height||(!contentWidth&&x.width!==y.width)||[x.width,y.width].some(w=>w<width||w>width+11))return {pixels:null,before:[x.width,x.height],after:[y.width,y.height]};
+ const c=document.createElement('canvas');c.width=width;c.height=x.height;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(x,0,0);const ax=ctx.getImageData(0,0,c.width,c.height).data;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(y,0,0);const ay=ctx.getImageData(0,0,c.width,c.height).data;let pixels=0;for(let i=0;i<ax.length;i+=4)if(ax[i]!==ay[i]||ax[i+1]!==ay[i+1]||ax[i+2]!==ay[i+2]||ax[i+3]!==ay[i+3])pixels++;return {pixels,width:c.width,height:c.height,windowWidths:[x.width,y.width],nativeGutters:[x.width-width,y.width-width]};
+ },['data:image/png;base64,'+before.toString('base64'),'data:image/png;base64,'+after.toString('base64'),contentWidth]);}
 async function capture(page,comparator,width,theme,slug,{full=true,axe=false,prepared=false,segment=0}={}){
  if(!prepared)await settle(page);
  const baseSlug=slug.split('--view-')[0];
  if(full){
   await reveal(page);
+  if(engine==='webkit')await page.waitForTimeout(1000);
   // WebKit fullPage temporarily changes the layout viewport to clientWidth,
   // crossing 768px when its 11px native scrollbar is present. Capture genuine
   // fixed-viewport screens while scrolling instead. No stitching or CSS masks.
@@ -111,6 +113,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
   }
   await page.evaluate(()=>scrollTo(0,0));return;
  }
+ if(engine==='webkit'&&!prepared)await page.waitForTimeout(1000);
  const layout=await page.evaluate(width=>{const y=scrollY;scrollTo(10000,y);const x=scrollX;scrollTo(0,y);return {body:document.body.scrollWidth,client:document.documentElement.clientWidth,inner:innerWidth,horizontal:x,expected:width,y:scrollY,mediaWidth:matchMedia(`(width: ${width}px)`).matches,mobileMedia:matchMedia('(max-width: 767px)').matches};},width);
  const key=`${width}-${theme}-${slug}`,path=`${out}/${variant}-${key}`;
  let png=await page.screenshot({fullPage:false,animations:'disabled'}),stable=false;
@@ -127,7 +130,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  if(width>=768&&variant==='before')refs.set(key,png);
  if(width>=768&&variant==='after'){
   if(!refs.has(key))throw Error('Missing baseline viewport: '+key);
-  comparison=await diff(comparator,refs.get(key),png);
+  comparison=await diff(comparator,refs.get(key),png,width);
   if(comparison.pixels!==0){
    failures.push({key,type:'desktop-pixels',comparison});await writeFile(path+'-before.png',refs.get(key));await writeFile(path+'-after.png',png);
    await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect,logo,images,artwork},null,2));
@@ -135,7 +138,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
     // A failing comparison keeps an independent fresh-baseline control. This
     // diagnoses renderer/cache variation; it NEVER replaces the original gate.
     const selected=variant;let controlContext;
-    try{variant='before';controlContext=await page.context().browser().newContext({viewport:page.viewportSize(),deviceScaleFactor:1,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const control=await controlContext.newPage();targets.set(control,{width,height:page.viewportSize().height});await navigate(control,page.url());await settle(control);await reveal(control);await control.evaluate(y=>scrollTo(0,y),layout.y);const controlPng=await control.screenshot({fullPage:false,animations:'disabled'});await writeFile(path+'-baseline-control.png',controlPng);await writeFile(path+'-control.json',JSON.stringify({baselineRepeat:await diff(comparator,refs.get(key),controlPng),candidateVsFreshBaseline:await diff(comparator,controlPng,png)},null,2));}finally{variant=selected;await controlContext?.close();}
+    try{variant='before';controlContext=await page.context().browser().newContext({viewport:page.viewportSize(),deviceScaleFactor:1,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const control=await controlContext.newPage();targets.set(control,{width,height:page.viewportSize().height});await navigate(control,page.url());await settle(control);await reveal(control);await control.evaluate(y=>scrollTo(0,y),layout.y);const controlPng=await control.screenshot({fullPage:false,animations:'disabled'});await writeFile(path+'-baseline-control.png',controlPng);await writeFile(path+'-control.json',JSON.stringify({baselineRepeat:await diff(comparator,refs.get(key),controlPng,width),candidateVsFreshBaseline:await diff(comparator,controlPng,png,width)},null,2));}finally{variant=selected;await controlContext?.close();}
     console.error('Desktop Home pixel difference: '+JSON.stringify({key,comparison,layout,nativeSelect,logo}));
    }
   }
