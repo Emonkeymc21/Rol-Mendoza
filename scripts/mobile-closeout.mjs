@@ -42,27 +42,24 @@ async function api(actor,action,payload){const r=await post('http://127.0.0.1:44
 // to the same requested CSS width, retaining the native gutter in screenshots.
 // No styles, screenshots or comparisons are masked/changed.
 async function navigate(page,url){
- let response=await page.goto(url);const target=targets.get(page);let resized=false;
- if(!target||target.width<768)return response;
- await expect.poll(()=>page.locator('link[rel=stylesheet]').evaluateAll(list=>list.length>0&&list.every(el=>el.sheet&&(!el.media||el.media==='all')))).toBe(true);
- await page.evaluate(()=>document.fonts.ready);
- for(let attempt=0;attempt<6;attempt++){
+ const target=targets.get(page);let response;
+ for(let attempt=0;attempt<4;attempt++){
+  response=await page.goto(url);
+  if(!target||target.width<768)return response;
+  await expect.poll(()=>page.locator('link[rel=stylesheet]').evaluateAll(list=>list.length>0&&list.every(el=>el.sheet&&(!el.media||el.media==='all')))).toBe(true);
+  await page.evaluate(()=>document.fonts.ready);
   const state=await page.evaluate(expected=>{
    let lo=0,hi=4096;while(lo+1<hi){const mid=Math.floor((lo+hi)/2);if(matchMedia(`(min-width: ${mid}px)`).matches)lo=mid;else hi=mid;}
    return {css:lo,inner:innerWidth,client:document.documentElement.clientWidth,expected,matches:matchMedia(`(width: ${expected}px)`).matches};
   },target.width);
-  if(state.matches&&resized){
-   // Begin the document at its final viewport. Resizing a loaded WebKit image
-   // from the mobile logo size can retain a different resampled backing bitmap.
-   response=await page.reload();resized=false;
-   await expect.poll(()=>page.locator('link[rel=stylesheet]').evaluateAll(list=>list.length>0&&list.every(el=>el.sheet&&(!el.media||el.media==='all')))).toBe(true);
-   await page.evaluate(()=>document.fonts.ready);continue;
-  }
-  if(state.matches){await appendFile(out+'/viewports.jsonl',JSON.stringify({variant,url:new URL(url).pathname,...target,...state,screenshotWidth:page.viewportSize().width})+'\n');return response;}
+  await appendFile(out+'/viewports.jsonl',JSON.stringify({variant,url:new URL(url).pathname,attempt,...target,...state,screenshotWidth:page.viewportSize().width})+'\n');
+  if(state.matches)return response;
   const current=page.viewportSize();
   if(engine!=='webkit'||Math.abs(current.width-target.width)>11||Math.abs(state.css-target.width)>11)throw Error('Unexpected CSS viewport: '+JSON.stringify(state));
-  await page.setViewportSize({width:current.width+target.width-state.css,height:target.height});resized=true;
-  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+  // Start a fresh document at the final size. Never resize live app images:
+  // WebKit may retain a differently resampled bitmap after mobile -> desktop.
+  await page.goto('about:blank');
+  await page.setViewportSize({width:current.width+target.width-state.css,height:target.height});
  }
  throw Error('CSS viewport calibration did not settle: '+url);
 }
@@ -118,7 +115,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  }
  if(!stable)throw Error('Unstable screenshot: '+key);
  const nativeSelect=baseSlug==='home'?await page.locator('app-home select').evaluate(el=>{const c=getComputedStyle(el),r=el.getBoundingClientRect();return {value:el.value,font:c.font,lineHeight:c.lineHeight,padding:c.padding,appearance:c.appearance,x:r.x,y:r.y,width:r.width,height:r.height,fonts:document.fonts.status};}):undefined;
- const logo=baseSlug==='home'?await page.locator('.brand-mark').evaluate(el=>{const r=el.getBoundingClientRect(),c=getComputedStyle(el);return {src:el.getAttribute('src'),naturalWidth:el.naturalWidth,x:r.x,y:r.y,width:r.width,height:r.height,objectFit:c.objectFit};}):undefined;
+ const logo=baseSlug==='home'?await page.locator('.brand-mark').evaluate(el=>{const r=el.getBoundingClientRect(),c=getComputedStyle(el);return {src:el.getAttribute('src'),naturalWidth:el.naturalWidth,x:r.x,y:r.y,width:r.width,height:r.height,objectFit:c.objectFit,filter:c.filter,imageRendering:c.imageRendering,transform:c.transform,opacity:c.opacity,mixBlendMode:c.mixBlendMode};}):undefined;
  let comparison;
  if(width>=768&&variant==='before')refs.set(key,png);
  if(width>=768&&variant==='after'){
@@ -127,7 +124,13 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
   if(comparison.pixels!==0){
    failures.push({key,type:'desktop-pixels',comparison});await writeFile(path+'-before.png',refs.get(key));await writeFile(path+'-after.png',png);
    await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect,logo},null,2));
-   if(baseSlug==='home')throw Error('Desktop Home pixel difference: '+JSON.stringify({key,comparison,layout,nativeSelect}));
+   if(baseSlug==='home'){
+    // A failing comparison keeps an independent fresh-baseline control. This
+    // diagnoses renderer/cache variation; it NEVER replaces the original gate.
+    const selected=variant;let controlContext;
+    try{variant='before';controlContext=await page.context().browser().newContext({viewport:page.viewportSize(),deviceScaleFactor:1,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const control=await controlContext.newPage();targets.set(control,{width,height:page.viewportSize().height});await navigate(control,page.url());await settle(control);await reveal(control);await control.evaluate(y=>scrollTo(0,y),layout.y);const controlPng=await control.screenshot({fullPage:false,animations:'disabled'});await writeFile(path+'-baseline-control.png',controlPng);await writeFile(path+'-control.json',JSON.stringify({baselineRepeat:await diff(comparator,refs.get(key),controlPng),candidateVsFreshBaseline:await diff(comparator,controlPng,png)},null,2));}finally{variant=selected;await controlContext?.close();}
+    throw Error('Desktop Home pixel difference: '+JSON.stringify({key,comparison,layout,nativeSelect,logo}));
+   }
   }
  }
  if(segment===0&&(width===390||width===1440&&['home','partidas','perfil'].includes(baseSlug)))await writeFile(path+'.png',png);
@@ -166,7 +169,7 @@ try{
  const privateRoutes=[['/perfil','perfil'],['/perfil/editar','editar-perfil'],['/jugadores','jugadores'],['/jugadores/'+player.uid,'perfil-jugador'],['/partidas/nueva','publicar'],['/mis-partidas','mis-partidas'],['/mis-partidas/'+game.id+'/editar','editar-partida'],['/solicitudes','solicitudes'],['/mis-solicitudes','mis-solicitudes'],['/notificaciones','notificaciones'],['/comunidades/solicitar','solicitar-comunidad']];
  for(const [width,height]of [[768,1024],[1024,900],[1440,900],[1920,1080],[390,844]]){
   for(const theme of ['dark','light'])for(const selected of ['before','after']){
-   variant=selected;const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const page=await context.newPage();targets.set(page,{width,height});
+   variant=selected;const context=await browser.newContext({viewport:{width:engine==='webkit'&&width>=768?width+11:width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const page=await context.newPage();targets.set(page,{width,height});
    const observer=await observeBrowserErrors(page,{attach:async(name,attachment)=>{await writeFile(`${out}/${selected}-${width}-${theme}-${name}.json`,attachment.body);}},'errors');
    try{
     for(const [route,slug]of publicRoutes){await navigate(page,'http://127.0.0.1:4200'+route);if(route==='/'||route==='/partidas')await expect(page.locator('app-game-card')).toHaveCount(2);if(route==='/comunidades')await expect(page.locator('main')).toContainText('Espacio de rol de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
@@ -176,7 +179,7 @@ try{
     for(const [route,slug]of privateRoutes){await navigate(page,'http://127.0.0.1:4200'+route);await expect(page.locator('app-header')).toContainText('Máster');if(slug==='mis-partidas')await expect(page.locator('.my-game-entry')).toContainText('Aventura de prueba visual');if(slug==='editar-partida')await expect(page.locator('[formcontrolname=title]')).toHaveValue('Aventura de prueba visual');if(slug==='solicitudes')await expect(page.locator('.inbox-item')).toContainText('luna');if(slug==='notificaciones')await expect(page.locator('.notification-card')).toHaveCount(1);if(slug==='perfil-jugador')await expect(page.locator('h1')).toHaveText('Luna de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
     await observer.assertClean();
    }finally{await context.close();}
-   const onboarding=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});try{const p=await onboarding.newPage();targets.set(p,{width,height});await login(p,draft,'/completar-perfil');await expect(p.locator('[formcontrolname=firstName]')).toBeVisible();await capture(p,comparator,width,theme,'completar-perfil',{axe:selected==='after'&&width===390});}finally{await onboarding.close();}
+   const onboarding=await browser.newContext({viewport:{width:engine==='webkit'&&width>=768?width+11:width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});try{const p=await onboarding.newPage();targets.set(p,{width,height});await login(p,draft,'/completar-perfil');await expect(p.locator('[formcontrolname=firstName]')).toBeVisible();await capture(p,comparator,width,theme,'completar-perfil',{axe:selected==='after'&&width===390});}finally{await onboarding.close();}
    console.log('VISUAL_PROGRESS',JSON.stringify({engine,variant,width,theme,checks:records.length,failures:failures.length}));
   }
  }
