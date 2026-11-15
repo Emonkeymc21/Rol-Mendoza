@@ -138,6 +138,18 @@ for (const [width, height] of widths) {
       await page.getByRole('button', { name: 'Compartir partida', exact: true }).click();
       const sheet = page.getByRole('menu', { name: 'Opciones para compartir' });
       await expect(sheet).toBeVisible();
+      // The mobile sheet contains keyboard focus and blocks background scroll.
+      const closeSheet = page.getByRole('menuitem', {name:'Cerrar opciones para compartir'});
+      await expect(closeSheet).toBeFocused();
+      await page.keyboard.press('Shift+Tab');
+      await expect(sheet.getByRole('menuitem', {name:/Copiar enlace/})).toBeFocused();
+      await page.keyboard.press('Tab');
+      await expect(closeSheet).toBeFocused();
+      expect(await page.locator('html').evaluate(el=>getComputedStyle(el).overflowY)).toBe('hidden');
+      const scrollBefore = await page.evaluate(()=>scrollY);
+      await page.mouse.wheel(0,450);
+      await page.waitForTimeout(120);
+      expect(await page.evaluate(()=>scrollY)).toBe(scrollBefore);
       const sheetBox = await sheet.boundingBox();
       expect(sheetBox).not.toBeNull();
       expect(Math.abs(sheetBox!.y + sheetBox!.height - height)).toBeLessThanOrEqual(2);
@@ -145,6 +157,8 @@ for (const [width, height] of widths) {
       await page.screenshot({ path: info.outputPath('compartir-' + width + '.png'), animations: 'disabled' });
       await page.getByRole('menuitem', { name: 'Cerrar opciones para compartir' }).click();
       await expect(sheet).toBeHidden();
+      await expect(page.getByRole('button', {name:'Compartir partida',exact:true})).toBeFocused();
+      expect(await page.locator('html').evaluate(el=>getComputedStyle(el).overflowY)).not.toBe('hidden');
 
       await page.goto('/comunidades');
       await expect(page.locator('h1').first()).toBeVisible();

@@ -40,7 +40,9 @@ async function api(actor,action,payload){const r=await post('http://127.0.0.1:44
 async function login(page,actor,destination='/perfil'){
  await page.goto('http://127.0.0.1:4200/ingresar?returnUrl='+encodeURIComponent(destination));
  await page.locator('[formcontrolname=email]').fill(actor.email);await page.locator('[formcontrolname=password]').fill(actor.password);
- await page.locator('button[type=submit]').click();await expect(page).toHaveURL('http://127.0.0.1:4200'+destination);
+ await page.locator('button[type=submit]').click();
+ if(destination==='/completar-perfil')await expect(page).toHaveURL('http://127.0.0.1:4200/completar-perfil?returnUrl=%2Fcompletar-perfil');
+ else await expect(page).toHaveURL('http://127.0.0.1:4200'+destination);
 }
 async function settle(page){
  await page.locator('h1').first().waitFor();await page.evaluate(()=>document.fonts.ready);
@@ -120,7 +122,7 @@ try{
  }
 } catch(error){failures.push({type:'execution',message:error.stack});throw error;}
 finally{
- await writeFile(out+'/summary.json',JSON.stringify({engine,baseline:'780ebf445a24dd8d557abcf8baeceb14c994b248',candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),checks:records.length,comparisons:records.filter(r=>r.comparison).length,metrics,failures},null,2));
+ await writeFile(out+'/summary.json',JSON.stringify({engine,baseline:'780ebf445a24dd8d557abcf8baeceb14c994b248',candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceHead:process.env.CUMBRE20_SOURCE_SHA,checks:records.length,comparisons:records.filter(r=>r.comparison).length,metrics,failures},null,2));
  await browser?.close();proxy?.close();children.forEach(p=>p.kill('SIGTERM'));
 }
 expect(failures).toEqual([]);

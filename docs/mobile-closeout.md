@@ -51,3 +51,11 @@ Build publicado: inicial **674,28 kB**, transferencia estimada **170,32 kB**. Pe
 No se probaron dispositivos físicos, VoiceOver/TalkBack, teclado virtual real, barras dinámicas reales ni Google OAuth/correos con usuarios reales. La automatización de motores y Auth Emulator cubre la lógica restante. Continuar con `docs/qa/physical-device-checklist.md`.
 
 No se modifican usuarios, Firestore, permisos, Apps Script/Sheets ni dependencias de producción. Rollback visual: revertir PR #26 y desplegar `780ebf4`; no requiere migración de datos. Para esta ampliación de QA, revertir su PR afecta únicamente pruebas/documentación.
+
+## Correcciones incrementales de cierre
+
+- La hoja móvil de compartir tenía aspecto modal, pero no contenía el foco ni bloqueaba el scroll del documento. Se limita el foco a sus acciones, con Tab/Shift+Tab/flechas/Home/End; Escape/cierre devuelven el foco al disparador. CSS `:has()` bloquea el fondo únicamente en la query móvil y baja el header debajo del scrim. La prueba E2E comprueba foco, retorno y rueda sin desplazamiento del fondo.
+- Se limita el traslado del drawer fuera del header a la query móvil. En el breakpoint de tablet/PC se conserva el padre original del commit anterior al rediseño. Esto evita que un cambio de contexto de pintura afecte píxeles del menú en PC. No se duplican las rutas ni el contenido: un solo `ng-template` se inserta en el padre correspondiente al abrir/rotar.
+- Se agrega una comprobación automatizada **de sólo lectura** del dominio público en ambos motores, 320/390/1440, Home/listado/login/registro/comunidades, menú y compartir un detalle real. Registra estilos activos, `ng-version`, capturas y excepciones. No inicia sesión ni envía formularios o datos ficticios a producción.
+
+Los resultados nuevos se acreditarán con los jobs/artefactos finales. El primer intento de la nueva matriz se detuvo por una expectativa incorrecta de la fixture (`Luna` frente a `luna`, derivado del email por el contrato de Apps Script); se corrigió la prueba, no la aplicación ni el contrato. El siguiente intento también verificó que el guard conserva `returnUrl` al enviar una cuenta incompleta al onboarding; la expectativa se ajustó a esa URL completa ya implementada.
