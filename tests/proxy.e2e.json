@@ -8,5 +8,15 @@
     "target": "http://127.0.0.1:4401",
     "secure": false,
     "changeOrigin": false
+  },
+  "/api/game-cover": {
+    "target": "http://127.0.0.1:4401",
+    "secure": false,
+    "changeOrigin": false
+  },
+  "/portadas/**": {
+    "target": "http://127.0.0.1:4401",
+    "secure": false,
+    "changeOrigin": false
   }
 }

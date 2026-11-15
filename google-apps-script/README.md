@@ -92,3 +92,18 @@ Al aceptar una solicitud, Apps Script bloquea la operación, comprueba que siga 
 - Los textos se sanitizan y se evita la inyección de fórmulas.
 - Se aplica bloqueo de concurrencia y limitación básica por usuario.
 - Ningún dato de WhatsApp o Instagram circula por Apps Script o Sheets.
+
+## Portadas de partidas
+
+La carga usa la función Vercel `/api/game-cover`. Apps Script comprueba el rol o la propiedad según el formulario. La función decodifica JPG, PNG o WebP de hasta 4 MiB, corrige la orientación EXIF, elimina metadatos y genera dos WebP (tarjeta ≤27 kB y detalle ≤90 kB). Firma ambas variantes para esa cuenta y partida durante una hora. Apps Script valida la firma antes de guardar.
+
+La versión y las imágenes quedan en la misma fila que la partida. Una nueva carga queda en memoria hasta guardar. Una escritura exitosa reemplaza o vacía las celdas anteriores. El listado y el detalle devuelven únicamente la referencia de la portada. El endpoint de imagen lee solo la variante solicitada y revalida versión y visibilidad sin caché compartida. La lectura privada para editar incluye una miniatura, incluso con la partida pausada.
+
+Para activar la función:
+
+1. Configurá el mismo secreto aleatorio de 32 bytes como `CUMBRE20_COVER_SIGNING_KEY` en las propiedades de Apps Script y en las variables de Vercel del entorno correspondiente.
+2. Actualizá `Code.gs` y ejecutá `prepararPortadasCumbre20`. Agrega cinco columnas al final de `PARTIDAS`. El proceso se puede repetir y las filas existentes quedan con portada vacía. Mantené esas columnas juntas y al final.
+3. Publicá una versión del deployment web existente, con la misma URL. Conserva la compatibilidad 8.0.0 y los scopes actuales.
+4. Publicá el frontend. Comprobá con una partida de prueba que la imagen quede disponible para visitantes cuando está activa y responda 404 al pausarla.
+
+Para un preview con datos aislados, configurá `APPS_SCRIPT_WEB_APP_URL` con el deployment de prueba en la función Vercel y usá un build del frontend que apunte al mismo backend y a su Firebase de prueba. El entorno local usa el código de Apps Script con Sheets en memoria y emuladores Auth/Firestore.

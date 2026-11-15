@@ -40,6 +40,10 @@
       "destination": "/api/share-game?gameId=:gameId"
     },
     {
+      "source": "/portadas/:gameId/:version/:variant",
+      "destination": "/api/game-cover?gameId=:gameId&version=:version&variant=:variant"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
     },

@@ -223,3 +223,172 @@ test('public Angular HTML is readable without JavaScript and private routes stay
  const privatePage=await request.get('/perfil');expect(privatePage.headers()['x-robots-tag']).toBe('noindex, nofollow');expect(await privatePage.text()).not.toMatch(/fixture@example.test|whatsappNumber/);
  const missing=await request.get('/partidas/PRT-MISSING');expect(missing.status()).toBe(404);
 });
+
+test('campaign cover persists, replaces and clears across owner and visitor sessions', async ({ page, browser, request }, info) => {
+  const sharp = (await import('sharp')).default;
+  const createImage = (width: number, height: number, background: string) => sharp({
+    create: { width, height, channels: 3, background }
+  }).composite([{ input: {
+    create: { width: Math.floor(width * 0.6), height: Math.floor(height * 0.6), channels: 3, background: '#704454' }
+  }, gravity: 'center' }]).png({ compressionLevel: 0 }).toBuffer();
+  const wide = await createImage(1340, 780, '#eee2cf');
+  const tall = await createImage(620, 1450, '#14111a');
+  expect(wide.length).toBeLessThanOrEqual(4 * 1024 * 1024);
+  expect(tall.length).toBeLessThanOrEqual(4 * 1024 * 1024);
+  const touch = ['android-chromium', 'iphone-webkit'].includes(info.project.name);
+  const initial = page.viewportSize()!;
+  const landscape = { width: initial.height, height: initial.width };
+  const title = 'Portada de campaña QA';
+  const field = page.getByLabel('Imagen de portada (opcional)');
+  const preview = page.getByRole('img', { name: 'Vista previa de la portada' });
+  const existing = '/partidas/PRT-DEMO-BASE';
+  const screenshot = async (target: Page, name: string) => {
+    await target.addStyleTag({ content: '.firebase-emulator-warning { display:none !important; }' });
+    await target.evaluate(() => document.fonts.ready);
+    await target.screenshot({ path: info.outputPath(name + '.png'), fullPage: true, animations: 'disabled' });
+  };
+  const imageLoaded = async (target: Page, selector: string) => {
+    const image = target.locator(selector);
+    await expect(image).toBeVisible();
+    await expect.poll(() => image.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0);
+    return await image.getAttribute('src') as string;
+  };
+  const choose = (buffer: Buffer) => field.setInputFiles({ name: 'portada.png', mimeType: 'image/png', buffer });
+
+  await register(page, 'CoverOwner', 'DM', '/partidas/nueva');
+  await control(page, 'title').fill(title);
+  await control(page, 'system').fill('Fate');
+  await control(page, 'summary').fill('Una aventura aislada para comprobar la portada de campaña y su visibilidad.');
+  await control(page, 'tone').fill('Aventura');
+  await control(page, 'city').selectOption('Guaymallén');
+  await control(page, 'location').selectOption('Discord');
+  await control(page, 'date').fill('2027-01-15');
+  await control(page, 'time').fill('18:00');
+  await control(page, 'schedule').fill('Sábado a las 18');
+  await choose(wide);
+  await expect(preview).toBeVisible();
+  await screenshot(page, 'formulario-vertical');
+  if (touch) {
+    await page.setViewportSize(landscape);
+    await screenshot(page, 'formulario-horizontal');
+    await page.setViewportSize(initial);
+  }
+  await page.getByRole('button', { name: 'Publicar partida' }).click();
+  await expect(page).toHaveURL(/mis-partidas/);
+  const created = new URL(page.url()).searchParams.get('saved');
+  expect(created).toBeTruthy();
+  const detail = '/partidas/' + created;
+  const visitor = await browser.newContext({
+    viewport: initial, isMobile: touch, hasTouch: touch, colorScheme: 'dark', reducedMotion: 'reduce'
+  });
+  const visitorPage = await visitor.newPage();
+  const cardHeight: Record<string, number> = {};
+  let wideUrl = '';
+  try {
+    await visitorPage.goto(existing);
+    await expect(visitorPage.locator('h1')).toHaveText('Mesa pública de prueba');
+    await expect(visitorPage.locator('.masthead-cover')).toHaveCount(0);
+    await visitorPage.goto(detail);
+    await expect(visitorPage.locator('h1')).toHaveText(title);
+    await visitorPage.reload();
+    wideUrl = await imageLoaded(visitorPage, '.masthead-cover');
+    await screenshot(visitorPage, 'detalle-vertical');
+    const original = await request.get(app + wideUrl);
+    expect(original.ok()).toBeTruthy();
+    expect(original.headers()['cache-control']).toBe('private, no-store');
+    expect((await original.body()).length).toBeLessThanOrEqual(90_000);
+    expect(await sharp(await original.body()).metadata()).not.toHaveProperty('exif');
+
+    await visitorPage.goto('/partidas');
+    const tile = visitorPage.locator('app-game-card').filter({ hasText: title });
+    const thumb = await imageLoaded(visitorPage, 'app-game-card:has-text("' + title + '") .card-cover');
+    const thumbBytes = (await (await request.get(app + thumb)).body()).length;
+    expect(thumbBytes).toBeLessThanOrEqual(27_000);
+    cardHeight.vertical = (await tile.boundingBox())!.height;
+    await expect(tile.getByRole('link', { name: /Ver aventura|Ver partida/ })).toBeVisible();
+    await expect(tile.getByRole('button', { name: /Compartir/ })).toBeVisible();
+    await screenshot(visitorPage, 'tarjeta-vertical');
+    if (touch) {
+      await visitorPage.setViewportSize(landscape);
+      cardHeight.horizontal = (await tile.boundingBox())!.height;
+      await screenshot(visitorPage, 'tarjeta-horizontal');
+      await visitorPage.goto(detail);
+      await imageLoaded(visitorPage, '.masthead-cover');
+      await screenshot(visitorPage, 'detalle-horizontal');
+      await visitorPage.setViewportSize(initial);
+    }
+
+    const edit = '/mis-partidas/' + created + '/editar';
+    await page.goto(edit);
+    await expect(preview).toBeVisible();
+    const oldPreview = await preview.getAttribute('src');
+    let releaseUpload!: () => void;
+    const holdUpload = new Promise<void>(resolve => { releaseUpload = resolve; });
+    await page.route(/\/api\/game-cover\?gameId=/, async route => {
+      await holdUpload;
+      await route.abort('aborted').catch(() => {});
+    }, { times: 1 });
+    await choose(tall);
+    await page.getByRole('button', { name: 'Cancelar carga' }).click();
+    releaseUpload();
+    await expect(preview).toHaveAttribute('src', oldPreview!);
+    await expect(control(page, 'title')).toHaveValue(title);
+
+    await page.route(/\/api\/game-cover\?gameId=/, route => route.abort('connectionreset'), { times: 1 });
+    await choose(tall);
+    await expect(page.getByRole('alert')).toContainText('La carga se interrumpió');
+    await expect(preview).toHaveAttribute('src', oldPreview!);
+    await expect(control(page, 'title')).toHaveValue(title);
+
+    await field.setInputFiles({ name: 'falso.png', mimeType: 'image/png', buffer: Buffer.from('Texto sin imagen') });
+    await expect(page.getByRole('alert')).toContainText('No pudimos abrir la imagen');
+    await expect(preview).toHaveAttribute('src', oldPreview!);
+    await request.post(api + '/advance-cache-clock');
+    await choose(tall);
+    await expect(preview).not.toHaveAttribute('src', oldPreview!);
+    await page.getByRole('button', { name: 'Guardar cambios', exact: true }).click();
+    await expect(page).toHaveURL(/mis-partidas\?saved=/);
+    await visitorPage.goto(detail);
+    const tallUrl = await imageLoaded(visitorPage, '.masthead-cover');
+    expect(tallUrl).not.toBe(wideUrl);
+    expect((await request.get(app + wideUrl)).status()).toBe(404);
+    const tallImage = await request.get(app + tallUrl);
+    expect(tallImage.ok()).toBeTruthy();
+    const tallBytes = (await tallImage.body()).length;
+    await visitorPage.goto('/partidas');
+    await imageLoaded(visitorPage, 'app-game-card:has-text("' + title + '") .card-cover');
+    expect((await tile.boundingBox())!.height).toBeCloseTo(cardHeight.vertical, 0);
+    if (touch) {
+      await visitorPage.setViewportSize(landscape);
+      expect((await tile.boundingBox())!.height).toBeCloseTo(cardHeight.horizontal, 0);
+      await screenshot(visitorPage, 'tarjeta-portada-alta-horizontal');
+      await visitorPage.setViewportSize(initial);
+    }
+
+    await page.goto(edit);
+    await expect(preview).toBeVisible();
+    await page.getByRole('button', { name: 'Quitar portada' }).click();
+    await request.post(api + '/advance-cache-clock');
+    await request.post(api + '/advance-cache-clock');
+    await page.getByRole('button', { name: 'Guardar cambios', exact: true }).click();
+    await expect(page).toHaveURL(/mis-partidas\?saved=/);
+    await visitorPage.goto(detail);
+    await expect(visitorPage.locator('h1')).toHaveText(title);
+    await expect(visitorPage.locator('.masthead-cover')).toHaveCount(0);
+    expect((await request.get(app + tallUrl)).status()).toBe(404);
+    await visitorPage.goto('/partidas');
+    await expect(tile.locator('.card-cover')).toHaveCount(0);
+    expect((await tile.boundingBox())!.height).toBeCloseTo(cardHeight.vertical, 0);
+
+    await register(visitorPage, 'OtherCoverDm', 'DM', edit);
+    await expect(visitorPage.getByRole('alert')).toContainText('No tenés permisos');
+    await expect(visitorPage.getByLabel('Imagen de portada (opcional)')).toHaveCount(0);
+    await info.attach('cover-metrics', { contentType: 'application/json', body: JSON.stringify({
+      wideOriginalBytes: wide.length, tallOriginalBytes: tall.length,
+      cardBytes: thumbBytes,
+      detailBytes: (await original.body()).length, tallDetailBytes: tallBytes, cardHeight
+    }) });
+  } finally {
+    await visitor.close();
+  }
+});

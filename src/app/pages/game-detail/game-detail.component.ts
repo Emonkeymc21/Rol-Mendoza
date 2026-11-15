@@ -1,3 +1,4 @@
+import { gameCoverUrl } from '../../core/data/game-cover';
 import { RESPONSE_INIT, ChangeDetectorRef, Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
@@ -22,6 +23,8 @@ import { SeoService } from '../../core/services/seo.service';
     standalone: false
 })
 export class GameDetailComponent {
+  readonly coverUrl = gameCoverUrl;
+
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly response = inject(RESPONSE_INIT, { optional: true });
   private readonly destroyRef = inject(DestroyRef);

@@ -1,12 +1,14 @@
 const http = require('node:http');
-const { createAppsScript, PROJECT_ID } = require('./helpers/apps-script.cjs');
+const { createAppsScript, PROJECT_ID, COVER_KEY } = require('./helpers/apps-script.cjs');
 const { URL } = require('node:url');
 if (process.env.CUMBRE20_TEST_MODE !== '1' || PROJECT_ID !== 'demo-cumbre20') throw new Error('The isolated server is test-only.');
 process.env.APPS_SCRIPT_WEB_APP_URL = 'http://127.0.0.1:4401/apps-script';
+process.env.CUMBRE20_COVER_SIGNING_KEY = COVER_KEY;
+const cover = require('../api/game-cover.js');
 const share = require('../api/share-game.js');
 let api = createAppsScript();
 const send = (res, code, body) => { res.statusCode=code; res.setHeader('Content-Type','application/json'); res.end(JSON.stringify(body)); };
-const body = req => new Promise((resolve,reject) => {let raw=''; req.on('data',chunk=>{raw+=chunk; if(raw.length>100000){reject(new Error('Payload too large'));req.destroy();}});req.on('end',()=>resolve(raw));req.on('error',reject);});
+const body = req => new Promise((resolve,reject) => {let raw=''; req.on('data',chunk=>{raw+=chunk; if(raw.length>170000){reject(new Error('Payload too large'));req.destroy();}});req.on('end',()=>resolve(raw));req.on('error',reject);});
 const server=http.createServer(async (req,res) => {
   try {
     const url=new URL(req.url,'http://127.0.0.1:4401');
@@ -21,6 +23,13 @@ const server=http.createServer(async (req,res) => {
     }
     if(url.pathname==='/advance-cache-clock'&&req.method==='POST') {
       api.advanceCacheTime(4000);return send(res,200,{ok:true});
+    }
+    if (url.pathname === '/api/game-cover') return await cover(req, res);
+    const coverPath = /^\/portadas\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(url.pathname);
+    if (coverPath) {
+      const [, gameId, version, variant] = coverPath;
+      req.query = { gameId, version, variant };
+      return await cover(req, res);
     }
     if(url.pathname==='/apps-script') {
       const result=req.method==='POST' ? api.post(JSON.parse(await body(req))) : api.get(Object.fromEntries(url.searchParams));

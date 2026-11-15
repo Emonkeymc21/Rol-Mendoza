@@ -8,6 +8,9 @@
       <div class="game-detail-layout mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
         <article class="game-detail-main glass-panel overflow-hidden">
           <div class="game-masthead p-6 sm:p-10">
+            @if (coverUrl(game, 'detail'); as cover) {
+              <img class="masthead-cover" [src]="cover" alt="" decoding="async" #coverImage (error)="coverImage.hidden = true" (load)="coverImage.hidden = false">
+            }
             <div class="relative">
               <div class="flex flex-wrap gap-2">@for (tag of game.tags; track tag) {
                 <span class="tag">{{ tag }}</span>

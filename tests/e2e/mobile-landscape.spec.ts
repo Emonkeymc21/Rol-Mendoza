@@ -19,19 +19,22 @@ async function assertInteractiveLayout(page: Page, width: number) {
   const result = await page.evaluate((expected) => {
     const bodyWidth = document.body.scrollWidth;
     const viewportWidth = document.documentElement.clientWidth;
-    const prevY = scrollY;
-    scrollTo(9000, prevY);
-    const horizontalScroll = scrollX;
-    scrollTo(0, prevY);
     const offscreen = Array.from(document.querySelectorAll('a,button,input,textarea,select'))
       .filter(el => {
         const rect = el.getBoundingClientRect();
         const style = getComputedStyle(el);
         if (style.visibility === 'hidden' || style.display === 'none' ||
             rect.width === 0 || rect.height === 0) return false;
-        // Ignore elements inside deliberately closed/hidden dialogs.
+        // Backdrops cover the viewport. Their hit target is checked by tapping outside the panel.
+        if (el.matches('.share-backdrop')) return false;
         return rect.left < -2 || rect.right > expected + 2;
       }).slice(0,10).map(el => ({tag:el.tagName,selector:String(el.className).slice(0,70)}));
+    // Probe horizontal scrolling after measuring the UI at its actual resting offset.
+    const startX = scrollX;
+    const startY = scrollY;
+    scrollTo(9000, startY);
+    const horizontalScroll = scrollX;
+    scrollTo(startX, startY);
     return {bodyWidth,viewportWidth,horizontalScroll,offscreen};
   }, width);
   expect(result.viewportWidth).toBe(width);
@@ -149,4 +152,41 @@ test('Desktop at 932x430 stays on original non-touch layout',async({browser},inf
     expect(await page.locator('app-home .hero-stage').evaluate(el=>getComputedStyle(el).display)).toBe('flex');
     await page.screenshot({path:info.outputPath('desktop-932-horizontal-unchanged.png'),animations:'disabled'});
   }finally{await context.close();}
+});
+
+test('Touch rotation keeps sharing actions and the close button reachable', async ({ browser }, info) => {
+  test.skip(!['android-chromium', 'iphone-webkit'].includes(info.project.name), 'Touch engines only');
+  const portrait = { width: 390, height: 844 };
+  const landscape = { width: 844, height: 390 };
+  const context = await browser.newContext({
+    viewport: portrait, isMobile: true, hasTouch: true, deviceScaleFactor: 1, colorScheme: 'dark'
+  });
+  const page = await context.newPage();
+  try {
+    await page.goto('/partidas/PRT-DEMO-BASE');
+    const trigger = page.getByRole('button', { name: 'Compartir partida', exact: true });
+    await trigger.tap();
+    const menu = page.getByRole('menu', { name: 'Opciones para compartir' });
+    const close = menu.getByRole('menuitem', { name: 'Cerrar opciones para compartir' });
+    for (const viewport of [portrait, landscape, portrait]) {
+      await page.setViewportSize(viewport);
+      await expect(menu).toBeVisible();
+      for (const button of [close, menu.getByRole('menuitem', { name: /WhatsApp/ }), menu.getByRole('menuitem', { name: /Copiar enlace/ })]) {
+        await expect(button).toBeInViewport({ ratio: 0.95 });
+      }
+      await assertInteractiveLayout(page, viewport.width);
+    }
+    await page.setViewportSize(landscape);
+    await page.screenshot({ path: info.outputPath('rotacion-compartir-horizontal.png'), animations: 'disabled' });
+    await close.tap();
+    await expect(menu).toBeHidden();
+
+    await trigger.tap();
+    await expect(menu).toBeVisible();
+    const bounds = (await menu.boundingBox())!;
+    await page.touchscreen.tap(Math.floor(bounds.x / 2), Math.floor(bounds.y + bounds.height / 2));
+    await expect(menu).toBeHidden();
+  } finally {
+    await context.close();
+  }
 });
