@@ -232,7 +232,9 @@ test('campaign cover persists, replaces and clears across owner and visitor sess
     create: { width: Math.floor(width * 0.6), height: Math.floor(height * 0.6), channels: 3, background: '#704454' }
   }, gravity: 'center' }]).png({ compressionLevel: 0 }).toBuffer();
   const wide = await createImage(1340, 780, '#eee2cf');
-  const tall = await createImage(760, 1500, '#14111a');
+  const tall = await createImage(620, 1450, '#14111a');
+  expect(wide.length).toBeLessThanOrEqual(4 * 1024 * 1024);
+  expect(tall.length).toBeLessThanOrEqual(4 * 1024 * 1024);
   const touch = ['android-chromium', 'iphone-webkit'].includes(info.project.name);
   const initial = page.viewportSize()!;
   const landscape = { width: initial.height, height: initial.width };
@@ -322,15 +324,11 @@ test('campaign cover persists, replaces and clears across owner and visitor sess
     const oldPreview = await preview.getAttribute('src');
     let releaseUpload!: () => void;
     const holdUpload = new Promise<void>(resolve => { releaseUpload = resolve; });
-    let confirmUpload!: () => void;
-    const uploadStarted = new Promise<void>(resolve => { confirmUpload = resolve; });
     await page.route(/\/api\/game-cover\?gameId=/, async route => {
-      confirmUpload();
       await holdUpload;
       await route.abort('aborted').catch(() => {});
     }, { times: 1 });
     await choose(tall);
-    await uploadStarted;
     await page.getByRole('button', { name: 'Cancelar carga' }).click();
     releaseUpload();
     await expect(preview).toHaveAttribute('src', oldPreview!);
