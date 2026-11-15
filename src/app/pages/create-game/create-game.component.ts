@@ -1,9 +1,11 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MENDOZA_LOCATIONS, OTHER_LOCATION, resolveLocation, splitLocation } from '../../core/data/mendoza-locations';
-import { Game } from '../../core/models/game.model';
+import { Subscription } from 'rxjs';
+import { Game, PreparedGameCover } from '../../core/models/game.model';
 import { AuthService } from '../../core/services/auth.service';
+import { GameCoverService } from '../../core/services/game-cover.service';
 import { GameService } from '../../core/services/game.service';
 import { ProfileService } from '../../core/services/profile.service';
 
@@ -12,7 +14,7 @@ import { ProfileService } from '../../core/services/profile.service';
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
-export class CreateGameComponent implements OnInit {
+export class CreateGameComponent implements OnInit, OnDestroy {
   readonly locations = MENDOZA_LOCATIONS;
   readonly otherLocation = OTHER_LOCATION;
   readonly gameLocations = ['Discord', 'A definir', 'Otro espacio'];
@@ -28,6 +30,14 @@ export class CreateGameComponent implements OnInit {
   saveError = '';
   readonly editing: boolean;
   private readonly gameId: string;
+  private createRequestId?: string;
+  private cover?: PreparedGameCover | null;
+  private coverUpload?: Subscription;
+  private originalPreview = '';
+  coverPreview = '';
+  coverError = '';
+  coverProgress: number | null = null;
+  canEdit = false;
 
   form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(120)]],
@@ -56,6 +66,7 @@ export class CreateGameComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private games: GameService,
+    private covers: GameCoverService,
     private profiles: ProfileService,
     readonly auth: AuthService,
     route: ActivatedRoute,
@@ -74,6 +85,9 @@ export class CreateGameComponent implements OnInit {
       this.loading = true;
       this.games.getOwnedGame(this.gameId).subscribe({
         next: game => {
+          this.originalPreview = game.coverPreview ? this.previewUrl(game.coverPreview) : '';
+          this.coverPreview = this.originalPreview;
+          this.canEdit = true;
           const selectedLocation = splitLocation(game.city);
           this.legacyGameLocation = game.location && !this.gameLocations.includes(game.location)
             ? game.location
@@ -116,7 +130,7 @@ export class CreateGameComponent implements OnInit {
   }
 
   save(): void {
-    if (this.saving) return;
+    if (this.saving || this.coverProgress !== null || (this.editing && !this.canEdit)) return;
     this.submitted = true;
     this.saveError = '';
     if (this.form.invalid) {
@@ -135,6 +149,10 @@ export class CreateGameComponent implements OnInit {
       return;
     }
 
+    if (this.cover && this.cover.expires <= Math.floor(Date.now() / 1000)) {
+      this.coverError = 'La carga venció. Volvé a elegir la imagen antes de guardar.';
+      return;
+    }
     this.saving = true;
     const { otherCity, otherSafety, ...gameValues } = value;
     const game: Game = {
@@ -149,13 +167,17 @@ export class CreateGameComponent implements OnInit {
       status: 'ACTIVE',
       featured: false
     };
-    const operation = this.editing ? this.games.updateGame(game) : this.games.createGame(game);
+    const draft = { ...game, cover: this.cover };
+    const operation = this.editing ? this.games.updateGame(draft) : this.games.createGame({
+      ...draft,
+      createRequestId: this.createRequestId ??= crypto.randomUUID()
+    });
     operation.subscribe({
       next: async result => {
-        this.saving = false;
         await this.router.navigate(['/mis-partidas'], {
           queryParams: { saved: result.gameId || result.id, action: this.editing ? 'updated' : 'published' }
         });
+        this.saving = false;
       },
       error: error => {
         console.error(this.editing ? 'No se pudo actualizar la partida.' : 'No se pudo crear la partida.', error);
@@ -165,6 +187,47 @@ export class CreateGameComponent implements OnInit {
           : 'No pudimos crear la partida. Intentá nuevamente.');
       }
     });
+  }
+
+  chooseCover(input: HTMLInputElement): void {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.saving) return;
+    this.cancelCoverUpload();
+    this.coverError = '';
+    this.coverProgress = 0;
+    this.coverUpload = this.covers.prepare(file, this.gameId, progress => {
+      this.coverProgress = progress;
+    }).subscribe({
+      next: cover => {
+        this.cover = cover;
+        this.coverPreview = this.previewUrl(cover.detail);
+        this.coverProgress = null;
+      },
+      error: error => {
+        this.coverProgress = null;
+        this.coverError = error.message;
+      }
+    });
+  }
+
+  cancelCoverUpload(): void {
+    this.coverUpload?.unsubscribe();
+    this.coverProgress = null;
+  }
+
+  removeCover(): void {
+    this.cover = this.originalPreview ? null : undefined;
+    this.coverPreview = '';
+    this.coverError = '';
+  }
+
+  ngOnDestroy(): void {
+    this.cancelCoverUpload();
+  }
+
+  private previewUrl(image: string): string {
+    return 'data:image/webp;base64,' + image;
   }
 
   invalid(name: keyof typeof this.form.controls): boolean {

@@ -1,3 +1,4 @@
+import { gameCoverUrl } from '../../../core/data/game-cover';
 import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Game } from '../../../core/models/game.model';
 import { UserProfile } from '../../../core/models/user-profile.model';
@@ -10,6 +11,8 @@ import { ProfileService } from '../../../core/services/profile.service';
     standalone: false
 })
 export class GameCardComponent implements OnInit {
+  readonly coverUrl = gameCoverUrl;
+
   @Input() headingLevel: 2 | 3 = 3;
   @Input({ required: true }) game!: Game;
   dmProfile?: UserProfile;

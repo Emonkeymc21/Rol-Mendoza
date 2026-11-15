@@ -6,6 +6,7 @@ const { execFileSync } = require('node:child_process');
 
 const PROJECT_ID = 'demo-cumbre20';
 const GAME_HEADERS = ['partida_id','creada_el','creador_uid','creador_email','titulo','sistema','master_nombre_publico','modalidad','ciudad','zona_plataforma','fecha','hora','dia_horario','frecuencia','cupos_totales','cupos_libres','jugadores_actuales','nivel','edad_requerida','metodo_contacto','tono','descripcion','herramientas_cuidado','estado','publicada','actualizada_el'];
+const COVER_KEY = 'local-cumbre20-demo-cover-key';
 const COMMENT_HEADERS = ['comentario_id','fecha','partida_id','usuario_uid','nombre_publico','comentario','estado','respuesta_admin','fecha_moderacion'];
 
 // Only the Google infrastructure is adapted. Business functions run from Code.gs.
@@ -13,7 +14,7 @@ function createAppsScript({ root = path.resolve(__dirname, '../..'), seed = true
   if (process.env.FIRESTORE_EMULATOR_HOST !== '127.0.0.1:8080' || process.env.FIREBASE_AUTH_EMULATOR_HOST !== '127.0.0.1:9099') {
     throw new Error('Tests require loopback Auth and Firestore emulators. Production is never an allowed fallback.');
   }
-  const sheets = new Map([['PARTIDAS', [GAME_HEADERS]], ['COMENTARIOS', [COMMENT_HEADERS]], ['SOLICITUDES', [[]]]]);
+  const sheets = new Map([['PARTIDAS', [[...GAME_HEADERS, 'portada_version', 'portada_card', 'portada_detail_1', 'portada_detail_2', 'portada_detail_3']]], ['COMENTARIOS', [COMMENT_HEADERS]], ['SOLICITUDES', [[]]]]);
   const cache = new Map();
   let clockOffset = 0;
   let failCommit = false;
@@ -65,10 +66,12 @@ function createAppsScript({ root = path.resolve(__dirname, '../..'), seed = true
     console: { error: (...args) => errors.push(args.join(' ')), log() {} },
     SpreadsheetApp: { openById: () => ({ getSheetByName: sheet }), flush() {} },
     LockService: { getScriptLock: () => ({ waitLock() { if (locked) throw new Error('Concurrent test lock'); locked = true; }, releaseLock() { locked = false; } }) },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: () => COVER_KEY }) },
     ScriptApp: { getOAuthToken: () => 'owner' },
     ContentService: { MimeType: { JSON: 'application/json' }, createTextOutput: text => ({ text, setMimeType() { return this; } }) },
     Utilities: {
       DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' },
+      computeHmacSha256Signature: (message, key) => Array.from(crypto.createHmac('sha256', key).update(message).digest()),
       computeDigest: (algorithm, value) => crypto.createHash(algorithm).update(value).digest(),
       base64EncodeWebSafe: value => Buffer.from(value).toString('base64url'),
       getUuid: () => crypto.randomUUID(),
@@ -98,4 +101,4 @@ function createAppsScript({ root = path.resolve(__dirname, '../..'), seed = true
     sheets
   };
 }
-module.exports = { createAppsScript, PROJECT_ID };
+module.exports = { createAppsScript, PROJECT_ID, COVER_KEY };

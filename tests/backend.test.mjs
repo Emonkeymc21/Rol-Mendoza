@@ -1,12 +1,12 @@
 import { before, beforeEach, after, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator, doc, getDoc, getDocs, collection, query, where, terminate } from 'firebase/firestore';
 import { saveProfile } from './helpers/fixtures.mjs';
-const {createAppsScript,PROJECT_ID}=createRequire(import.meta.url)('./helpers/apps-script.cjs');
+const {createAppsScript,PROJECT_ID,COVER_KEY}=createRequire(import.meta.url)('./helpers/apps-script.cjs');
 const actors={}; let api;
 const gameInput={title:'Aventura aislada de prueba',system:'Fate',location:'A coordinar',city:'Guaymallén',mode:'Presencial',schedule:'Sábado 18:00',frequency:'One-shot',totalSeats:4,currentPlayers:0,level:'Principiantes bienvenidos',tone:'Aventura',summary:'Una aventura ficticia para comprobar solicitudes, cupos y permisos sin utilizar datos de producción.',safety:'Acuerdos previos de mesa'};
 before(async () => {
@@ -55,6 +55,39 @@ describe('actual Apps Script business logic with emulated Auth/Firestore and in-
     assert.equal(post('player','updateGame',{...gameInput,id}).ok,false);
     assert.equal(post('dm','updateGame',{...gameInput,id,title:'Aventura actualizada'}).ok,true);
     assert.equal(api.get({action:'game',gameId:id}).data.titulo,'Aventura actualizada');
+  });
+  it('binds a prepared cover to its owner and game and applies public visibility', async () => {
+    const image = await (await import('sharp')).default({
+      create: { width: 64, height: 64, channels: 3, background: '#704454' }
+    }).webp().toBuffer();
+    const detail = image.toString('base64');
+    const card = detail;
+    const createCover = (gameId, uid = actors.dm.uid) => {
+      const expires = Math.floor(Date.now() / 1000) + 300;
+      const signature = createHmac('sha256', COVER_KEY).update([uid, gameId, expires, detail, card].join('\n')).digest('hex');
+      return { detail, card, expires, signature };
+    };
+    const id = createGame({ cover: createCover(''), createRequestId: 'e32de414-fe91-4ba1-9338-e7bd1f177e70' });
+    const row = api.get({ action: 'game', gameId: id }).data;
+    assert.equal(Object.keys(row).filter(key => key.startsWith('portada_')).join(), 'portada_version');
+    const publicImage = { action: 'cover', gameId: id, version: row.portada_version, variant: 'card' };
+    assert.equal(api.get(publicImage).data.image, card);
+    assert.equal(post('dm', 'ownedGame', { gameId: id }).data.portada_preview, card);
+    assert.equal(post('other', 'authorizeCover', { gameId: id }).ok, false);
+    assert.equal(post('other', 'updateGame', { ...gameInput, id, cover: null }).ok, false);
+    assert.equal(post('dm', 'updateGame', { ...gameInput, id, cover: createCover('another-game') }).ok, false);
+    assert.equal(api.get(publicImage).ok, true);
+    api.advanceCacheTime(6000);
+    assert.equal(post('dm', 'updateGame', { ...gameInput, id, title: 'Otra descripción' }).ok, true);
+    assert.equal(api.get(publicImage).ok, true);
+    assert.equal(post('dm', 'setGameStatus', { gameId: id, status: 'PAUSED' }).ok, true);
+    assert.equal(api.get(publicImage).ok, false);
+    assert.equal(post('dm', 'ownedGame', { gameId: id }).data.portada_preview, card);
+    api.advanceCacheTime(31_000);
+    const duplicate = post('dm', 'createGame', { ...gameInput, createRequestId: 'e32de414-fe91-4ba1-9338-e7bd1f177e70' });
+    assert.equal(duplicate.data.id, id);
+    assert.equal(duplicate.data.duplicate, true);
+    assert.equal(post('dm', 'myGames').data.length, 1);
   });
   it('creates a pending request once and notifies the DM', async () => {
     const gameId=createGame(),id=request('player',gameId);

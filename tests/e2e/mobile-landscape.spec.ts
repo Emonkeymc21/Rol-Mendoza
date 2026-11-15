@@ -150,3 +150,34 @@ test('Desktop at 932x430 stays on original non-touch layout',async({browser},inf
     await page.screenshot({path:info.outputPath('desktop-932-horizontal-unchanged.png'),animations:'disabled'});
   }finally{await context.close();}
 });
+
+test('Touch rotation keeps sharing actions and the close button reachable', async ({ browser }, info) => {
+  test.skip(!['android-chromium', 'iphone-webkit'].includes(info.project.name), 'Touch engines only');
+  const portrait = { width: 390, height: 844 };
+  const landscape = { width: 844, height: 390 };
+  const context = await browser.newContext({
+    viewport: portrait, isMobile: true, hasTouch: true, deviceScaleFactor: 1, colorScheme: 'dark'
+  });
+  const page = await context.newPage();
+  try {
+    await page.goto('/partidas/PRT-DEMO-BASE');
+    const trigger = page.getByRole('button', { name: 'Compartir partida', exact: true });
+    await trigger.tap();
+    const menu = page.getByRole('menu', { name: 'Opciones para compartir' });
+    const close = menu.getByRole('menuitem', { name: 'Cerrar opciones para compartir' });
+    for (const viewport of [portrait, landscape, portrait]) {
+      await page.setViewportSize(viewport);
+      await expect(menu).toBeVisible();
+      for (const button of [close, menu.getByRole('menuitem', { name: /WhatsApp/ }), menu.getByRole('menuitem', { name: /Copiar enlace/ })]) {
+        await expect(button).toBeInViewport({ ratio: 0.95 });
+      }
+      await assertInteractiveLayout(page, viewport.width);
+    }
+    await page.setViewportSize(landscape);
+    await page.screenshot({ path: info.outputPath('rotacion-compartir-horizontal.png'), animations: 'disabled' });
+    await close.tap();
+    await expect(menu).toBeHidden();
+  } finally {
+    await context.close();
+  }
+});

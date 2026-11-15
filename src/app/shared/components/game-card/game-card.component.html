@@ -1,5 +1,9 @@
 <article class="game-card group">
-  <div class="card-art" aria-hidden="true"><span class="card-art-system">{{ game.system }}</span><span class="card-art-index">C20</span></div>
+  <div class="card-art" aria-hidden="true">
+    @if (coverUrl(game, 'card'); as cover) {
+      <img class="card-cover" [src]="cover" alt="" loading="lazy" decoding="async" #coverImage (error)="coverImage.hidden = true" (load)="coverImage.hidden = false">
+    }
+    <span class="card-art-system">{{ game.system }}</span><span class="card-art-index">C20</span></div>
   <div class="game-card-body flex h-full flex-col p-5 sm:p-6">
     <div class="flex flex-wrap items-center gap-2">
       <span class="meta-badge">{{ game.mode }}</span>

@@ -1,3 +1,10 @@
+export interface PreparedGameCover {
+  detail: string;
+  card: string;
+  expires: number;
+  signature: string;
+}
+
 export type GameStatus = 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'FULL';
 
 export interface Game {
@@ -28,6 +35,8 @@ export interface Game {
   createdAt?: string;
   updatedAt?: string;
   featured?: boolean;
+  coverVersion?: string;
+  coverPreview?: string;
 }
 
 export type GameDraft = Omit<Game, 'id' | 'gm' | 'masterUserId' | 'creatorEmail' | 'status' | 'createdAt' | 'updatedAt'>;

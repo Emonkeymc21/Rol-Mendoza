@@ -5,6 +5,9 @@
  * Escrituras privadas: requieren un Firebase ID token válido.
  * Los perfiles y contactos viven en Firestore; Sheets solo administra partidas.
  */
+const COVER_DATA_COLUMNS = ['portada_card', 'portada_detail_1', 'portada_detail_2', 'portada_detail_3'];
+const COVER_VERSION_COLUMN = 'portada_version';
+const COVER_CHUNK_SIZE = 40000;
 const CONFIG = Object.freeze({
   gamesSpreadsheetId: '1ZtbK4j_V8ePbUgaZZkeTtP7vFcnjsn2R7s2brRtvw9k',
   firebaseWebApiKey: 'AIzaSyDAUvtcTyEQmbGmmmOGJTsyVg34dt1h_gU',
@@ -18,6 +21,7 @@ const CONFIG = Object.freeze({
   rateSeconds: Object.freeze({
     createGame: 30,
     updateGame: 5,
+    authorizeCover: 2,
     setGameStatus: 3,
     deleteGame: 5,
     joinGame: 20,
@@ -140,6 +144,8 @@ function doGet(e) {
         return json_({ ok: true, data: getPublicGames_() });
       case 'game':
         return json_({ ok: true, data: getPublicGame_(requiredText_(params.gameId, 'gameId', 80)) });
+      case 'cover':
+        return json_({ ok: true, data: getPublicCover_(params) });
       case 'comments':
         return json_({
           ok: true,
@@ -170,6 +176,12 @@ function doPost(e) {
     switch (action) {
       case 'createGame':
         return json_({ ok: true, data: createGame_(payload, firebaseAccount_(user), requireDm_(idToken, user.uid)) });
+      case 'authorizeCover': {
+        const gameId = cleanText_(payload.gameId, 80);
+        if (gameId) assertOwner_(findGame_(gameId), user.uid);
+        else requireDm_(idToken, user.uid);
+        return json_({ ok: true, data: { uid: user.uid } });
+      }
       case 'myGames':
         return json_({ ok: true, data: getOwnedGames_(user.uid) });
       case 'ownedGame':
@@ -222,9 +234,12 @@ function getOwnedGames_(uid) {
 }
 
 function getOwnedGame_(gameId, uid) {
-  const game = findGame_(gameId);
-  assertOwner_(game, uid);
-  return ownedGame_(game);
+  const record = findGameWithRow_(gameId);
+  assertOwner_(record && record.data, uid);
+  const result = ownedGame_(record.data);
+  const preview = record.data.portada_card;
+  if (typeof preview === 'string' && preview.indexOf('b:') === 0) result.portada_preview = preview.slice(2);
+  return result;
 }
 
 function publicGame_(row) {
@@ -237,6 +252,7 @@ function publicGame_(row) {
   safe.master_nombre = row.master_nombre_publico || 'Máster de la comunidad';
   safe.master_usuario_id = row.creador_uid || '';
   safe.estado = canonicalStatus_(row.estado);
+  if (/^[a-f0-9]{24}$/.test(row.portada_version || '')) safe.portada_version = row.portada_version;
   return safe;
 }
 
@@ -263,6 +279,97 @@ function getPublicComments_(gameId) {
     });
 }
 
+// Ejecutar una vez desde el editor antes de publicar esta versión.
+function prepararPortadasCumbre20() {
+  if (!PropertiesService.getScriptProperties().getProperty('CUMBRE20_COVER_SIGNING_KEY')) {
+    throw new Error('Configurá CUMBRE20_COVER_SIGNING_KEY en las propiedades del script.');
+  }
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = getSheet_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games);
+    const last = sheet.getLastColumn();
+    const headers = sheet.getRange(1, 1, 1, last).getValues()[0];
+    const columns = [COVER_VERSION_COLUMN].concat(COVER_DATA_COLUMNS);
+    const existing = headers.indexOf(COVER_VERSION_COLUMN);
+    if (existing >= 0) {
+      if (headers.slice(existing).join(',') !== columns.join(',')) throw new Error('Revisá las columnas de portada.');
+      return;
+    }
+    const missingGridColumns = last + columns.length - sheet.getMaxColumns();
+    if (missingGridColumns > 0) sheet.insertColumnsAfter(sheet.getMaxColumns(), missingGridColumns);
+    sheet.getRange(1, last + 1, 1, columns.length).setValues([columns]);
+    SpreadsheetApp.flush();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function getPublicCover_(params) {
+  const gameId = String(params.gameId || '');
+  const version = String(params.version || '');
+  const variant = String(params.variant || '');
+  if (!/^[A-Za-z0-9_-]{3,80}$/.test(gameId) || !/^[a-f0-9]{24}$/.test(version) ||
+      (variant !== 'card' && variant !== 'detail')) throw new Error('Portada no disponible.');
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const record = findGameWithRow_(gameId, variant);
+    if (!record || !isPublicGame_(record.data) || record.data.portada_version !== version) {
+      throw new Error('Portada no disponible.');
+    }
+    const image = variant === 'card' ? record.data.portada_card : COVER_DATA_COLUMNS.slice(1)
+      .map(function (name) { return record.data[name] || ''; }).join('');
+    if (!image) throw new Error('Portada no disponible.');
+    return { image: image };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function coverFields_(cover, uid, gameId) {
+  if (cover === undefined) return {};
+  const fields = { portada_version: '', portada_card: '', portada_detail_1: '', portada_detail_2: '', portada_detail_3: '' };
+  if (cover === null) return fields;
+  const expires = Number(cover.expires);
+  const now = Math.floor(Date.now() / 1000);
+  const signature = cover.signature;
+  const validImage = function (value, max) {
+    return typeof value === 'string' && value.length <= max && value.length % 4 === 0 &&
+      /^UklGR[A-Za-z0-9+/]+={0,2}$/.test(value);
+  };
+  if (!Number.isInteger(expires) || expires < now || expires > now + 3600 ||
+      !/^[a-f0-9]{64}$/.test(signature || '') ||
+      !validImage(cover.detail, 120000) || !validImage(cover.card, 36000)) {
+    throw new Error('Volvé a elegir la imagen de portada antes de guardar.');
+  }
+  const key = PropertiesService.getScriptProperties().getProperty('CUMBRE20_COVER_SIGNING_KEY');
+  if (!key) throw new Error('La carga de portadas todavía no está disponible.');
+  const expected = Utilities.computeHmacSha256Signature(
+    [uid, gameId, expires, cover.detail, cover.card].join('\n'), key, Utilities.Charset.UTF_8
+  ).map(function (byte) { return ('0' + (byte & 255).toString(16)).slice(-2); }).join('');
+  let difference = 0;
+  for (let index = 0; index < expected.length; index += 1) {
+    difference |= expected.charCodeAt(index) ^ signature.charCodeAt(index);
+  }
+  if (difference) throw new Error('La portada no corresponde a esta cuenta o partida. Volvé a elegirla.');
+  fields.portada_version = expected.slice(0, 24);
+  // Prefix chunks to preserve them as text in Sheets, including numeric Base64 fragments.
+  fields.portada_card = 'b:' + cover.card;
+  COVER_DATA_COLUMNS.slice(1).forEach(function (name, index) {
+    const chunk = cover.detail.slice(index * COVER_CHUNK_SIZE, (index + 1) * COVER_CHUNK_SIZE);
+    if (chunk) fields[name] = 'b:' + chunk;
+  });
+  return fields;
+}
+
+function coverRows_(sheet) {
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const firstImageColumn = headers.indexOf(COVER_DATA_COLUMNS[0]);
+  const columns = firstImageColumn < 0 ? headers.length : firstImageColumn;
+  return sheet.getRange(1, 1, sheet.getLastRow(), columns).getValues();
+}
+
 function createGame_(payload, account, profile) {
   const title = requiredText_(payload.title, 'título', 120, 5);
   const system = requiredText_(payload.system, 'sistema', 100, 2);
@@ -276,8 +383,15 @@ function createGame_(payload, account, profile) {
   const initialStatus = currentPlayers >= totalSeats ? 'FULL' : 'ACTIVE';
 
   const now = new Date();
-  const id = makeId_('PRT');
-  appendObject_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, {
+  const cover = coverFields_(payload.cover, account.firebase_uid, '');
+  const requestId = typeof payload.createRequestId === 'string' ? payload.createRequestId : '';
+  if (requestId && !/^[a-f0-9-]{36}$/.test(requestId)) throw new Error('La solicitud para publicar no es válida.');
+  const requestDigest = requestId && Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
+    account.firebase_uid + ':' + requestId, Utilities.Charset.UTF_8);
+  const id = requestDigest
+    ? 'PRT-' + Utilities.base64EncodeWebSafe(requestDigest).slice(0, 28)
+    : makeId_('PRT');
+  const row = Object.assign({
     partida_id: id,
     creada_el: now,
     creador_uid: account.firebase_uid,
@@ -304,12 +418,33 @@ function createGame_(payload, account, profile) {
     estado: initialStatus,
     publicada: 'Sí',
     actualizada_el: now
-  });
-
-  return { id: id, status: initialStatus, message: '¡Partida publicada! Tu partida ya está disponible para la comunidad.' };
+  }, cover);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const existing = requestId && findGame_(id);
+    if (existing) {
+      assertOwner_(existing, account.firebase_uid);
+      return { id: id, status: canonicalStatus_(existing.estado), duplicate: true, message: 'La partida ya está publicada.' };
+    }
+    writeObjectRow_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, row, null);
+    return { id: id, status: initialStatus, message: '¡Partida publicada! Tu partida ya está disponible para la comunidad.' };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function updateGame_(payload, account) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    return updateOwnedGame_(payload, account);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function updateOwnedGame_(payload, account) {
   const gameId = requiredText_(payload.id || payload.gameId, 'partida', 80);
   const record = findGameWithRow_(gameId);
   assertOwner_(record && record.data, account.firebase_uid);
@@ -351,22 +486,31 @@ function updateGame_(payload, account) {
     herramientas_cuidado: requiredText_(payload.safety, 'herramientas de cuidado', 180, 2),
     actualizada_el: new Date()
   });
-  upsertObject_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, next, record.rowNumber);
+  Object.assign(next, coverFields_(payload.cover, account.firebase_uid, gameId));
+  writeObjectRow_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, next, record.rowNumber);
   return { id: gameId, status: canonicalStatus_(next.estado), message: 'La partida fue actualizada.' };
 }
 
 function setGameStatus_(payload, uid) {
   const gameId = requiredText_(payload.gameId, 'partida', 80);
   const status = oneOf_(String(payload.status || '').toUpperCase(), ['ACTIVE', 'PAUSED', 'CANCELLED', 'FULL'], 'estado');
-  const record = findGameWithRow_(gameId);
-  assertOwner_(record && record.data, uid);
-  const previousStatus = canonicalStatus_(record.data.estado);
-  const next = Object.assign({}, record.data, {
-    estado: status,
-    publicada: status === 'ACTIVE' || status === 'FULL' ? 'Sí' : 'No',
-    actualizada_el: new Date()
-  });
-  upsertObject_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, next, record.rowNumber);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  let previousStatus;
+  let next;
+  try {
+    const record = findGameWithRow_(gameId);
+    assertOwner_(record && record.data, uid);
+    previousStatus = canonicalStatus_(record.data.estado);
+    next = Object.assign({}, record.data, {
+      estado: status,
+      publicada: status === 'ACTIVE' || status === 'FULL' ? 'Sí' : 'No',
+      actualizada_el: new Date()
+    });
+    writeObjectRow_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, next, record.rowNumber);
+  } finally {
+    lock.releaseLock();
+  }
   if (status === 'CANCELLED' && previousStatus !== 'CANCELLED') {
     try {
       const notified = notifyGameCancelled_(gameId, uid, cleanText_(next.titulo, 120));
@@ -1042,9 +1186,9 @@ function findGame_(gameId) {
   return null;
 }
 
-function findGameWithRow_(gameId) {
+function findGameWithRow_(gameId, coverVariant) {
   const sheet = getSheet_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games);
-  const values = sheet.getDataRange().getValues();
+  const values = coverRows_(sheet);
   if (values.length < 2) return null;
   const headers = values[0].map(function (header) { return String(header).trim(); });
   const idIndex = headers.indexOf('partida_id');
@@ -1055,6 +1199,14 @@ function findGameWithRow_(gameId) {
       headers.forEach(function (header, column) {
         if (header) data[header] = serializeCell_(values[index][column]);
       });
+      if (headers.indexOf(COVER_VERSION_COLUMN) >= 0) {
+        const first = coverVariant === 'detail' ? 1 : 0;
+        const count = coverVariant === 'card' ? 1 : COVER_DATA_COLUMNS.length - first;
+        const contents = sheet.getRange(index + 1, headers.length + 1 + first, 1, count).getValues()[0];
+        contents.forEach(function (value, offset) {
+          data[COVER_DATA_COLUMNS[first + offset]] = coverVariant ? String(value || '').slice(2) : value;
+        });
+      }
       return { data: data, rowNumber: index + 1 };
     }
   }
@@ -1094,7 +1246,7 @@ function statusMessage_(status) {
 
 function readObjects_(spreadsheetId, sheetName) {
   const sheet = getSheet_(spreadsheetId, sheetName);
-  const values = sheet.getDataRange().getValues();
+  const values = sheetName === CONFIG.sheets.games ? coverRows_(sheet) : sheet.getDataRange().getValues();
   if (values.length < 2) return [];
 
   const headers = values[0].map(function (header) { return String(header).trim(); });
@@ -1127,6 +1279,10 @@ function writeObjectRow_(spreadsheetId, sheetName, object, rowNumber) {
   const sheet = getSheet_(spreadsheetId, sheetName);
   const lastColumn = sheet.getLastColumn();
   const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  if (sheetName === CONFIG.sheets.games && object.portada_version &&
+      ![COVER_VERSION_COLUMN].concat(COVER_DATA_COLUMNS).every(function (name) { return headers.indexOf(name) >= 0; })) {
+    throw new Error('El almacenamiento de portadas todavía no está habilitado.');
+  }
   const row = headers.map(function (header) {
     const value = Object.prototype.hasOwnProperty.call(object, header) ? object[header] : '';
     return safeCell_(value);
@@ -1146,6 +1302,7 @@ function getSheet_(spreadsheetId, sheetName) {
 function parseRequest_(e) {
   const raw = e && e.postData && e.postData.contents;
   if (!raw) throw new Error('La solicitud está vacía.');
+  if (raw.length > 170000) throw new Error('El contenido de la solicitud es demasiado grande.');
   try {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') throw new Error('Formato inválido.');

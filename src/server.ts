@@ -7,6 +7,7 @@ import {
 import express from 'express';
 import { environment } from './environments/environment';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -25,6 +26,22 @@ if (!environment.production && environment.firebase.projectId === 'demo-cumbre20
       const response = await fetch('http://127.0.0.1:4401/apps-script' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''), {method:req.method, body:req.method === 'GET' ? undefined : await new Promise<string>(resolve => {let raw='';req.on('data',chunk=>raw+=chunk);req.on('end',()=>resolve(raw));})});
       res.status(response.status).type('application/json').send(await response.text());
     } catch (error) {next(error);}
+  });
+  app.use(['/api/game-cover', '/portadas'], async (req, res, next) => {
+    try {
+      const response = await fetch('http://127.0.0.1:4401' + req.originalUrl, {
+        method: req.method,
+        headers: {
+          'content-type': req.headers['content-type'] || 'application/octet-stream',
+          ...(req.headers.authorization && { authorization: req.headers.authorization }),
+          ...(req.headers['content-length'] && { 'content-length': req.headers['content-length'] })
+        },
+        ...(req.method === 'POST' && { body: Readable.toWeb(req) as ReadableStream, duplex: 'half' })
+      });
+      res.status(response.status);
+      response.headers.forEach((value, key) => res.setHeader(key, value));
+      res.end(Buffer.from(await response.arrayBuffer()));
+    } catch (error) { next(error); }
   });
   app.use('/compartir', async (req, res, next) => {
     try {
