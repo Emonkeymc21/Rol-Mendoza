@@ -21,14 +21,20 @@ if(process.env.CUMBRE20_REQUIRE_PUBLISHED==='1'){
  }
  if(!matched)throw Error('Production does not serve the exact expected bootstrap: '+expectedBootstrap);
 }
+async function ready(page){
+ await expect(page.locator('h1').first()).toBeVisible();
+ await expect.poll(()=>page.locator('link[rel=stylesheet]').evaluateAll(list=>list.length>0&&list.every(el=>el.sheet&&(!el.media||el.media==='all')))).toBe(true);
+ await page.evaluate(()=>document.fonts.ready);
+}
 const browser=await({chromium,webkit}[engine]).launch();
 try{
  for(const [width,height]of [[320,568],[390,844],[1440,900]]){
   const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:'dark'});
+  await context.tracing.start({screenshots:true,snapshots:true,sources:true});
   const page=await context.newPage();const errors=await observeBrowserErrors(page,{attach:async(name,value)=>writeFile(`${out}/${width}-${name}`,value.body)},'browser-errors.json');
   try{
    for(const [path,slug]of [['/','home'],['/partidas','partidas'],['/ingresar','login'],['/registrarme','registro'],['/comunidades','comunidades']]){
-    const response=await page.goto(origin+path);expect(response.status()).toBe(200);await expect(page.locator('h1').first()).toBeVisible();await page.evaluate(()=>document.fonts.ready);
+    const response=await page.goto(origin+path);expect(response.status()).toBe(200);await ready(page);
     if(path==='/partidas')await expect(page.locator('.game-results-skeleton')).toHaveCount(0);
     const layout=await page.evaluate(expected=>{
       const client=document.documentElement.clientWidth,y=scrollY;scrollTo(10000,y);const horizontal=scrollX;scrollTo(0,y);
@@ -44,11 +50,11 @@ try{
     expect(layout.version).toBe('22.2.5');expect(layout.styles.some(s=>!s.media||s.media==='all')).toBe(true);
     if(path==='/'&&width<768){await page.getByRole('button',{name:'Abrir menú',exact:true}).click();await expect(page.getByRole('navigation',{name:'Navegación móvil'})).toBeVisible();await page.screenshot({path:`${out}/${width}-menu.jpg`,type:'jpeg',quality:85});await page.getByRole('button',{name:'Cerrar menú',exact:true}).click();await expect(page.getByRole('navigation',{name:'Navegación móvil'})).toBeHidden();}
    }
-   await page.goto(origin+'/partidas');await expect(page.locator('.game-results-skeleton')).toHaveCount(0);
+   await page.goto(origin+'/partidas');await ready(page);await expect(page.locator('.game-results-skeleton')).toHaveCount(0);
    const detail=await page.locator('.game-card-action').first().getAttribute('href');
-   if(detail){const response=await page.goto(origin+detail);expect(response.status()).toBe(200);await expect(page.locator('h1')).toBeVisible();await page.getByRole('button',{name:'Compartir partida',exact:true}).click();await expect(page.getByRole('menu',{name:'Opciones para compartir'})).toBeVisible();await page.screenshot({path:`${out}/${width}-compartir.jpg`,type:'jpeg',quality:85});await page.keyboard.press('Escape');checks.push({width,path:detail,status:response.status(),share:true});}
+   if(detail){const response=await page.goto(origin+detail);expect(response.status()).toBe(200);await ready(page);await page.screenshot({path:`${out}/${width}-detalle.jpg`,type:'jpeg',quality:85,fullPage:false,animations:'disabled'});await page.getByRole('button',{name:'Compartir partida',exact:true}).click();await expect(page.getByRole('menu',{name:'Opciones para compartir'})).toBeVisible();await page.screenshot({path:`${out}/${width}-compartir.jpg`,type:'jpeg',quality:85});await page.keyboard.press('Escape');checks.push({width,path:detail,status:response.status(),share:true});}
    await errors.assertClean();
-  }finally{await context.close();}
+  }finally{await context.tracing.stop({path:`${out}/${width}-trace.zip`});await context.close();}
  }
 }finally{await writeFile(out+'/summary.json',JSON.stringify({engine,checkedAt:new Date().toISOString(),origin,readOnly:true,sourceHead:process.env.GITHUB_SHA,expectedBootstrap,expectedStyles,checks},null,2));await browser.close();}
 console.log('PRODUCTION_READ_ONLY',JSON.stringify({engine,checks:checks.length}));
