@@ -54,7 +54,12 @@ async function login(page,actor,destination='/perfil'){
 async function settle(page){
  await page.locator('h1').first().waitFor();
  await expect.poll(()=>page.locator('link[rel="stylesheet"]').evaluateAll(list=>list.every(el=>el.sheet&&(!el.media||el.media==='all')))).toBe(true);
- await page.evaluate(async()=>{await Promise.all([document.fonts.load('400 14px Inter'),document.fonts.load('700 14px Inter'),document.fonts.load('750 32px Cinzel')]);await document.fonts.ready;});
+ await page.evaluate(async()=>{
+  const samples='ÁÉÍÓÚáéíóúÑñü¿¡ CUMBRE20 Encontrá tu próxima mesa 0123456789';
+  const requests=[...['400','500','600','700','800'].map(w=>w+' 16px Inter'),...['600','700','800','900'].map(w=>w+' 32px Cinzel'),...['500','600','700'].map(w=>w+' 20px Alegreya'),'italic 500 20px Alegreya'];
+  for(const font of requests){const faces=await document.fonts.load(font,samples);if(!faces.length||faces.some(f=>f.status!=='loaded'))throw Error('Required capture font unavailable: '+font);}
+  await document.fonts.ready;
+ });
  await page.locator('.auth-loading,.loading-panel').first().waitFor({state:'hidden'});
  await page.locator('.firebase-emulator-warning').evaluateAll(list=>list.forEach(el=>el.style.display='none'));
  await page.waitForTimeout(180);
@@ -105,6 +110,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  if(!stable)throw Error('Unstable screenshot: '+key);
  const nativeSelect=baseSlug==='home'?await page.locator('app-home select').evaluate(el=>{const c=getComputedStyle(el),r=el.getBoundingClientRect();return {value:el.value,font:c.font,lineHeight:c.lineHeight,padding:c.padding,appearance:c.appearance,x:r.x,y:r.y,width:r.width,height:r.height,fonts:document.fonts.status};}):undefined;
  const logo=baseSlug==='home'?await page.locator('.brand-mark').evaluate(el=>{const r=el.getBoundingClientRect(),c=getComputedStyle(el);return {src:el.getAttribute('src'),naturalWidth:el.naturalWidth,x:r.x,y:r.y,width:r.width,height:r.height,objectFit:c.objectFit,filter:c.filter,imageRendering:c.imageRendering,transform:c.transform,opacity:c.opacity,mixBlendMode:c.mixBlendMode};}):undefined;
+ const fonts=baseSlug==='home'?await page.evaluate(()=>({faces:[...document.fonts].map(f=>({family:f.family,weight:f.weight,style:f.style,status:f.status})),resources:performance.getEntriesByType('resource').map(r=>r.name).filter(n=>n.includes('fonts.gstatic.com'))})):undefined;
  const images=baseSlug==='home'?await page.locator('img').evaluateAll(list=>list.map(img=>({src:img.currentSrc,naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight,complete:img.complete,width:img.getBoundingClientRect().width,height:img.getBoundingClientRect().height}))):undefined;
  const artwork=baseSlug==='home'?await page.locator('.card-art').evaluateAll(list=>list.map(el=>{const c=getComputedStyle(el),r=el.getBoundingClientRect();return {backgroundImage:c.backgroundImage,backgroundSize:c.backgroundSize,backgroundPosition:c.backgroundPosition,hover:el.closest('.game-card').matches(':hover'),width:r.width,height:r.height};})):undefined;
  let comparison;
@@ -114,7 +120,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
   comparison=reference?await diff(comparator,reference,png):{pixels:null,missingBaseline:true};
   if(comparison.pixels!==0){
    failures.push({key,type:'desktop-pixels',comparison});if(reference)await writeFile(path+'-before.png',reference);await writeFile(path+'-after.png',png);
-   await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect,logo,images,artwork},null,2));
+   await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect,logo,fonts,images,artwork},null,2));
    if(baseSlug==='home'&&reference){
     // A failing comparison keeps an independent fresh-baseline control. This
     // diagnoses renderer/cache variation; it NEVER replaces the original gate.
@@ -129,7 +135,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  let violations=[];
  if(axe){const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22a','wcag22aa']).analyze();violations=result.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}));if(violations.length)failures.push({key,type:'axe',violations});}
  if(variant==='after'&&(layout.body>layout.client+1||frame.width!==width||frame.height!==(targets.get(page)?.height)||layout.horizontal>0))failures.push({key,type:'overflow',layout});
- const record={variant,width,theme,slug,nativeSelect,logo,images,artwork,url:new URL(page.url()).pathname,layout,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
+ const record={variant,width,theme,slug,nativeSelect,logo,fonts,images,artwork,url:new URL(page.url()).pathname,layout,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
 }
 try{
  start('tests/isolated-server.cjs');start('dist/mobile-baseline/server/server.mjs',{PORT:'4310'});start('dist/ssr-test/server/server.mjs',{PORT:'4320'});

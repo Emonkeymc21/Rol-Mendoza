@@ -67,7 +67,7 @@ jobs:
             test-results/
           retention-days: 7
   visual:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.engine == 'webkit' && matrix.viewport == 390 && 'macos-15' || 'ubuntu-24.04' }}
     timeout-minutes: 55
     strategy:
       fail-fast: false
