@@ -29,7 +29,7 @@ async function assetsReady(page){
 async function ready(page){await assetsReady(page);await expect(page.locator('h1').first()).toBeVisible();}
 async function detailReady(page,width,path){
  await assetsReady(page);
- const upstreamError=page.getByText('No pudimos cargar la partida. Revisá tu conexión e intentá nuevamente.',{exact:true});
+ const upstreamError=page.getByRole('alert').filter({hasText:'No pudimos cargar la partida. Revisá tu conexión e intentá nuevamente.'});
  await expect(page.locator('h1').or(upstreamError).first()).toBeVisible();
  if(await upstreamError.isVisible()){
   checks.push({width,path,upstreamError:'Public Apps Script detail unavailable',recovery:'User-facing Reintentar button, once'});
