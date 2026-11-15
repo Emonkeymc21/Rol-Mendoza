@@ -458,9 +458,10 @@ function updateOwnedGame_(payload, account) {
   }
   const seats = totalSeats - currentPlayers;
   const currentStatus = canonicalStatus_(current.estado);
-  const capacityStatus = currentPlayers >= totalSeats
-    ? 'FULL'
-    : (currentStatus === 'FULL' ? 'ACTIVE' : currentStatus);
+  const wasPublic = currentStatus === 'ACTIVE' || currentStatus === 'FULL';
+  const capacityStatus = wasPublic
+    ? (currentPlayers >= totalSeats ? 'FULL' : 'ACTIVE')
+    : currentStatus;
   const next = Object.assign({}, current, {
     titulo: requiredText_(payload.title, 'título', 120, 5),
     sistema: requiredText_(payload.system, 'sistema', 100, 2),

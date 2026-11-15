@@ -83,6 +83,11 @@ describe('actual Apps Script business logic with emulated Auth/Firestore and in-
     assert.equal(post('dm', 'setGameStatus', { gameId: id, status: 'PAUSED' }).ok, true);
     assert.equal(api.get(publicImage).ok, false);
     assert.equal(post('dm', 'ownedGame', { gameId: id }).data.portada_preview, card);
+    api.advanceCacheTime(6000);
+    assert.equal(post('dm', 'updateGame', { ...gameInput, id, currentPlayers: 4, cover: createCover(id) }).data.status, 'PAUSED');
+    const updated = post('dm', 'ownedGame', { gameId: id }).data;
+    assert.notEqual(updated.portada_version, row.portada_version);
+    assert.equal(api.get({ ...publicImage, version: updated.portada_version }).ok, false);
     api.advanceCacheTime(31_000);
     const duplicate = post('dm', 'createGame', { ...gameInput, createRequestId: 'e32de414-fe91-4ba1-9338-e7bd1f177e70' });
     assert.equal(duplicate.data.id, id);
