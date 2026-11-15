@@ -1,0 +1,53 @@
+# CUMBRE20: cierre verificable del diseño móvil
+
+Revisión del 15/11/2026. Fuente de verdad: GitHub y Vercel, no el resumen del chat.
+
+## Estado recuperado
+
+- PR #26 integrado el 9/11 a las 21:12 de Argentina; `main` **79928ffd9c9a2c8e2486864cb34367cd3bc8418b**.
+- Vercel producción **dpl_77Z4efT1H5vAtyktqrQ5g2NNCwiJ**, READY; alias `rol-mendoza-2026.vercel.app`, mismo SHA.
+- Angular 22.2.5, CLI/build 22.2.6, Firebase modular 13.2.0, TypeScript 6.0.3, Node 24.22.1 en esta revisión. El rediseño ya estaba implementado: no se reconstruye.
+- Se abrió el sitio público y se recorrieron Home, listado, detalle real y compartir/cerrar. Las dos partidas reales aparecen; no se crearon registros en producción. Sin errores/fatales/warnings en los logs disponibles del deployment durante la ventana de 30 minutos de esta revisión; esto no acredita ausencia histórica de errores.
+
+## Evidencia recuperada del código publicado
+
+Run [42726569904](https://github.com/Emonkeymc21/Rol-Mendoza/actions/runs/42726569904), exacto `79928ff`, todos sus jobs aprobados:
+
+| Verificación | Resultado |
+|---|---|
+| Instalación limpia, árbol, audit completo y producción | Aprobados; auditorías 0 en esa ejecución |
+| Build producción/CSP | Aprobados; 12 scripts inline autorizados por SHA-256 exacto |
+| Unitarias | 40 aprobadas |
+| Emuladores | 30 aprobadas: 14 reglas reales, 11 Apps Script, 3 Auth, 2 sitemap |
+| Chromium | 30 aprobadas; 14 omisiones explícitas por proyecto/alcance |
+| WebKit macOS | 23 aprobadas; 21 omisiones explícitas por proyecto/anchos de muestra |
+| Axe/overflow público | 108 combinaciones; 0 violaciones y 0 desbordamientos en candidato |
+| Regresión visual anterior | Home 768/1440, dos temas, tolerancia previa 1%; no equivale a todos los píxeles de todas las pantallas |
+
+Las omisiones no se cuentan como pruebas aprobadas. Se descargaron y revisaron los artefactos originales: capturas reales y resultados JSON. Las cuentas son emuladas.
+
+## Falta detectada y corrección de QA
+
+El documento anterior seguía diciendo «pendiente» y la comparación de escritorio sólo cubría Home 768/1440 con tolerancia 1%. Las capturas a 1024/1920 y la ausencia de media query activa no prueban por sí solas igualdad visual.
+
+Se agrega `scripts/build-mobile-baseline.cjs` que recompila **780ebf445a24dd8d557abcf8baeceb14c994b248**, anterior al rediseño, con el mismo compiler y configuración demo. `scripts/mobile-closeout.mjs` sirve ambos builds alternativamente en el mismo origen, con cuentas/datos persistentes iguales, fuentes, zona horaria, tema y escala 1.
+
+Compara RGBA píxel por píxel sin máscaras, umbral ni tolerancia de antialiasing a **768/1024/1440/1920**, en ambos temas y motores. Captura todas las pantallas públicas y privadas principales, menú, compartir y onboarding; los cambios intencionales de 390 px se guardan como antes/después. El foco de esta ampliación es verificar y documentar, sin introducir nuevas bibliotecas ni cambiar contratos.
+
+La matriz móvil existente conserva 320/360/375/390/393/412/430 y añade orientación horizontal táctil 800/844/932. WebKit anterior sólo tomó 320/390/430; no se presenta como cobertura de cada ancho ni como iPhone físico.
+
+El nuevo cierre se ejecuta en CI junto a los flujos originales; un fallo de píxeles en escritorio, excepción real, permisos, build/CSP o reglas impide aprobar. El clasificador estricto WebKit existente y su control negativo se conservan.
+
+## Rendimiento: alcance de las mediciones
+
+El run histórico anterior compara **c733dd6**, anterior a Fase 5, con el móvil actual. Sus medianas de 3 mediciones: Performance 75→84, LCP 3746→3193 ms, TBT 556→347 ms, CLS 0,0130→0,0122. No es una comparación exclusiva del rediseño móvil, ni métricas de usuarios reales. Performance 90 y LCP 2,5 s no se alcanzan.
+
+La ampliación mide ambos builds contra **780ebf4** en el mismo runner/gzip, con tres Lighthouse móviles por variante, sin alterar el throttling predeterminado. Las capturas usan movimiento reducido para reproducibilidad; Lighthouse conserva condiciones normales. Publicar resultados reales del run al completar, sin asumir mejora.
+
+Build publicado: inicial **674,28 kB**, transferencia estimada **170,32 kB**. Persiste Home SCSS 15,98 kB frente a aviso 13 kB. No se elevaron presupuestos.
+
+## Límites y recuperación
+
+No se probaron dispositivos físicos, VoiceOver/TalkBack, teclado virtual real, barras dinámicas reales ni Google OAuth/correos con usuarios reales. La automatización de motores y Auth Emulator cubre la lógica restante. Continuar con `docs/qa/physical-device-checklist.md`.
+
+No se modifican usuarios, Firestore, permisos, Apps Script/Sheets ni dependencias de producción. Rollback visual: revertir PR #26 y desplegar `780ebf4`; no requiere migración de datos. Para esta ampliación de QA, revertir su PR afecta únicamente pruebas/documentación.

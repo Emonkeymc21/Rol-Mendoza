@@ -47,3 +47,5 @@ Thumbs.db
 /test-results/
 /audit-results/
 /.angular/prerender-root/
+
+mobile-results/
