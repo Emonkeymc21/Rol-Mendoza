@@ -17,7 +17,7 @@ const out='mobile-results/'+engine;await mkdir(out,{recursive:true});
 const original=require('../vercel.json').headers.find(x=>x.source==='/(.*)').headers.find(x=>x.key==='Content-Security-Policy').value;
 const csp=original.replace("connect-src 'self'","connect-src 'self' http://127.0.0.1:9099 http://127.0.0.1:8080").replace("frame-src 'self'","frame-src 'self' http://127.0.0.1:9099").replace('; upgrade-insecure-requests','');
 const children=[];let variant='before',laboratory=false,browser,proxy;
-const records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[];
+const records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[],targets=new WeakMap();
 const start=(file,extra={})=>{const p=spawn(process.execPath,[file],{env:{...process.env,CUMBRE20_TEST_MODE:'1',CUMBRE20_TEST_CSP:csp,...extra},stdio:'inherit'});children.push(p);return p;};
 async function ready(url){for(let i=0;i<100;i++){try{if((await fetch(url)).ok)return;}catch{}await new Promise(r=>setTimeout(r,200));}throw Error('Not ready: '+url);}
 async function json(url,options={}){const r=await fetch(url,options),data=await r.json();if(!r.ok||data.error)throw Error(JSON.stringify({url,status:r.status,data}));return data;}
@@ -37,8 +37,30 @@ async function profile(name,role,complete=true){
  return {...account,email,password,uid};
 }
 async function api(actor,action,payload){const r=await post('http://127.0.0.1:4401/apps-script',{apiVersion:'8.0.0',idToken:actor.idToken,action,payload});if(!r.ok)throw Error(JSON.stringify(r));return r.data;}
+// Desktop dimensions target the CSS media-query viewport. WebKit macOS
+// subtracts its native scrollbar from that width. Calibrate the outer viewport
+// to the same requested CSS width, retaining the native gutter in screenshots.
+// No styles, screenshots or comparisons are masked/changed.
+async function navigate(page,url){
+ const response=await page.goto(url),target=targets.get(page);
+ if(!target||target.width<768)return response;
+ await expect.poll(()=>page.locator('link[rel=stylesheet]').evaluateAll(list=>list.length>0&&list.every(el=>el.sheet&&(!el.media||el.media==='all')))).toBe(true);
+ await page.evaluate(()=>document.fonts.ready);
+ for(let attempt=0;attempt<4;attempt++){
+  const state=await page.evaluate(expected=>{
+   let lo=0,hi=4096;while(lo+1<hi){const mid=Math.floor((lo+hi)/2);if(matchMedia(`(min-width: ${mid}px)`).matches)lo=mid;else hi=mid;}
+   return {css:lo,inner:innerWidth,client:document.documentElement.clientWidth,expected,matches:matchMedia(`(width: ${expected}px)`).matches};
+  },target.width);
+  if(state.matches){await appendFile(out+'/viewports.jsonl',JSON.stringify({variant,url:new URL(url).pathname,...target,...state,screenshotWidth:page.viewportSize().width})+'\n');return response;}
+  const current=page.viewportSize();
+  if(engine!=='webkit'||Math.abs(current.width-target.width)>11||Math.abs(state.css-target.width)>11)throw Error('Unexpected CSS viewport: '+JSON.stringify(state));
+  await page.setViewportSize({width:current.width+target.width-state.css,height:target.height});
+  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+ }
+ throw Error('CSS viewport calibration did not settle: '+url);
+}
 async function login(page,actor,destination='/perfil'){
- await page.goto('http://127.0.0.1:4200/ingresar?returnUrl='+encodeURIComponent(destination));
+ await navigate(page,'http://127.0.0.1:4200/ingresar?returnUrl='+encodeURIComponent(destination));
  await page.locator('[formcontrolname=email]').fill(actor.email);await page.locator('[formcontrolname=password]').fill(actor.password);
  await page.locator('button[type=submit]').click();
  if(destination==='/completar-perfil')await expect(page).toHaveURL('http://127.0.0.1:4200/completar-perfil?returnUrl=%2Fcompletar-perfil');
@@ -136,17 +158,17 @@ try{
  const privateRoutes=[['/perfil','perfil'],['/perfil/editar','editar-perfil'],['/jugadores','jugadores'],['/jugadores/'+player.uid,'perfil-jugador'],['/partidas/nueva','publicar'],['/mis-partidas','mis-partidas'],['/mis-partidas/'+game.id+'/editar','editar-partida'],['/solicitudes','solicitudes'],['/mis-solicitudes','mis-solicitudes'],['/notificaciones','notificaciones'],['/comunidades/solicitar','solicitar-comunidad']];
  for(const [width,height]of [[768,1024],[1024,900],[1440,900],[1920,1080],[390,844]]){
   for(const theme of ['dark','light'])for(const selected of ['before','after']){
-   variant=selected;const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const page=await context.newPage();
+   variant=selected;const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const page=await context.newPage();targets.set(page,{width,height});
    const observer=await observeBrowserErrors(page,{attach:async(name,attachment)=>{await writeFile(`${out}/${selected}-${width}-${theme}-${name}.json`,attachment.body);}},'errors');
    try{
-    for(const [route,slug]of publicRoutes){await page.goto('http://127.0.0.1:4200'+route);if(route==='/'||route==='/partidas')await expect(page.locator('app-game-card')).toHaveCount(2);if(route==='/comunidades')await expect(page.locator('main')).toContainText('Espacio de rol de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
-    await page.goto('http://127.0.0.1:4200/partidas/PRT-DEMO-BASE');await page.getByRole('button',{name:'Compartir partida',exact:true}).click();await expect(page.getByRole('menu',{name:'Opciones para compartir'})).toBeVisible();await capture(page,comparator,width,theme,'compartir',{full:false});await page.keyboard.press('Escape');
-    if(width<1280){await page.goto('http://127.0.0.1:4200/');await expect(page.locator('app-game-card')).toHaveCount(2);await page.getByRole('button',{name:'Abrir menú',exact:true}).click();await expect(page.getByRole('navigation',{name:'Navegación móvil'})).toBeVisible();await capture(page,comparator,width,theme,'menu',{full:false});await page.keyboard.press('Escape');}
+    for(const [route,slug]of publicRoutes){await navigate(page,'http://127.0.0.1:4200'+route);if(route==='/'||route==='/partidas')await expect(page.locator('app-game-card')).toHaveCount(2);if(route==='/comunidades')await expect(page.locator('main')).toContainText('Espacio de rol de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
+    await navigate(page,'http://127.0.0.1:4200/partidas/PRT-DEMO-BASE');await page.getByRole('button',{name:'Compartir partida',exact:true}).click();await expect(page.getByRole('menu',{name:'Opciones para compartir'})).toBeVisible();await capture(page,comparator,width,theme,'compartir',{full:false});await page.keyboard.press('Escape');
+    if(width<1280){await navigate(page,'http://127.0.0.1:4200/');await expect(page.locator('app-game-card')).toHaveCount(2);await page.getByRole('button',{name:'Abrir menú',exact:true}).click();await expect(page.getByRole('navigation',{name:'Navegación móvil'})).toBeVisible();await capture(page,comparator,width,theme,'menu',{full:false});await page.keyboard.press('Escape');}
     await login(page,dm);
-    for(const [route,slug]of privateRoutes){await page.goto('http://127.0.0.1:4200'+route);await expect(page.locator('app-header')).toContainText('Máster');if(slug==='mis-partidas')await expect(page.locator('.my-game-entry')).toContainText('Aventura de prueba visual');if(slug==='editar-partida')await expect(page.locator('[formcontrolname=title]')).toHaveValue('Aventura de prueba visual');if(slug==='solicitudes')await expect(page.locator('.inbox-item')).toContainText('luna');if(slug==='notificaciones')await expect(page.locator('.notification-card')).toHaveCount(1);if(slug==='perfil-jugador')await expect(page.locator('h1')).toHaveText('Luna de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
+    for(const [route,slug]of privateRoutes){await navigate(page,'http://127.0.0.1:4200'+route);await expect(page.locator('app-header')).toContainText('Máster');if(slug==='mis-partidas')await expect(page.locator('.my-game-entry')).toContainText('Aventura de prueba visual');if(slug==='editar-partida')await expect(page.locator('[formcontrolname=title]')).toHaveValue('Aventura de prueba visual');if(slug==='solicitudes')await expect(page.locator('.inbox-item')).toContainText('luna');if(slug==='notificaciones')await expect(page.locator('.notification-card')).toHaveCount(1);if(slug==='perfil-jugador')await expect(page.locator('h1')).toHaveText('Luna de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
     await observer.assertClean();
    }finally{await context.close();}
-   const onboarding=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});try{const p=await onboarding.newPage();await login(p,draft,'/completar-perfil');await expect(p.locator('[formcontrolname=firstName]')).toBeVisible();await capture(p,comparator,width,theme,'completar-perfil',{axe:selected==='after'&&width===390});}finally{await onboarding.close();}
+   const onboarding=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});try{const p=await onboarding.newPage();targets.set(p,{width,height});await login(p,draft,'/completar-perfil');await expect(p.locator('[formcontrolname=firstName]')).toBeVisible();await capture(p,comparator,width,theme,'completar-perfil',{axe:selected==='after'&&width===390});}finally{await onboarding.close();}
    console.log('VISUAL_PROGRESS',JSON.stringify({engine,variant,width,theme,checks:records.length,failures:failures.length}));
   }
  }
