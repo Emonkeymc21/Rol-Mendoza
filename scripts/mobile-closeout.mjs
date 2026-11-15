@@ -20,7 +20,7 @@ const out='mobile-results/'+engine;await mkdir(out,{recursive:true});
 const original=require('../vercel.json').headers.find(x=>x.source==='/(.*)').headers.find(x=>x.key==='Content-Security-Policy').value;
 const csp=original.replace("connect-src 'self'","connect-src 'self' http://127.0.0.1:9099 http://127.0.0.1:8080").replace("frame-src 'self'","frame-src 'self' http://127.0.0.1:9099").replace('; upgrade-insecure-requests','');
 const children=[];let variant='before',laboratory=false,browser,proxy;
-const records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[],targets=new WeakMap();
+const inputControls=[],records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[],targets=new WeakMap();
 const start=(file,extra={})=>{const p=spawn(process.execPath,[file],{env:{...process.env,CUMBRE20_TEST_MODE:'1',CUMBRE20_TEST_CSP:csp,...extra},stdio:'inherit'});children.push(p);return p;};
 async function ready(url){for(let i=0;i<100;i++){try{if((await fetch(url)).ok)return;}catch{}await new Promise(r=>setTimeout(r,200));}throw Error('Not ready: '+url);}
 async function json(url,options={}){const r=await fetch(url,options),data=await r.json();if(!r.ok||data.error)throw Error(JSON.stringify({url,status:r.status,data}));return data;}
@@ -75,9 +75,30 @@ async function diff(page,before,after){return page.evaluate(async([a,b])=>{
  if(x.height!==y.height||x.width!==y.width)return {pixels:null,before:[x.width,x.height],after:[y.width,y.height]};
  const c=document.createElement('canvas');c.width=width;c.height=x.height;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(x,0,0);const ax=ctx.getImageData(0,0,c.width,c.height).data;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(y,0,0);const ay=ctx.getImageData(0,0,c.width,c.height).data;let pixels=0;for(let i=0;i<ax.length;i+=4)if(ax[i]!==ay[i]||ax[i+1]!==ay[i+1]||ax[i+2]!==ay[i+2]||ax[i+3]!==ay[i+3])pixels++;return {pixels,width:c.width,height:c.height,windowWidths:[x.width,y.width],nativeGutters:[x.width-width,y.width-width]};
  },['data:image/png;base64,'+before.toString('base64'),'data:image/png;base64,'+after.toString('base64')]);}
-async function capture(page,comparator,width,theme,slug,{full=true,axe=false,prepared=false,segment=0}={}){
+async function checkHorizontalInput(page){
+ const focused=await page.evaluateHandle(()=>document.activeElement);
+ const y=await page.evaluate(()=>{document.activeElement?.blur?.();scrollTo({left:0,top:scrollY,behavior:'instant'});return scrollY;});
+ await page.keyboard.press('ArrowRight');await page.waitForTimeout(150);
+ const arrow=await page.evaluate(()=>scrollX);let wheel;
+ if(engine==='chromium'){await page.mouse.wheel(450,0);await page.waitForTimeout(150);wheel=await page.evaluate(()=>scrollX);}
+ await page.evaluate(y=>scrollTo({left:0,top:y,behavior:'instant'}),y);
+ await focused.evaluate(el=>{if(el instanceof HTMLElement&&el.isConnected)el.focus({preventScroll:true});});await focused.dispose();
+ return {arrow,wheel};
+}
+async function checkInputControl(){
+ const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
+ try{const page=await context.newPage();await page.setContent('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>html{overflow-x:auto;scroll-behavior:auto}body{margin:0}div{width:900px;height:1800px}</style><div>Horizontal overflow negative control</div>');
+ const open=await checkHorizontalInput(page);
+ await page.evaluate(()=>document.documentElement.style.overflowX='hidden');const clipped=await checkHorizontalInput(page);
+ const programmatic=await page.evaluate(()=>{scrollTo({left:500,top:0,behavior:'instant'});return scrollX;});
+ const control={engine,open,clipped,programmatic};inputControls.push(control);await writeFile(out+'/horizontal-input-control.json',JSON.stringify(control,null,2));
+ expect(open.arrow,'Control must detect genuine user-scrollable overflow').toBeGreaterThan(0);expect(clipped.arrow).toBe(0);if(engine==='chromium'){expect(open.wheel).toBeGreaterThan(0);expect(clipped.wheel).toBe(0);}expect(programmatic,'Hidden clipping permits programmatic scrolling per CSS Overflow 3').toBeGreaterThan(0);
+ }finally{await context.close();}
+}
+async function capture(page,comparator,width,theme,slug,{full=true,axe=false,prepared=false,segment=0,horizontalInput}={}){
  if(!prepared)await settle(page);
  const baseSlug=slug.split('--view-')[0];
+ if(width<768&&!horizontalInput)horizontalInput=await checkHorizontalInput(page);
  if(full){
   await reveal(page);
   if(engine==='webkit')await page.waitForTimeout(1000);
@@ -94,13 +115,13 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
   }
   for(let i=0;i<offsets.length;i++){
    await page.evaluate(y=>scrollTo(0,y),offsets[i]);await page.waitForTimeout(120);
-   await capture(page,comparator,width,theme,slug+'--view-'+i,{full:false,axe:axe&&i===0,prepared:true,segment:i});
+   await capture(page,comparator,width,theme,slug+'--view-'+i,{full:false,axe:axe&&i===0,prepared:true,segment:i,horizontalInput});
   }
   await page.evaluate(()=>scrollTo(0,0));return;
  }
  if(engine==='webkit'&&!prepared)await page.waitForTimeout(1000);
  const frame=page.viewportSize();
- const layout=await page.evaluate(width=>{const y=scrollY;scrollTo(10000,y);const x=scrollX;scrollTo(0,y);return {body:document.body.scrollWidth,client:document.documentElement.clientWidth,inner:innerWidth,horizontal:x,expected:width,y:scrollY,mediaWidth:matchMedia(`(width: ${width}px)`).matches,cssGutter:innerWidth-document.documentElement.clientWidth,mobileMedia:matchMedia('(max-width: 767px)').matches};},width);
+ const layout=await page.evaluate(width=>{const y=scrollY;scrollTo({left:10000,top:y,behavior:'instant'});const x=scrollX;scrollTo({left:0,top:y,behavior:'instant'});const offscreen=[...document.querySelectorAll('main a,main button,main input,main select,main textarea,app-header a,app-header button,app-footer a,app-footer button')].filter(el=>{const r=el.getBoundingClientRect(),c=getComputedStyle(el);return c.display!=='none'&&c.visibility!=='hidden'&&r.width>0&&r.height>0&&(r.left< -2||r.right>document.documentElement.clientWidth+2);}).map(el=>({tag:el.tagName,className:String(el.className).slice(0,80)}));return {body:document.body.scrollWidth,client:document.documentElement.clientWidth,inner:innerWidth,horizontal:x,offscreen,rootOverflowX:getComputedStyle(document.documentElement).overflowX,expected:width,y:scrollY,mediaWidth:matchMedia(`(width: ${width}px)`).matches,cssGutter:innerWidth-document.documentElement.clientWidth,mobileMedia:matchMedia('(max-width: 767px)').matches};},width);
  const key=`${width}-${theme}-${slug}`,path=`${out}/${variant}-${key}`;
  let png=await page.screenshot({fullPage:false,animations:'disabled'}),stable=false;
  for(let frame=0;frame<4;frame++){
@@ -134,8 +155,8 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  else await page.screenshot({path:path+'.jpg',type:'jpeg',quality:72,fullPage:false,animations:'disabled'});
  let violations=[];
  if(axe){const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22a','wcag22aa']).analyze();violations=result.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}));if(violations.length)failures.push({key,type:'axe',violations});}
- if(variant==='after'&&(layout.body>layout.client+1||frame.width!==width||frame.height!==(targets.get(page)?.height)||layout.horizontal>0))failures.push({key,type:'overflow',layout});
- const record={variant,width,theme,slug,nativeSelect,logo,fonts,images,artwork,url:new URL(page.url()).pathname,layout,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
+ if(variant==='after'&&(layout.body>layout.client+1||frame.width!==width||frame.height!==(targets.get(page)?.height)||(width<768&&layout.offscreen.length>0)||(width<768?(horizontalInput.arrow!==0||(horizontalInput.wheel??0)!==0):layout.horizontal>0)))failures.push({key,type:'overflow',layout});
+ const record={variant,width,theme,slug,nativeSelect,logo,fonts,images,artwork,url:new URL(page.url()).pathname,layout,horizontalInput,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
 }
 try{
  start('tests/isolated-server.cjs');start('dist/mobile-baseline/server/server.mjs',{PORT:'4310'});start('dist/ssr-test/server/server.mjs',{PORT:'4320'});
@@ -162,6 +183,7 @@ try{
   for(const doc of data.documents||[]){for(const k of ['createdAt','updatedAt'])if(doc.fields[k])doc.fields[k]={timestampValue:fixedDate};await json('http://127.0.0.1:8080/v1/'+doc.name,{method:'PATCH',headers:{Authorization:'Bearer owner','Content-Type':'application/json'},body:JSON.stringify({fields:doc.fields})});}
  }
  browser=await({chromium,webkit}[engine]).launch();let compareContext=await browser.newContext();let comparator=await compareContext.newPage();
+ if(!viewportFilter||viewportFilter==='390')await checkInputControl();
  const publicRoutes=[['/','home'],['/partidas','partidas'],['/partidas/PRT-DEMO-BASE','detalle'],['/comunidades','comunidades'],['/ingresar','login'],['/registrarme','registro'],['/como-funciona','como-funciona'],['/nosotros','nosotros'],['/terminos','terminos'],['/privacidad','privacidad']];
  const privateRoutes=[['/perfil','perfil'],['/perfil/editar','editar-perfil'],['/jugadores','jugadores'],['/jugadores/'+player.uid,'perfil-jugador'],['/partidas/nueva','publicar'],['/mis-partidas','mis-partidas'],['/mis-partidas/'+game.id+'/editar','editar-partida'],['/solicitudes','solicitudes'],['/mis-solicitudes','mis-solicitudes'],['/notificaciones','notificaciones'],['/comunidades/solicitar','solicitar-comunidad']];
  for(const [width,height]of viewports.filter(([w])=>!viewportFilter||String(w)===viewportFilter)){
@@ -189,7 +211,7 @@ try{
  }
 } catch(error){failures.push({type:'execution',message:error.stack});throw error;}
 finally{
- await writeFile(out+'/summary.json',JSON.stringify({engine,platform:process.platform,viewport:viewportFilter||'all',baseline:'780ebf445a24dd8d557abcf8baeceb14c994b248',candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceHead:process.env.CUMBRE20_SOURCE_SHA,checks:records.length,comparisons:records.filter(r=>r.comparison).length,metrics,failures},null,2));
+ await writeFile(out+'/summary.json',JSON.stringify({engine,platform:process.platform,viewport:viewportFilter||'all',baseline:'780ebf445a24dd8d557abcf8baeceb14c994b248',candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceHead:process.env.CUMBRE20_SOURCE_SHA,inputControls,checks:records.length,comparisons:records.filter(r=>r.comparison).length,metrics,failures},null,2));
  await browser?.close();proxy?.close();children.forEach(p=>p.kill('SIGTERM'));
 }
 expect(failures).toEqual([]);

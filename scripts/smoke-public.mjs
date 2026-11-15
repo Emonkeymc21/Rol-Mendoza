@@ -49,16 +49,17 @@ try{
     const response=await page.goto(origin+path);expect(response.status()).toBe(200);await ready(page);
     if(path==='/partidas')await expect(page.locator('.game-results-skeleton')).toHaveCount(0);
     const layout=await page.evaluate(expected=>{
-      const client=document.documentElement.clientWidth,y=scrollY;scrollTo(10000,y);const horizontal=scrollX;scrollTo(0,y);
+      const client=document.documentElement.clientWidth,y=scrollY;scrollTo({left:10000,top:y,behavior:'instant'});const horizontal=scrollX;scrollTo({left:0,top:y,behavior:'instant'});
       const offscreen=[...document.querySelectorAll('main a,main button,main input,main select,main textarea,app-header a,app-header button,app-footer a,app-footer button')].filter(el=>{const r=el.getBoundingClientRect(),c=getComputedStyle(el);return c.display!=='none'&&c.visibility!=='hidden'&&r.width>0&&r.height>0&&(r.left< -2||r.right>client+2);}).map(el=>({tag:el.tagName,className:String(el.className).slice(0,80)}));
       return {body:document.body.scrollWidth,viewport:client,inner:innerWidth,visual:visualViewport?.width,scale:visualViewport?.scale,mediaWidth:matchMedia(`(width: ${expected}px)`).matches,horizontal,offscreen,version:document.querySelector('[ng-version]')?.getAttribute('ng-version'),styles:[...document.querySelectorAll('link[rel=stylesheet]')].map(el=>({href:el.getAttribute('href'),media:el.getAttribute('media')}))};
     },width);
-    // Persist diagnostics even if a real layout failure is found.
+    await page.evaluate(()=>document.activeElement?.blur?.());await page.keyboard.press('ArrowRight');await page.waitForTimeout(150);layout.userHorizontal=await page.evaluate(()=>scrollX);
+    // Persist programmatic diagnostics separately from actual keyboard input.
     checks.push({width,path,status:response.status(),layout});
     await page.screenshot({path:`${out}/${width}-${slug}.jpg`,type:'jpeg',quality:85,fullPage:false,animations:'disabled'});
     expect(layout.body).toBeLessThanOrEqual(layout.viewport+1);
     if(width<768)expect(layout.viewport).toBe(width);else{expect(layout.viewport).toBeLessThanOrEqual(width);expect(layout.viewport).toBeGreaterThanOrEqual(width-11);}
-    expect(layout.offscreen).toEqual([]);expect(layout.horizontal).toBe(0);
+    expect(layout.offscreen).toEqual([]);expect(layout.userHorizontal).toBe(0);
     expect(layout.version).toBe('22.2.5');expect(layout.styles.some(s=>!s.media||s.media==='all')).toBe(true);
     if(path==='/'&&width<768){await page.getByRole('button',{name:'Abrir menú',exact:true}).click();await expect(page.getByRole('navigation',{name:'Navegación móvil'})).toBeVisible();await page.screenshot({path:`${out}/${width}-menu.jpg`,type:'jpeg',quality:85});await page.getByRole('button',{name:'Cerrar menú',exact:true}).click();await expect(page.getByRole('navigation',{name:'Navegación móvil'})).toBeHidden();}
    }
