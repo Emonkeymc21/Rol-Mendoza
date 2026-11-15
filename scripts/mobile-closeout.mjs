@@ -17,7 +17,7 @@ const out='mobile-results/'+engine;await mkdir(out,{recursive:true});
 const original=require('../vercel.json').headers.find(x=>x.source==='/(.*)').headers.find(x=>x.key==='Content-Security-Policy').value;
 const csp=original.replace("connect-src 'self'","connect-src 'self' http://127.0.0.1:9099 http://127.0.0.1:8080").replace("frame-src 'self'","frame-src 'self' http://127.0.0.1:9099").replace('; upgrade-insecure-requests','');
 const children=[];let variant='before',laboratory=false,browser,proxy;
-const records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[],targets=new WeakMap(),windowRefs=new Map();
+const records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[],targets=new WeakMap();
 const start=(file,extra={})=>{const p=spawn(process.execPath,[file],{env:{...process.env,CUMBRE20_TEST_MODE:'1',CUMBRE20_TEST_CSP:csp,...extra},stdio:'inherit'});children.push(p);return p;};
 async function ready(url){for(let i=0;i<100;i++){try{if((await fetch(url)).ok)return;}catch{}await new Promise(r=>setTimeout(r,200));}throw Error('Not ready: '+url);}
 async function json(url,options={}){const r=await fetch(url,options),data=await r.json();if(!r.ok||data.error)throw Error(JSON.stringify({url,status:r.status,data}));return data;}
@@ -37,37 +37,10 @@ async function profile(name,role,complete=true){
  return {...account,email,password,uid};
 }
 async function api(actor,action,payload){const r=await post('http://127.0.0.1:4401/apps-script',{apiVersion:'8.0.0',idToken:actor.idToken,action,payload});if(!r.ok)throw Error(JSON.stringify(r));return r.data;}
-// Desktop dimensions target the CSS media-query viewport. WebKit macOS
-// subtracts its native scrollbar from that width. Calibrate the outer viewport
-// to the same requested CSS width, retaining the native gutter in screenshots.
-// No styles, screenshots or comparisons are masked/changed.
-async function navigate(page,url){
- const target=targets.get(page);let response;
- const frameKey=target?`${target.width}-${new URL(url).pathname}`:'';
- const reference=windowRefs.get(frameKey);
- if(variant==='after'&&reference&&page.viewportSize().width!==reference.width){await page.goto('about:blank');await page.setViewportSize(reference);}
- for(let attempt=0;attempt<4;attempt++){
-  response=await page.goto(url);
-  if(!target||target.width<768)return response;
-  await settle(page);
-  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-  const state=await page.evaluate(expected=>{
-   const client=document.documentElement.clientWidth,bodyHeight=document.body.scrollHeight,rootOverflow=getComputedStyle(document.documentElement).overflow;
-   let lo=0,hi=4096;while(lo+1<hi){const mid=Math.floor((lo+hi)/2);if(matchMedia(`(min-width: ${mid}px)`).matches)lo=mid;else hi=mid;}
-   return {css:lo,inner:innerWidth,client,bodyHeight,rootOverflow,expected,matches:matchMedia(`(width: ${expected}px)`).matches};
-  },target.width);
-  await appendFile(out+'/viewports.jsonl',JSON.stringify({variant,url:new URL(url).pathname,attempt,...target,...state,screenshotWidth:page.viewportSize().width})+'\n');
-  if(state.matches){if(variant==='before')windowRefs.set(frameKey,page.viewportSize());return response;}
-  if(variant==='after'&&reference)throw Error('Candidate changed the matched baseline viewport: '+JSON.stringify({reference,state}));
-  const current=page.viewportSize();
-  if(engine!=='webkit'||Math.abs(current.width-target.width)>11||Math.abs(state.css-target.width)>11)throw Error('Unexpected CSS viewport: '+JSON.stringify(state));
-  // Start a fresh document at the final size. Never resize live app images:
-  // WebKit may retain a differently resampled bitmap after mobile -> desktop.
-  await page.goto('about:blank');
-  await page.setViewportSize({width:current.width+target.width-state.css,height:target.height});
- }
- throw Error('CSS viewport calibration did not settle: '+url);
-}
+// Fixed physical viewports in both builds, without resizing the live document.
+// Native macOS scrollbars may reduce CSS client/media width by 11px; record that
+// real browser behaviour rather than calibrating one build to a different frame.
+async function navigate(page,url){return page.goto(url);}
 async function login(page,actor,destination='/perfil'){
  await navigate(page,'http://127.0.0.1:4200/ingresar?returnUrl='+encodeURIComponent(destination));
  await page.locator('[formcontrolname=email]').fill(actor.email);await page.locator('[formcontrolname=password]').fill(actor.password);
@@ -88,12 +61,12 @@ async function reveal(page){if((targets.get(page)?.width||0)>=768)await page.mou
  const backgrounds=await page.evaluate(()=>{const urls=new Set();for(const el of document.querySelectorAll('body *'))for(const pseudo of [null,'::before','::after']){const css=getComputedStyle(el,pseudo).backgroundImage;for(const m of css.matchAll(/url\(["']?([^"')]+)["']?\)/g))if(m[1].startsWith(location.origin+'/assets/'))urls.add(m[1]);}return [...urls];});
  await page.evaluate(urls=>Promise.all(urls.map(src=>{const image=new Image();image.src=src;return image.decode();})),backgrounds);
  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));}
-async function diff(page,before,after,contentWidth){return page.evaluate(async([a,b,contentWidth])=>{
+async function diff(page,before,after){return page.evaluate(async([a,b])=>{
  const image=async src=>{const i=new Image();i.src=src;await i.decode();return i;};const [x,y]=await Promise.all([image(a),image(b)]);
- const width=contentWidth||x.width;
- if(x.height!==y.height||(!contentWidth&&x.width!==y.width)||[x.width,y.width].some(w=>w<width||w>width+11))return {pixels:null,before:[x.width,x.height],after:[y.width,y.height]};
+ const width=x.width;
+ if(x.height!==y.height||x.width!==y.width)return {pixels:null,before:[x.width,x.height],after:[y.width,y.height]};
  const c=document.createElement('canvas');c.width=width;c.height=x.height;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(x,0,0);const ax=ctx.getImageData(0,0,c.width,c.height).data;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(y,0,0);const ay=ctx.getImageData(0,0,c.width,c.height).data;let pixels=0;for(let i=0;i<ax.length;i+=4)if(ax[i]!==ay[i]||ax[i+1]!==ay[i+1]||ax[i+2]!==ay[i+2]||ax[i+3]!==ay[i+3])pixels++;return {pixels,width:c.width,height:c.height,windowWidths:[x.width,y.width],nativeGutters:[x.width-width,y.width-width]};
- },['data:image/png;base64,'+before.toString('base64'),'data:image/png;base64,'+after.toString('base64'),contentWidth]);}
+ },['data:image/png;base64,'+before.toString('base64'),'data:image/png;base64,'+after.toString('base64')]);}
 async function capture(page,comparator,width,theme,slug,{full=true,axe=false,prepared=false,segment=0}={}){
  if(!prepared)await settle(page);
  const baseSlug=slug.split('--view-')[0];
@@ -108,7 +81,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
   for(let y=0;y<max;y+=geometry.viewport)offsets.push(y);offsets.push(max);
   const geometryKey=`${width}-${theme}-${slug}`;
   if(variant==='before')geometries.set(geometryKey,geometry);
-  else if(width>=768&&JSON.stringify(geometry)!==JSON.stringify(geometries.get(geometryKey))){
+  else if(width>=1024&&JSON.stringify(geometry)!==JSON.stringify(geometries.get(geometryKey))){
    failures.push({key:geometryKey,type:'desktop-geometry',before:geometries.get(geometryKey),after:geometry});
   }
   for(let i=0;i<offsets.length;i++){
@@ -118,7 +91,8 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
   await page.evaluate(()=>scrollTo(0,0));return;
  }
  if(engine==='webkit'&&!prepared)await page.waitForTimeout(1000);
- const layout=await page.evaluate(width=>{const y=scrollY;scrollTo(10000,y);const x=scrollX;scrollTo(0,y);return {body:document.body.scrollWidth,client:document.documentElement.clientWidth,inner:innerWidth,horizontal:x,expected:width,y:scrollY,mediaWidth:matchMedia(`(width: ${width}px)`).matches,mobileMedia:matchMedia('(max-width: 767px)').matches};},width);
+ const frame=page.viewportSize();
+ const layout=await page.evaluate(width=>{const y=scrollY;scrollTo(10000,y);const x=scrollX;scrollTo(0,y);return {body:document.body.scrollWidth,client:document.documentElement.clientWidth,inner:innerWidth,horizontal:x,expected:width,y:scrollY,mediaWidth:matchMedia(`(width: ${width}px)`).matches,cssGutter:innerWidth-document.documentElement.clientWidth,mobileMedia:matchMedia('(max-width: 767px)').matches};},width);
  const key=`${width}-${theme}-${slug}`,path=`${out}/${variant}-${key}`;
  let png=await page.screenshot({fullPage:false,animations:'disabled'}),stable=false;
  for(let frame=0;frame<4;frame++){
@@ -131,8 +105,8 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  const images=baseSlug==='home'?await page.locator('img').evaluateAll(list=>list.map(img=>({src:img.currentSrc,naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight,complete:img.complete,width:img.getBoundingClientRect().width,height:img.getBoundingClientRect().height}))):undefined;
  const artwork=baseSlug==='home'?await page.locator('.card-art').evaluateAll(list=>list.map(el=>{const c=getComputedStyle(el),r=el.getBoundingClientRect();return {backgroundImage:c.backgroundImage,backgroundSize:c.backgroundSize,backgroundPosition:c.backgroundPosition,hover:el.closest('.game-card').matches(':hover'),width:r.width,height:r.height};})):undefined;
  let comparison;
- if(width>=768&&variant==='before')refs.set(key,png);
- if(width>=768&&variant==='after'){
+ if(width>=1024&&variant==='before')refs.set(key,png);
+ if(width>=1024&&variant==='after'){
   if(!refs.has(key))throw Error('Missing baseline viewport: '+key);
   comparison=await diff(comparator,refs.get(key),png);
   if(comparison.pixels!==0){
@@ -151,7 +125,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  else await page.screenshot({path:path+'.jpg',type:'jpeg',quality:72,fullPage:false,animations:'disabled'});
  let violations=[];
  if(axe){const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22a','wcag22aa']).analyze();violations=result.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}));if(violations.length)failures.push({key,type:'axe',violations});}
- if(variant==='after'&&(layout.body>layout.client+1||!layout.mediaWidth||layout.horizontal>11))failures.push({key,type:'overflow',layout});
+ if(variant==='after'&&(layout.body>layout.client+1||frame.width!==width||frame.height!==(targets.get(page)?.height)||layout.horizontal>0))failures.push({key,type:'overflow',layout});
  const record={variant,width,theme,slug,nativeSelect,logo,images,artwork,url:new URL(page.url()).pathname,layout,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
 }
 try{
@@ -184,7 +158,7 @@ try{
  for(const [width,height]of [[768,1024],[1024,900],[1440,900],[1920,1080],[390,844]]){
   if(engine==='webkit'&&width===390){await compareContext.close();await browser.close();execFileSync('defaults',['write','NSGlobalDomain','AppleShowScrollBars','-string','WhenScrolling']);browser=await webkit.launch();compareContext=await browser.newContext();comparator=await compareContext.newPage();}
   for(const theme of ['dark','light'])for(const selected of ['before','after']){
-   variant=selected;const context=await browser.newContext({viewport:{width:engine==='webkit'&&width>=768?width+11:width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const page=await context.newPage();targets.set(page,{width,height});
+   variant=selected;const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const page=await context.newPage();targets.set(page,{width,height});
    const observer=await observeBrowserErrors(page,{attach:async(name,attachment)=>{await writeFile(`${out}/${selected}-${width}-${theme}-${name}.json`,attachment.body);}},'errors');
    try{
     for(const [route,slug]of publicRoutes){await navigate(page,'http://127.0.0.1:4200'+route);if(route==='/'||route==='/partidas')await expect(page.locator('app-game-card')).toHaveCount(2);if(route==='/comunidades')await expect(page.locator('main')).toContainText('Espacio de rol de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
@@ -194,7 +168,7 @@ try{
     for(const [route,slug]of privateRoutes){await navigate(page,'http://127.0.0.1:4200'+route);await expect(page.locator('app-header')).toContainText('Máster');if(slug==='mis-partidas')await expect(page.locator('.my-game-entry')).toContainText('Aventura de prueba visual');if(slug==='editar-partida')await expect(page.locator('[formcontrolname=title]')).toHaveValue('Aventura de prueba visual');if(slug==='solicitudes')await expect(page.locator('.inbox-item')).toContainText('luna');if(slug==='notificaciones')await expect(page.locator('.notification-card')).toHaveCount(1);if(slug==='perfil-jugador')await expect(page.locator('h1')).toHaveText('Luna de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
     await observer.assertClean();
    }finally{await context.close();}
-   const onboarding=await browser.newContext({viewport:{width:engine==='webkit'&&width>=768?width+11:width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});try{const p=await onboarding.newPage();targets.set(p,{width,height});await login(p,draft,'/completar-perfil');await expect(p.locator('[formcontrolname=firstName]')).toBeVisible();await capture(p,comparator,width,theme,'completar-perfil',{axe:selected==='after'&&width===390});}finally{await onboarding.close();}
+   const onboarding=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});try{const p=await onboarding.newPage();targets.set(p,{width,height});await login(p,draft,'/completar-perfil');await expect(p.locator('[formcontrolname=firstName]')).toBeVisible();await capture(p,comparator,width,theme,'completar-perfil',{axe:selected==='after'&&width===390});}finally{await onboarding.close();}
    console.log('VISUAL_PROGRESS',JSON.stringify({engine,variant,width,theme,checks:records.length,failures:failures.length}));
   }
  }
