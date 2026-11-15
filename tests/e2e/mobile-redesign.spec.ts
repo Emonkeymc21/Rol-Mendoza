@@ -91,7 +91,6 @@ for (const [width, height] of widths) {
   test('Mobile redesign at ' + width + 'px: home, partidas, detalle, share, menus, communities', async ({ browser, request }, info) => {
     const engine = info.project.name;
     test.skip(engine !== 'android-chromium' && engine !== 'iphone-webkit', 'Mobile engine only');
-    test.skip(engine === 'iphone-webkit' && ![320, 390, 430].includes(width), 'WebKit sample widths');
 
     const seeded = await request.post('http://127.0.0.1:4401/reset');
     expect(seeded.ok()).toBeTruthy();
@@ -147,7 +146,10 @@ for (const [width, height] of widths) {
       await expect(closeSheet).toBeFocused();
       expect(await page.locator('html').evaluate(el=>getComputedStyle(el).overflowY)).toBe('hidden');
       const scrollBefore = await page.evaluate(()=>scrollY);
-      await page.mouse.wheel(0,450);
+      // Mobile WebKit has no wheel protocol. PageDown exercises keyboard
+      // scrolling in both engines; Chromium additionally exercises the wheel.
+      await page.keyboard.press('PageDown');
+      if (engine === 'android-chromium') await page.mouse.wheel(0,450);
       await page.waitForTimeout(120);
       expect(await page.evaluate(()=>scrollY)).toBe(scrollBefore);
       const sheetBox = await sheet.boundingBox();

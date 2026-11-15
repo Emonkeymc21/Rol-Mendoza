@@ -16,7 +16,7 @@ if(!['chromium','webkit'].includes(engine))throw Error('Unknown engine');
 const out='mobile-results/'+engine;await mkdir(out,{recursive:true});
 const original=require('../vercel.json').headers.find(x=>x.source==='/(.*)').headers.find(x=>x.key==='Content-Security-Policy').value;
 const csp=original.replace("connect-src 'self'","connect-src 'self' http://127.0.0.1:9099 http://127.0.0.1:8080").replace("frame-src 'self'","frame-src 'self' http://127.0.0.1:9099").replace('; upgrade-insecure-requests','');
-const children=[];let variant='before',browser,proxy;
+const children=[];let variant='before',laboratory=false,browser,proxy;
 const records=[],failures=[],refs=new Map(),metrics=[];
 const start=(file,extra={})=>{const p=spawn(process.execPath,[file],{env:{...process.env,CUMBRE20_TEST_MODE:'1',CUMBRE20_TEST_CSP:csp,...extra},stdio:'inherit'});children.push(p);return p;};
 async function ready(url){for(let i=0;i<100;i++){try{if((await fetch(url)).ok)return;}catch{}await new Promise(r=>setTimeout(r,200));}throw Error('Not ready: '+url);}
@@ -45,7 +45,9 @@ async function login(page,actor,destination='/perfil'){
  else await expect(page).toHaveURL('http://127.0.0.1:4200'+destination);
 }
 async function settle(page){
- await page.locator('h1').first().waitFor();await page.evaluate(()=>document.fonts.ready);
+ await page.locator('h1').first().waitFor();
+ await expect.poll(()=>page.locator('link[rel="stylesheet"]').evaluateAll(list=>list.every(el=>el.sheet&&(!el.media||el.media==='all')))).toBe(true);
+ await page.evaluate(async()=>{await Promise.all([document.fonts.load('400 14px Inter'),document.fonts.load('700 14px Inter'),document.fonts.load('750 32px Cinzel')]);await document.fonts.ready;});
  await page.locator('.auth-loading,.loading-panel').first().waitFor({state:'hidden'});
  await page.locator('.firebase-emulator-warning').evaluateAll(list=>list.forEach(el=>el.style.display='none'));
  await page.waitForTimeout(180);
@@ -58,22 +60,31 @@ async function diff(page,before,after){return page.evaluate(async([a,b])=>{
  },['data:image/png;base64,'+before.toString('base64'),'data:image/png;base64,'+after.toString('base64')]);}
 async function capture(page,comparator,width,theme,slug,{full=true,axe=false}={}){
  await settle(page);if(full)await reveal(page);
+ // Native selects can cache fallback-font ascent while CSS/fonts load. Initialize
+ // the same current option in BOTH builds after font readiness. No value changes,
+ // masks, style injection or ignored pixels are used for visual comparisons.
+ if(slug==='home'){
+  const mode=page.locator('app-home select');await mode.selectOption(await mode.inputValue());
+ }
  const layout=await page.evaluate(width=>{const y=scrollY;scrollTo(10000,y);const x=scrollX;scrollTo(0,y);return {body:document.body.scrollWidth,client:document.documentElement.clientWidth,horizontal:x,expected:width};},width);
  const key=`${width}-${theme}-${slug}`,path=`${out}/${variant}-${key}`;
- const png=await page.screenshot({fullPage:full,animations:'disabled'});
+ let png=await page.screenshot({fullPage:full,animations:'disabled'}),stable=false;
+ for(let frame=0;frame<4;frame++){await page.waitForTimeout(80);const next=await page.screenshot({fullPage:full,animations:'disabled'});if(png.equals(next)||(await diff(comparator,png,next)).pixels===0){stable=true;png=next;break;}png=next;}
+ if(!stable)throw Error('Unstable screenshot: '+key);
+ const nativeSelect=slug==='home'?await page.locator('app-home select').evaluate(el=>{const c=getComputedStyle(el),r=el.getBoundingClientRect();return {value:el.value,font:c.font,lineHeight:c.lineHeight,padding:c.padding,appearance:c.appearance,x:r.x,y:r.y,width:r.width,height:r.height,fonts:document.fonts.status};}):undefined;
  // The exact comparator never masks pixels or ignores antialiasing.
  let comparison;
  if(width>=768&&variant==='before')refs.set(key,png);
  if(width>=768&&variant==='after'){
   comparison=await diff(comparator,refs.get(key),png);
-  if(comparison.pixels!==0){failures.push({key,type:'desktop-pixels',comparison});await writeFile(path+'-before.png',refs.get(key));await writeFile(path+'-after.png',png);}
+  if(comparison.pixels!==0){failures.push({key,type:'desktop-pixels',comparison});await writeFile(path+'-before.png',refs.get(key));await writeFile(path+'-after.png',png);if(slug==='home')throw Error('Desktop Home pixel difference: '+JSON.stringify({key,comparison}));}
  }
  if(width===390||width===1440&&['home','partidas','perfil'].includes(slug))await writeFile(path+'.png',png);
  else await page.screenshot({path:path+'.jpg',type:'jpeg',quality:72,fullPage:full,animations:'disabled'});
  let violations=[];
  if(axe){const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22a','wcag22aa']).analyze();violations=result.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}));if(violations.length)failures.push({key,type:'axe',violations});}
  if(variant==='after'&&(layout.body>width+1||layout.client!==width||layout.horizontal>11))failures.push({key,type:'overflow',layout});
- const record={variant,width,theme,slug,url:new URL(page.url()).pathname,layout,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
+ const record={variant,width,theme,slug,nativeSelect,url:new URL(page.url()).pathname,layout,comparison,violations};records.push(record);await appendFile(out+'/checks.jsonl',JSON.stringify(record)+'\n');
 }
 try{
  start('tests/isolated-server.cjs');start('dist/mobile-baseline/server/server.mjs',{PORT:'4310'});start('dist/ssr-test/server/server.mjs',{PORT:'4320'});
@@ -82,7 +93,10 @@ try{
   const chunks=[];for await(const chunk of req)chunks.push(chunk);
   const target=(req.url.startsWith('/apps-script')||req.url.startsWith('/compartir/'))?'http://127.0.0.1:4401':`http://127.0.0.1:${variant==='before'?4310:4320}`;
   const response=await fetch(target+req.url,{method:req.method,body:chunks.length?Buffer.concat(chunks):undefined,headers:{'user-agent':req.headers['user-agent']||'','content-type':req.headers['content-type']||'','x-forwarded-host':'127.0.0.1:4200'},redirect:'manual'});
-  const data=Buffer.from(await response.arrayBuffer());res.statusCode=response.status;
+  let data=Buffer.from(await response.arrayBuffer());res.statusCode=response.status;
+  // Diagnostic overlay exists only in Auth Emulator, never in production.
+  // Omit it identically from both lab variants, retaining console/error gates.
+  if(laboratory&&response.headers.get('content-type')?.includes('text/html'))data=Buffer.from(data.toString().replace('</head>','<style>.firebase-emulator-warning{display:none!important}</style></head>'));
   for(const [key,value]of response.headers)if(!['content-encoding','content-length','transfer-encoding'].includes(key))res.setHeader(key,value);
   res.setHeader('Content-Security-Policy',csp);
   if(req.headers['accept-encoding']?.includes('gzip')){res.setHeader('Content-Encoding','gzip');res.end(gzipSync(data));}else res.end(data);
@@ -117,6 +131,7 @@ try{
  }
  await compareContext.close();await browser.close();browser=null;
  if(engine==='chromium'){
+  laboratory=true;
   const {default:lighthouse}=await import('lighthouse');const launcher=await import('chrome-launcher');
   for(const selected of ['before','after']){variant=selected;for(let run=1;run<=3;run++){const chrome=await launcher.launch({chromePath:chromium.executablePath(),chromeFlags:['--headless','--no-sandbox']});try{const result=await lighthouse('http://127.0.0.1:4200/',{port:chrome.port,output:['html','json'],onlyCategories:['performance','accessibility','best-practices','seo'],logLevel:'error'});await writeFile(`${out}/${selected}-lighthouse-${run}.html`,result.report[0]);await writeFile(`${out}/${selected}-lighthouse-${run}.json`,result.report[1]);const a=result.lhr.audits;metrics.push({variant:selected,run,categories:Object.fromEntries(Object.entries(result.lhr.categories).map(([k,v])=>[k,v.score*100])),LCP:a['largest-contentful-paint'].numericValue,CLS:a['cumulative-layout-shift'].numericValue,FCP:a['first-contentful-paint'].numericValue,TBT:a['total-blocking-time'].numericValue,bytes:a['total-byte-weight'].numericValue});}finally{await chrome.kill();}}}
  }

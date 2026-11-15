@@ -79,6 +79,7 @@ export class HeaderComponent {
     event.stopPropagation();
     this.accountMenuOpen = !this.accountMenuOpen;
   }
+  notificationLabel(unread: number): string { return unread > 0 ? `Notificaciones, ${unread > 99 ? '99+' : unread} sin leer` : 'Notificaciones'; }
   canCreateGames(): boolean { return this.profile?.role === 'DM' || this.profile?.role === 'BOTH'; }
   roleText(): string { return this.profile ? roleLabel(this.profile.role) : 'Comunidad'; }
   setTheme(preference: ThemePreference): void {
