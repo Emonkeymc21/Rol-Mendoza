@@ -27,6 +27,31 @@ const CONFIG = Object.freeze({
   })
 });
 
+// Keep these columns at the end of PARTIDAS. Only the reference is read with campaign metadata.
+const COVER_COLUMNS = ['portada_version', 'portada_tarjeta', 'portada_detalle_1', 'portada_detalle_2', 'portada_detalle_3'];
+const COVER_CELL_SIZE = 48000;
+
+function configurarPortadasCumbre20() {
+  if (!PropertiesService.getScriptProperties().getProperty('CUMBRE20_COVER_KEY')) {
+    throw new Error('Configurá la propiedad CUMBRE20_COVER_KEY antes de habilitar portadas.');
+  }
+  return withGameLock_(function () {
+    const sheet = getSheet_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games);
+    const last = sheet.getLastColumn();
+    if (coverColumn_(sheet)) return { ok: true };
+    const headers = sheet.getRange(1, 1, 1, last).getValues()[0];
+    if (COVER_COLUMNS.some(function (name) { return headers.includes(name); })) {
+      throw new Error('Revisá las columnas de portada: deben ser contiguas y estar al final de PARTIDAS.');
+    }
+    if (sheet.getMaxColumns() < last + COVER_COLUMNS.length) {
+      sheet.insertColumnsAfter(sheet.getMaxColumns(), last + COVER_COLUMNS.length - sheet.getMaxColumns());
+    }
+    sheet.getRange(1, last + 1, 1, COVER_COLUMNS.length).setValues([COVER_COLUMNS]);
+    SpreadsheetApp.flush();
+    return { ok: true };
+  });
+}
+
 /**
  * Ejecutar una vez desde el editor después de cambiar permisos o publicar una
  * versión. Fuerza el consentimiento para Sheets, solicitudes externas y
@@ -133,6 +158,7 @@ function doGet(e) {
             service: 'Cumbre20 API',
             version: CONFIG.apiVersion,
             auth: firebaseConfigured_() ? 'configured' : 'pending',
+            gameCovers: Boolean(PropertiesService.getScriptProperties().getProperty('CUMBRE20_COVER_KEY')),
             timestamp: new Date().toISOString()
           }
         });
@@ -140,6 +166,8 @@ function doGet(e) {
         return json_({ ok: true, data: getPublicGames_() });
       case 'game':
         return json_({ ok: true, data: getPublicGame_(requiredText_(params.gameId, 'gameId', 80)) });
+      case 'gameCover':
+        return json_({ ok: true, data: getPublicGameCover_(params) });
       case 'comments':
         return json_({
           ok: true,
@@ -165,17 +193,27 @@ function doPost(e) {
 
     const idToken = requiredText_(request.idToken, 'sesión', 5000);
     const user = verifyFirebaseToken_(idToken);
+    // Identical retries after a lost create response return the original campaign.
+    if (action === 'createGame' && payload.cover) {
+      const profile = requireDm_(idToken, user.uid);
+      return json_({ ok: true, data: createGame_(payload, firebaseAccount_(user), profile, idToken) });
+    }
     rateLimit_(action, user.uid);
 
     switch (action) {
       case 'createGame':
         return json_({ ok: true, data: createGame_(payload, firebaseAccount_(user), requireDm_(idToken, user.uid)) });
+      case 'coverAccess':
+        if (payload.gameId) assertOwner_(findGame_(requiredText_(payload.gameId, 'partida', 80)), user.uid);
+        else requireDm_(idToken, user.uid);
+        assertCoverConfigured_();
+        return json_({ ok: true, data: true });
       case 'myGames':
         return json_({ ok: true, data: getOwnedGames_(user.uid) });
       case 'ownedGame':
         return json_({ ok: true, data: getOwnedGame_(requiredText_(payload.gameId, 'partida', 80), user.uid) });
       case 'updateGame':
-        return json_({ ok: true, data: updateGame_(payload, firebaseAccount_(user)) });
+        return json_({ ok: true, data: updateGame_(payload, firebaseAccount_(user), idToken) });
       case 'setGameStatus':
         return json_({ ok: true, data: setGameStatus_(payload, user.uid) });
       case 'deleteGame':
@@ -222,9 +260,14 @@ function getOwnedGames_(uid) {
 }
 
 function getOwnedGame_(gameId, uid) {
-  const game = findGame_(gameId);
-  assertOwner_(game, uid);
-  return ownedGame_(game);
+  const record = findGameWithRow_(gameId);
+  assertOwner_(record && record.data, uid);
+  const game = ownedGame_(record.data);
+  if (game.portada_version) {
+    const preview = readGameCover_(record, game.portada_version, 'card');
+    if (preview) game.portada_previa = preview;
+  }
+  return game;
 }
 
 function publicGame_(row) {
@@ -237,6 +280,7 @@ function publicGame_(row) {
   safe.master_nombre = row.master_nombre_publico || 'Máster de la comunidad';
   safe.master_usuario_id = row.creador_uid || '';
   safe.estado = canonicalStatus_(row.estado);
+  if (/^v:[a-f0-9]{32}$/.test(row.portada_version || '')) safe.portada_version = row.portada_version.slice(2);
   return safe;
 }
 
@@ -263,7 +307,27 @@ function getPublicComments_(gameId) {
     });
 }
 
-function createGame_(payload, account, profile) {
+function createGame_(payload, account, profile, idToken) {
+  const cover = validateCoverChange_(payload, '', idToken);
+  const id = cover
+    ? 'PRT-' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(
+      Utilities.DigestAlgorithm.SHA_256, JSON.stringify([account.firebase_uid, payload.cover.uploadId]), Utilities.Charset.UTF_8
+    )).slice(0, 26)
+    : makeId_('PRT');
+  return withGameLock_(function () {
+    if (cover) {
+      const existing = findGameWithRow_(id);
+      if (existing) {
+        assertOwner_(existing.data, account.firebase_uid);
+        return { id: id, status: canonicalStatus_(existing.data.estado), message: 'La partida ya está publicada.' };
+      }
+      rateLimit_('createGame', account.firebase_uid);
+    }
+    return insertGame_(payload, account, profile, id, cover);
+  });
+}
+
+function insertGame_(payload, account, profile, id, cover) {
   const title = requiredText_(payload.title, 'título', 120, 5);
   const system = requiredText_(payload.system, 'sistema', 100, 2);
   const location = requiredText_(payload.location, 'zona o plataforma', 120, 2);
@@ -276,8 +340,7 @@ function createGame_(payload, account, profile) {
   const initialStatus = currentPlayers >= totalSeats ? 'FULL' : 'ACTIVE';
 
   const now = new Date();
-  const id = makeId_('PRT');
-  appendObject_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, {
+  const game = {
     partida_id: id,
     creada_el: now,
     creador_uid: account.firebase_uid,
@@ -304,17 +367,27 @@ function createGame_(payload, account, profile) {
     estado: initialStatus,
     publicada: 'Sí',
     actualizada_el: now
-  });
+  };
+  writeObjectRow_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, game, null, cover);
 
   return { id: id, status: initialStatus, message: '¡Partida publicada! Tu partida ya está disponible para la comunidad.' };
 }
 
-function updateGame_(payload, account) {
+function updateGame_(payload, account, idToken) {
+  return withGameLock_(function () { return updateGameLocked_(payload, account, idToken); });
+}
+
+function updateGameLocked_(payload, account, idToken) {
   const gameId = requiredText_(payload.id || payload.gameId, 'partida', 80);
   const record = findGameWithRow_(gameId);
   assertOwner_(record && record.data, account.firebase_uid);
 
   const current = record.data;
+  const cover = validateCoverChange_(payload, gameId, idToken);
+  const currentCover = (current.portada_version || '').slice(2);
+  if (cover && (payload.coverVersion || '') !== currentCover && cover[0] !== currentCover) {
+    throw new Error('La portada cambió en otra edición. Volvé a abrir la partida antes de reemplazarla.');
+  }
   const totalSeats = integerBetween_(payload.totalSeats, 'tamaño total', 2, 12);
   const currentPlayers = integerBetween_(payload.currentPlayers || 0, 'jugadores actuales', 0, totalSeats);
   const confirmedInCumbre20 = countParticipantsForGame_(gameId);
@@ -351,25 +424,27 @@ function updateGame_(payload, account) {
     herramientas_cuidado: requiredText_(payload.safety, 'herramientas de cuidado', 180, 2),
     actualizada_el: new Date()
   });
-  upsertObject_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, next, record.rowNumber);
+  writeObjectRow_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, next, record.rowNumber, cover);
   return { id: gameId, status: canonicalStatus_(next.estado), message: 'La partida fue actualizada.' };
 }
 
 function setGameStatus_(payload, uid) {
   const gameId = requiredText_(payload.gameId, 'partida', 80);
   const status = oneOf_(String(payload.status || '').toUpperCase(), ['ACTIVE', 'PAUSED', 'CANCELLED', 'FULL'], 'estado');
-  const record = findGameWithRow_(gameId);
-  assertOwner_(record && record.data, uid);
-  const previousStatus = canonicalStatus_(record.data.estado);
-  const next = Object.assign({}, record.data, {
-    estado: status,
-    publicada: status === 'ACTIVE' || status === 'FULL' ? 'Sí' : 'No',
-    actualizada_el: new Date()
+  const previousGame = withGameLock_(function () {
+    const record = findGameWithRow_(gameId);
+    assertOwner_(record && record.data, uid);
+    const next = Object.assign({}, record.data, {
+      estado: status,
+      publicada: status === 'ACTIVE' || status === 'FULL' ? 'Sí' : 'No',
+      actualizada_el: new Date()
+    });
+    writeObjectRow_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, next, record.rowNumber);
+    return record.data;
   });
-  upsertObject_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games, next, record.rowNumber);
-  if (status === 'CANCELLED' && previousStatus !== 'CANCELLED') {
+  if (status === 'CANCELLED' && canonicalStatus_(previousGame.estado) !== 'CANCELLED') {
     try {
-      const notified = notifyGameCancelled_(gameId, uid, cleanText_(next.titulo, 120));
+      const notified = notifyGameCancelled_(gameId, uid, cleanText_(previousGame.titulo, 120));
       return {
         id: gameId,
         status: status,
@@ -1044,7 +1119,7 @@ function findGame_(gameId) {
 
 function findGameWithRow_(gameId) {
   const sheet = getSheet_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games);
-  const values = sheet.getDataRange().getValues();
+  const values = gameMetadataValues_(sheet);
   if (values.length < 2) return null;
   const headers = values[0].map(function (header) { return String(header).trim(); });
   const idIndex = headers.indexOf('partida_id');
@@ -1094,7 +1169,7 @@ function statusMessage_(status) {
 
 function readObjects_(spreadsheetId, sheetName) {
   const sheet = getSheet_(spreadsheetId, sheetName);
-  const values = sheet.getDataRange().getValues();
+  const values = sheetName === CONFIG.sheets.games ? gameMetadataValues_(sheet) : sheet.getDataRange().getValues();
   if (values.length < 2) return [];
 
   const headers = values[0].map(function (header) { return String(header).trim(); });
@@ -1114,26 +1189,108 @@ function appendObject_(spreadsheetId, sheetName, object) {
 }
 
 function upsertObject_(spreadsheetId, sheetName, object, rowNumber) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    writeObjectRow_(spreadsheetId, sheetName, object, rowNumber);
-  } finally {
-    lock.releaseLock();
-  }
+  withGameLock_(function () { writeObjectRow_(spreadsheetId, sheetName, object, rowNumber); });
 }
 
-function writeObjectRow_(spreadsheetId, sheetName, object, rowNumber) {
+function withGameLock_(action) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try { return action(); }
+  finally { lock.releaseLock(); }
+}
+
+function writeObjectRow_(spreadsheetId, sheetName, object, rowNumber, cover) {
   const sheet = getSheet_(spreadsheetId, sheetName);
-  const lastColumn = sheet.getLastColumn();
-  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  const coverColumn = sheetName === CONFIG.sheets.games ? coverColumn_(sheet) : 0;
+  if (cover && !coverColumn) throw new Error('La carga de portadas no está habilitada.');
+  const metadataColumns = coverColumn ? coverColumn - 1 : sheet.getLastColumn();
+  const headers = sheet.getRange(1, 1, 1, metadataColumns).getValues()[0];
   const row = headers.map(function (header) {
     const value = Object.prototype.hasOwnProperty.call(object, header) ? object[header] : '';
     return safeCell_(value);
   });
   const targetRow = rowNumber || sheet.getLastRow() + 1;
-  sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
+  const values = cover ? row.concat(cover.map(function (value, index) { return value ? (index ? 'b:' : 'v:') + value : ''; })) : row;
+  sheet.getRange(targetRow, 1, 1, values.length).setValues([values]);
   SpreadsheetApp.flush();
+}
+
+function coverColumn_(sheet) {
+  const start = sheet.getLastColumn() - COVER_COLUMNS.length + 1;
+  if (start < 2) return 0;
+  const names = sheet.getRange(1, start, 1, COVER_COLUMNS.length).getValues()[0];
+  return COVER_COLUMNS.every(function (name, index) { return name === names[index]; }) ? start : 0;
+}
+
+function gameMetadataValues_(sheet) {
+  const width = coverColumn_(sheet) || sheet.getLastColumn();
+  return sheet.getRange(1, 1, sheet.getLastRow(), width).getValues();
+}
+
+function assertCoverConfigured_() {
+  const key = PropertiesService.getScriptProperties().getProperty('CUMBRE20_COVER_KEY');
+  const sheet = getSheet_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games);
+  if (!key || !coverColumn_(sheet)) throw new Error('La carga de portadas no está habilitada.');
+  return key;
+}
+
+function validateCoverChange_(payload, gameId, idToken) {
+  if (payload.cover === undefined) return null;
+  if (payload.cover === null) return gameId ? COVER_COLUMNS.map(function () { return ''; }) : null;
+  const cover = payload.cover;
+  const key = assertCoverConfigured_();
+  if (!idToken || !/^[a-f0-9-]{36}$/.test(cover.uploadId || '') ||
+      !Number.isSafeInteger(cover.expires) || cover.expires < Date.now() ||
+      cover.expires > Date.now() + 5 * 60 * 1000 ||
+      typeof cover.card !== 'string' || !cover.card.length || cover.card.length > 36864 ||
+      typeof cover.hero !== 'string' || !cover.hero.length || cover.hero.length > 143360 ||
+      typeof cover.proof !== 'string' || !/^[\w-]{43}$/.test(cover.proof)) {
+    throw new Error('La portada no es válida o venció. Intentá cargarla nuevamente.');
+  }
+  const signed = JSON.stringify([idToken, gameId, cover.uploadId, cover.expires, cover.card, cover.hero]);
+  const expected = Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(signed, key)).replace(/=+$/, '');
+  let difference = 0;
+  for (let index = 0; index < expected.length; index += 1) {
+    difference |= expected.charCodeAt(index) ^ cover.proof.charCodeAt(index);
+  }
+  if (difference) throw new Error('No pudimos verificar la portada.');
+  const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, cover.card + ':' + cover.hero, Utilities.Charset.UTF_8);
+  const version = Array.from(digest).slice(0, 16).map(function (byte) {
+    return (byte & 255).toString(16).padStart(2, '0');
+  }).join('');
+  return [version, cover.card,
+    cover.hero.slice(0, COVER_CELL_SIZE),
+    cover.hero.slice(COVER_CELL_SIZE, 2 * COVER_CELL_SIZE),
+    cover.hero.slice(2 * COVER_CELL_SIZE)];
+}
+
+function getPublicGameCover_(params) {
+  if (params.variant !== 'card' && params.variant !== 'hero') throw new Error('Portada no disponible.');
+  const gameId = requiredText_(params.gameId, 'partida', 80);
+  const record = findGameWithRow_(gameId);
+  if (!record || !isPublicGame_(record.data)) throw new Error('Portada no disponible.');
+  const image = readGameCover_(record, params.version, params.variant, true);
+  if (!image) throw new Error('Portada no disponible.');
+  return image;
+}
+
+function readGameCover_(record, version, variant, publicOnly) {
+  if (!/^[a-f0-9]{32}$/.test(version || '') || record.data.portada_version !== 'v:' + version) return '';
+  // Read the visibility and version with the bytes so concurrent edits cannot expose another cover.
+  const sheet = getSheet_(CONFIG.gamesSpreadsheetId, CONFIG.sheets.games);
+  const column = coverColumn_(sheet);
+  if (!column) return '';
+  const width = variant === 'card' ? column + 1 : column + COVER_COLUMNS.length - 1;
+  const row = sheet.getRange(record.rowNumber, 1, 1, width).getValues()[0];
+  if (row[column - 1] !== 'v:' + version) return '';
+  if (publicOnly) {
+    const headers = sheet.getRange(1, 1, 1, column - 1).getValues()[0];
+    const game = {};
+    ['partida_id', 'estado', 'publicada'].forEach(function (name) { game[name] = row[headers.indexOf(name)]; });
+    if (game.partida_id !== record.data.partida_id || !isPublicGame_(game)) return '';
+  }
+  const chunks = variant === 'card' ? row.slice(column, column + 1) : row.slice(column + 1);
+  return chunks.map(function (chunk) { return String(chunk || '').slice(2); }).join('');
 }
 
 function getSheet_(spreadsheetId, sheetName) {
@@ -1146,6 +1303,7 @@ function getSheet_(spreadsheetId, sheetName) {
 function parseRequest_(e) {
   const raw = e && e.postData && e.postData.contents;
   if (!raw) throw new Error('La solicitud está vacía.');
+  if (raw.length > 200000) throw new Error('La solicitud supera el tamaño permitido.');
   try {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') throw new Error('Formato inválido.');

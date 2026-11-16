@@ -24,6 +24,8 @@ export interface PublicGameRow {
   herramientas_cuidado: string;
   estado: string;
   actualizada_el: string;
+  portada_version?: string;
+  portada_previa?: string;
 }
 
 export interface PublicComment {

@@ -12,7 +12,7 @@ export default defineConfig({
     {name:'iphone-webkit',use:{...devices['iPhone 13']}}
   ],
   webServer: [
-    {command:'node tests/isolated-server.cjs',url:'http://127.0.0.1:4401/health',reuseExistingServer:false,env:{CUMBRE20_TEST_MODE:'1'}},
+    {command:'node tests/isolated-server.cjs',url:'http://127.0.0.1:4401/health',reuseExistingServer:false,env:{CUMBRE20_TEST_MODE:'1',CUMBRE20_COVER_E2E:'1'}},
     {command:process.env.CUMBRE20_SSR_E2E==='1'?'node scripts/serve-ssr-test.cjs':'node scripts/serve-e2e.cjs',env:{PORT:'4200',CUMBRE20_TEST_MODE:'1'},url:'http://127.0.0.1:4200',reuseExistingServer:false,timeout:120000}
   ]
 });

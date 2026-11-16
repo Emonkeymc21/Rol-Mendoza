@@ -20,6 +20,21 @@ const angularApp = new AngularNodeAppEngine({allowedHosts: [
 if (!environment.production && environment.firebase.projectId === 'demo-cumbre20' && process.env['CUMBRE20_TEST_MODE'] === '1') {
   if (process.env['FIREBASE_AUTH_EMULATOR_HOST'] !== '127.0.0.1:9099') throw Error('Demo emulators required');
   if (process.env['CUMBRE20_TEST_CSP']) app.use((_req,res,next)=>{res.setHeader('Content-Security-Policy',process.env['CUMBRE20_TEST_CSP']!);next();});
+  app.use('/api/game-cover', async (req, res, next) => {
+    try {
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const headers = Object.fromEntries(Object.entries(req.headers)
+        .filter(([name, value]) => typeof value === 'string' &&
+          ['authorization', 'content-type', 'x-cumbre-game', 'x-cumbre-upload'].includes(name))) as Record<string, string>;
+      const response = await fetch('http://127.0.0.1:4401' + req.originalUrl, {
+        method: req.method, body: chunks.length ? Buffer.concat(chunks) : undefined, headers
+      });
+      res.status(response.status);
+      response.headers.forEach((value, name) => res.setHeader(name, value));
+      res.send(Buffer.from(await response.arrayBuffer()));
+    } catch (error) { next(error); }
+  });
   app.use('/apps-script', async (req, res, next) => {
     try {
       const response = await fetch('http://127.0.0.1:4401/apps-script' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''), {method:req.method, body:req.method === 'GET' ? undefined : await new Promise<string>(resolve => {let raw='';req.on('data',chunk=>raw+=chunk);req.on('end',()=>resolve(raw));})});

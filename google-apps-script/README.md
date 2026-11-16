@@ -92,3 +92,48 @@ Al aceptar una solicitud, Apps Script bloquea la operación, comprueba que siga 
 - Los textos se sanitizan y se evita la inyección de fórmulas.
 - Se aplica bloqueo de concurrencia y limitación básica por usuario.
 - Ningún dato de WhatsApp o Instagram circula por Apps Script o Sheets.
+
+
+## Portadas de campañas
+
+La API conserva la versión 8.0.0. El listado y el detalle devuelven solamente
+la referencia de la portada. La edición autorizada devuelve también una vista
+previa liviana. Los bytes públicos pasan por `/api/game-cover` y cada lectura
+comprueba la visibilidad de la campaña y la referencia vigente.
+
+El optimizador de Vercel valida el archivo por contenido, aplica la
+orientación de la foto y lo convierte a dos WebP sin metadatos. Los límites son
+4 MiB de entrada, 25 megapíxeles, 27 KiB para la tarjeta y 105 KiB para el
+encabezado. La portada y los datos de la partida se guardan en una sola fila.
+Cancelar antes del guardado deja la portada anterior intacta. Reemplazar o
+quitar sobrescribe los bytes de esa fila, por lo que no hay objetos huérfanos.
+
+Se eligió la hoja existente para mantener el control de visibilidad y el
+guardado en la misma operación, sin provisionar otro servicio. Los bytes se
+reparten en celdas de menos de 50.000 caracteres y quedan fuera de las
+lecturas de listado. Firebase Storage requiere Blaze y el bucket configurado
+devolvió 404. Un Blob privado requeriría provisionar almacenamiento, guardar su
+referencia aparte y coordinar la limpieza y la autorización entre servicios.
+La solución actual hace una consulta a Apps Script por cada imagen visible.
+Si aumenta el volumen, medir latencia y cuotas antes de reconsiderar el almacenamiento.
+
+### Activación
+
+1. En un Apps Script de prueba y su hoja aislada, configurar una propiedad de
+   script `CUMBRE20_COVER_KEY` con un secreto aleatorio de 32 bytes o más.
+   Usar el mismo valor en Preview de Vercel y apuntar las operaciones de esa
+   compilación al Web App de prueba. Usar un secreto independiente en producción.
+2. Actualizar `Code.gs`, ejecutar `configurarPortadasCumbre20` con la cuenta
+   propietaria y publicar una nueva versión del Web App. El paso agrega cinco
+   columnas contiguas al final de PARTIDAS. Mantener esas columnas al final.
+   No se necesitan permisos OAuth nuevos ni cambios en Firestore.
+3. Confirmar que `GET ?action=health` devuelve `gameCovers: true`. Probar en
+   el preview el alta, una recarga anónima, reemplazo, eliminación y pausa.
+4. Repetir el despliegue de Apps Script y la configuración de la variable
+   `CUMBRE20_COVER_KEY` en producción. Usar el deployment Web App existente
+   para mantener su URL pública. Confirmar el SHA de Vercel después de integrar.
+
+Para desactivar temporalmente las nuevas cargas, retirar la variable de Vercel
+y volver a desplegar. Las portadas guardadas se pueden seguir leyendo desde
+la versión de Apps Script que entiende su referencia. Mantener sus columnas
+para conservar los datos al revertir el frontend.

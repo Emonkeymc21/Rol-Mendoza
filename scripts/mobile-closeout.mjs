@@ -171,7 +171,7 @@ try{
  await Promise.all(['http://127.0.0.1:4401/health','http://127.0.0.1:4310','http://127.0.0.1:4320'].map(ready));
  proxy=createServer(async(req,res)=>{try{
   const chunks=[];for await(const chunk of req)chunks.push(chunk);
-  const target=(req.url.startsWith('/apps-script')||req.url.startsWith('/compartir/'))?'http://127.0.0.1:4401':`http://127.0.0.1:${variant==='before'?4310:4320}`;
+  const target=(req.url.startsWith('/apps-script')||req.url.startsWith('/compartir/')||req.url.startsWith('/api/game-cover'))?'http://127.0.0.1:4401':`http://127.0.0.1:${variant==='before'?4310:4320}`;
   const response=await fetch(target+req.url,{method:req.method,body:chunks.length?Buffer.concat(chunks):undefined,headers:{'user-agent':req.headers['user-agent']||'','content-type':req.headers['content-type']||'','x-forwarded-host':'127.0.0.1:4200'},redirect:'manual'});
   let data=Buffer.from(await response.arrayBuffer());res.statusCode=response.status;
   // Diagnostic overlay exists only in Auth Emulator, never in production.
