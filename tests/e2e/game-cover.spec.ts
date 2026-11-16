@@ -112,7 +112,7 @@ test('campaign cover lifecycle, responsive use, permissions and size', async ({ 
   await expect(page.getByAltText('Vista previa de la portada')).toBeVisible();
 
   await submit.click();
-  await expect(page).toHaveURL(/mis-partidas/);
+  await expect(page).toHaveURL(/\/mis-partidas(?:\?|$)/);
   const gamesURL = api + '/apps-script?action=games';
   const rows = (await (await request.get(gamesURL)).json()).data;
   const game = rows.find((row: {titulo: string}) => row.titulo === title);
@@ -154,6 +154,7 @@ test('campaign cover lifecycle, responsive use, permissions and size', async ({ 
     }
     await visit.setViewportSize(portrait);
     await card.getByRole('link', {name:'Ver aventura'}).click();
+    await expect(visit).toHaveURL('/partidas/' + gameId);
     await visit.reload();
     await expect(visit).toHaveURL('/partidas/' + gameId);
     await expect(visit.locator('.masthead-cover')).not.toHaveJSProperty('naturalWidth', 0);
@@ -198,12 +199,14 @@ test('campaign cover lifecycle, responsive use, permissions and size', async ({ 
     expect((await visit.request.get(coverUrl('hero'))).status()).toBe(200);
 
     await save.click();
-    await expect(page).toHaveURL(/mis-partidas/);
+    await expect(page).toHaveURL(/\/mis-partidas(?:\?|$)/);
     const latest = (await (await request.get(gamesURL)).json()).data.find((row:{partida_id:string}) => row.partida_id === gameId);
     expect(latest.portada_version).not.toBe(game.portada_version);
     expect((await visit.request.get(coverUrl('hero'))).status()).toBe(404);
     await visit.reload();
+    await expect(visit.locator('.masthead-cover')).toHaveAttribute('src', coverUrl('hero', latest.portada_version));
     await expect(visit.locator('.masthead-cover')).not.toHaveJSProperty('naturalHeight', 0);
+    await snapshots(visit.locator('.game-masthead'), 'detalle-portada-vertical');
     await visit.goto('/partidas');
     for (const [direction, viewport] of views) {
       await visit.setViewportSize(viewport);
@@ -224,7 +227,7 @@ test('campaign cover lifecycle, responsive use, permissions and size', async ({ 
     await page.goto(editRoute);
     await page.getByRole('button', {name:'Quitar portada'}).click();
     await save.click();
-    await expect(page).toHaveURL(/mis-partidas/);
+    await expect(page).toHaveURL(/\/mis-partidas(?:\?|$)/);
     expect((await visit.request.get(coverUrl('hero', latest.portada_version))).status()).toBe(404);
     await visit.goto('/partidas');
     for (const [direction, viewport] of views) {

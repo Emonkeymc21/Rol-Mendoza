@@ -7,7 +7,7 @@ process.env.CUMBRE20_COVER_KEY = process.env.CUMBRE20_COVER_E2E === '1' ? 'test-
 const gameCover = require('../api/game-cover.js');
 const share = require('../api/share-game.js');
 let api = createAppsScript({coverKey:process.env.CUMBRE20_COVER_KEY});
-const send = (res, code, body) => { res.statusCode=code; res.setHeader('Content-Type','application/json'); res.end(JSON.stringify(body)); };
+const send = (res, code, body) => { res.setHeader('Cache-Control','no-store'); res.statusCode=code; res.setHeader('Content-Type','application/json'); res.end(JSON.stringify(body)); };
 const body = req => new Promise((resolve,reject) => {let raw=''; req.on('data',chunk=>{raw+=chunk; if(raw.length>220000){reject(new Error('Payload too large'));req.destroy();}});req.on('end',()=>resolve(raw));req.on('error',reject);});
 const server=http.createServer(async (req,res) => {
   try {
