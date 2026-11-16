@@ -8,7 +8,7 @@ try {
  execFileSync('tar',['-x','-C',temp],{input:archive});
  symlinkSync(path.join(cwd,'node_modules'),path.join(temp,'node_modules'),'dir');
  const file=path.join(temp,'angular.json'),config=JSON.parse(readFileSync(file));
- config.projects['rol-mendoza'].architect.build.configurations.mobileBaseline={outputPath:path.join(cwd,'dist/mobile-baseline'),fileReplacements:[{replace:'src/environments/environment.ts',with:'src/environments/environment.e2e.ts'}]};
+ config.projects['rol-mendoza'].architect.build.configurations.mobileBaseline={optimization:{fonts:{inline:false}},outputPath:path.join(cwd,'dist/mobile-baseline'),fileReplacements:[{replace:'src/environments/environment.ts',with:'src/environments/environment.e2e.ts'}]};
  writeFileSync(file,JSON.stringify(config));
  execFileSync(process.execPath,[path.join(cwd,'node_modules/@angular/cli/bin/ng.js'),'build','--configuration=production,mobileBaseline'],{cwd:temp,stdio:'inherit'});
 } finally {rmSync(temp,{recursive:true,force:true});}

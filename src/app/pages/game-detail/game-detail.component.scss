@@ -1,5 +1,11 @@
 .game-masthead { position:relative;background:linear-gradient(100deg,rgba(19,14,16,.96),rgba(19,14,16,.58)),url('/assets/branding/game-detail-real.webp') center/cover no-repeat;color:#f1e8d5; }
 
+.masthead-cover { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.game-masthead.has-cover { background-image: none; background-color: #130e10; }
+.game-masthead.has-cover::before { content:''; position:absolute; z-index:1; inset:0; background:linear-gradient(105deg,rgba(19,14,16,.88),rgba(19,14,16,.74)); pointer-events:none; }
+.game-masthead.has-cover > .relative { z-index:2; }
+.game-masthead.has-cover .text-gold { color:#f3cc82; }
+
 .game-masthead .detail-title { color:#f1e8d5; }
 .game-masthead .detail-summary { color:#c8bcba; }
 .game-masthead .tag { border-color:rgba(241,232,213,.22);background:rgba(19,14,16,.55);color:#f1e8d5; }

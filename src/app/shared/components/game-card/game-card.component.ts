@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { Game } from '../../../core/models/game.model';
+import { Game, gameCoverUrl } from '../../../core/models/game.model';
 import { UserProfile } from '../../../core/models/user-profile.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProfileService } from '../../../core/services/profile.service';
@@ -13,6 +13,13 @@ export class GameCardComponent implements OnInit {
   @Input() headingLevel: 2 | 3 = 3;
   @Input({ required: true }) game!: Game;
   dmProfile?: UserProfile;
+
+  failedCoverUrl = '';
+
+  get coverUrl(): string {
+    const url = this.game ? gameCoverUrl(this.game, 'card') : '';
+    return url === this.failedCoverUrl ? '' : url;
+  }
 
   constructor(private profiles: ProfileService, private auth: AuthService) {}
 

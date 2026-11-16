@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PublicComment } from '../../core/models/community-api.model';
-import { Game } from '../../core/models/game.model';
+import { Game, gameCoverUrl } from '../../core/models/game.model';
 import { CommunityService } from '../../core/services/community.service';
 import { AuthService } from '../../core/services/auth.service';
 import { GameJoinRequest } from '../../core/models/join-request.model';
@@ -52,6 +52,13 @@ export class GameDetailComponent {
   joinForm = this.fb.nonNullable.group({ message: ['', Validators.maxLength(500)] });
 
   commentForm = this.fb.nonNullable.group({ comment: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(700)]] });
+
+  failedCoverUrl = '';
+
+  get coverUrl(): string {
+    const url = this.game ? gameCoverUrl(this.game, 'hero') : '';
+    return url === this.failedCoverUrl ? '' : url;
+  }
 
   constructor(
     route: ActivatedRoute,

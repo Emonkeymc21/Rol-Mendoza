@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, EMPTY, shareReplay, catchError, defer, finalize, from, map, Observable, of, ReplaySubject, Subscription, switchMap, tap } from 'rxjs';
 import { ApiMutationResult, PublicGameRow } from '../models/community-api.model';
-import { Game } from '../models/game.model';
+import { Game, PreparedGameCover } from '../models/game.model';
 import { AuthService } from './auth.service';
 import { GoogleAppsScriptService } from './google-apps-script.service';
 
@@ -68,16 +68,16 @@ export class GameService {
     );
   }
 
-  createGame(game: Game): Observable<ApiMutationResult> {
-    return from(this.auth.getIdToken()).pipe(
-      switchMap(token => this.api.createGame(game, token)),
+  createGame(game: Game, cover?: PreparedGameCover | null, idToken?: string): Observable<ApiMutationResult> {
+    return from(idToken ? Promise.resolve(idToken) : this.auth.getIdToken()).pipe(
+      switchMap(token => this.api.createGame(game, token, cover)),
       tap(() => this.refresh())
     );
   }
 
-  updateGame(game: Game): Observable<ApiMutationResult> {
-    return from(this.auth.getIdToken()).pipe(
-      switchMap(token => this.api.updateGame(game, token)),
+  updateGame(game: Game, cover?: PreparedGameCover | null, idToken?: string): Observable<ApiMutationResult> {
+    return from(idToken ? Promise.resolve(idToken) : this.auth.getIdToken()).pipe(
+      switchMap(token => this.api.updateGame(game, token, cover)),
       tap(() => this.refresh())
     );
   }
@@ -185,7 +185,10 @@ export class GameService {
       status: this.status(row.estado),
       createdAt: row.creada_el,
       updatedAt: row.actualizada_el,
-      featured: false
+      featured: false,
+      coverVersion: /^[a-f0-9]{32}$/.test(row.portada_version || '') ? row.portada_version : undefined,
+      coverPreview: row.portada_previa && /^[A-Za-z0-9+/]+={0,2}$/.test(row.portada_previa)
+        ? 'data:image/webp;base64,' + row.portada_previa : undefined
     };
   }
 

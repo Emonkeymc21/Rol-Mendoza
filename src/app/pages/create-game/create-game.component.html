@@ -15,7 +15,7 @@
       <p class="mb-6 border-l-2 border-red-300/50 bg-red-950/30 p-4 text-sm text-red-100" role="alert">{{ saveError }}</p>
     }
 
-    @if (!loading) {
+    @if (!loading && (!editing || ownedGameLoaded)) {
       <form [formGroup]="form" (ngSubmit)="save()" class="grid gap-6 lg:grid-cols-[1fr_300px]">
         <div class="glass-panel rounded-2xl p-5 sm:p-7">
           <div class="form-section">
@@ -38,6 +38,33 @@
             <span class="error-text">Indicá el tono de la partida.</span>
           }</label>
           <label><span class="field-label">Etiquetas</span><input class="input-field" formControlName="tags" placeholder="Narrativa, misterio…"><span class="mt-1 block text-xs text-mist">Separadas por comas.</span></label>
+          @if (coversEnabled || originalCoverVersion) {
+          <div class="game-cover-field sm:col-span-2">
+            <label class="field-label" for="campaign-cover">Imagen de portada (opcional)</label>
+            <input #coverInput id="campaign-cover" class="input-field" type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+              aria-describedby="campaign-cover-help" [disabled]="!coversEnabled || saving || selectingCover" (change)="chooseCover(coverInput)">
+            <p id="campaign-cover-help" class="mt-1 text-xs text-mist">JPG, PNG o WebP de hasta 4 MB. Se recorta para adaptarse a cada pantalla.</p>
+            @if (coverPreview) {
+              <img class="game-cover-preview" [src]="coverPreview" alt="Vista previa de la portada">
+              <button type="button" class="btn-secondary mt-2" [disabled]="saving || selectingCover" (click)="removeCover()">Quitar portada</button>
+            }
+            @if (coverChanged) {
+              <button type="button" class="btn-secondary mt-2" [disabled]="saving || selectingCover" (click)="restoreCover()">Deshacer cambio de portada</button>
+            }
+            @if (selectingCover) {
+              <p class="mt-2 text-sm text-mist" role="status">Preparando vista previa…</p>
+            }
+            @if (coverUpload) {
+              <label class="field-label mt-3" for="campaign-cover-progress">{{ coverProgress === null ? 'Optimizando portada…' : 'Subiendo portada · ' + coverProgress + '%' }}</label>
+              <progress id="campaign-cover-progress" max="100" [attr.value]="coverProgress"></progress>
+              <button type="button" class="btn-secondary mt-2" (click)="coverUpload.abort()">Cancelar carga</button>
+            }
+            @if (coverError) {
+              <p class="error-text" role="alert">{{ coverError }}</p>
+            }
+          </div>
+          }
         </div>
       </div>
     </div>
@@ -115,7 +142,7 @@
       <li class="flex gap-2"><span class="text-gold">✓</span> Aclará el tono y los temas de la partida.</li>
       <li class="flex gap-2"><span class="text-gold">✓</span> Podrás pausarla o cancelarla desde Mis partidas.</li>
     </ul>
-    <button type="submit" class="btn-primary mt-6 w-full" [disabled]="saving">{{ saving ? 'Guardando…' : (editing ? 'Guardar cambios' : 'Publicar partida') }} @if (!saving) {
+    <button type="submit" class="btn-primary mt-6 w-full" [disabled]="saving || selectingCover">{{ saving ? 'Guardando…' : (editing ? 'Guardar cambios' : 'Publicar partida') }} @if (!saving) {
       <app-icon name="arrow" [size]="18"></app-icon>
     }</button>
   </div>

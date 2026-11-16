@@ -5,6 +5,9 @@
 .card-art { position:relative;height:148px;flex:0 0 auto;overflow:hidden;border-radius:var(--radius-xs) var(--radius-xs) 0 0;background:linear-gradient(180deg,rgba(19,14,16,.05),rgba(19,14,16,.88)),url('/assets/branding/tabletop-detail.webp') center 54%/cover no-repeat;transition:background-size .35s ease; }
 .game-card:hover .card-art { background-size:auto,103%; }
 .card-art::after { content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(111,29,42,.5),transparent 48%);mix-blend-mode:color; }
+.card-cover { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.card-art.has-cover { background-image: none; background-color: #130e10; }
+.card-art.has-cover::after { background:linear-gradient(180deg,transparent 45%,rgba(19,14,16,.82)); mix-blend-mode:normal; }
 .card-art-system { position:absolute;z-index:1;bottom:1rem;left:1.15rem;max-width:72%;color:#f1e8d5;font-size:.69rem;font-weight:850;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 2px 12px #000; }
 .card-art-index { position:absolute;z-index:1;right:1rem;bottom:.8rem;color:rgba(241,232,213,.48);font-family:Cinzel,Georgia,serif;font-size:.72rem;font-weight:800;letter-spacing:.12em; }
 .meta-badge,.status-badge { border:1px solid var(--border);border-radius:var(--radius-xs);background:transparent;padding:.27rem .58rem;color:var(--text-secondary);font-size:.65rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase; }

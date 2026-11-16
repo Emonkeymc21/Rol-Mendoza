@@ -3,13 +3,16 @@ const { createAppsScript, PROJECT_ID } = require('./helpers/apps-script.cjs');
 const { URL } = require('node:url');
 if (process.env.CUMBRE20_TEST_MODE !== '1' || PROJECT_ID !== 'demo-cumbre20') throw new Error('The isolated server is test-only.');
 process.env.APPS_SCRIPT_WEB_APP_URL = 'http://127.0.0.1:4401/apps-script';
+process.env.CUMBRE20_COVER_KEY = process.env.CUMBRE20_COVER_E2E === '1' ? 'test-fixture-cover-key' : '';
+const gameCover = require('../api/game-cover.js');
 const share = require('../api/share-game.js');
-let api = createAppsScript();
-const send = (res, code, body) => { res.statusCode=code; res.setHeader('Content-Type','application/json'); res.end(JSON.stringify(body)); };
-const body = req => new Promise((resolve,reject) => {let raw=''; req.on('data',chunk=>{raw+=chunk; if(raw.length>100000){reject(new Error('Payload too large'));req.destroy();}});req.on('end',()=>resolve(raw));req.on('error',reject);});
+let api = createAppsScript({coverKey:process.env.CUMBRE20_COVER_KEY});
+const send = (res, code, body) => { res.setHeader('Cache-Control','no-store'); res.statusCode=code; res.setHeader('Content-Type','application/json'); res.end(JSON.stringify(body)); };
+const body = req => new Promise((resolve,reject) => {let raw=''; req.on('data',chunk=>{raw+=chunk; if(raw.length>220000){reject(new Error('Payload too large'));req.destroy();}});req.on('end',()=>resolve(raw));req.on('error',reject);});
 const server=http.createServer(async (req,res) => {
   try {
     const url=new URL(req.url,'http://127.0.0.1:4401');
+    if(url.pathname==='/api/game-cover') return await gameCover(req,res);
     if(url.pathname==='/health') return send(res,200,{ok:true,projectId:PROJECT_ID});
     if(url.pathname==='/reset'&&req.method==='POST') {
       for(const target of [`http://127.0.0.1:8080/emulator/v1/projects/${PROJECT_ID}/databases/(default)/documents`,`http://127.0.0.1:9099/emulator/v1/projects/${PROJECT_ID}/accounts`]) {
@@ -17,7 +20,7 @@ const server=http.createServer(async (req,res) => {
       }
       const community=await fetch(`http://127.0.0.1:8080/v1/projects/${PROJECT_ID}/databases/(default)/documents/roleCommunities/demo-public`, {method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer owner'},body:JSON.stringify({fields:{name:{stringValue:'Espacio de rol de prueba'},description:{stringValue:'Espacio ficticio de pruebas aisladas para verificar el directorio público.'},zone:{stringValue:'Guaymallén'},status:{stringValue:'PUBLISHED'},active:{booleanValue:true},websiteUrl:{stringValue:'https://example.test'}}})});
       if(!community.ok)throw Error('Unable to seed public demo community');
-      api=createAppsScript();return send(res,200,{ok:true});
+      api=createAppsScript({coverKey:process.env.CUMBRE20_COVER_KEY});return send(res,200,{ok:true});
     }
     if(url.pathname==='/advance-cache-clock'&&req.method==='POST') {
       api.advanceCacheTime(4000);return send(res,200,{ok:true});

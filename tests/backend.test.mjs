@@ -1,6 +1,6 @@
 import { before, beforeEach, after, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHmac } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
@@ -56,6 +56,57 @@ describe('actual Apps Script business logic with emulated Auth/Firestore and in-
     assert.equal(post('dm','updateGame',{...gameInput,id,title:'Aventura actualizada'}).ok,true);
     assert.equal(api.get({action:'game',gameId:id}).data.titulo,'Aventura actualizada');
   });
+  it('persists signed covers atomically, rejects stale edits and gates visibility', () => {
+    const coverKey = 'test-secret-cover';
+    api = createAppsScript({ seed: false, coverKey });
+    function signedCover(id = '', token = actors.dm.token, bytes = 'UklGRgAAAAA=') {
+      const uploadId = randomUUID();
+      const expires = Date.now() + 60000;
+      const proof = createHmac('sha256', coverKey)
+        .update(JSON.stringify([token, id, uploadId, expires, bytes, bytes])).digest('base64url');
+      return { uploadId, expires, card: bytes, hero: bytes, proof };
+    }
+
+    assert.equal(post('player', 'coverAccess').ok, false);
+    assert.equal(post('dm', 'coverAccess').ok, true);
+    const cover = signedCover();
+    const { id } = post('dm', 'createGame', { ...gameInput, cover }).data;
+    assert.equal(post('dm', 'createGame', { ...gameInput, cover }).data.id, id);
+    assert.equal(api.get({ action: 'games' }).data.length, 1);
+    const game = api.get({ action: 'game', gameId: id }).data;
+    const query = { action: 'gameCover', gameId: id, version: game.portada_version, variant: 'hero' };
+    assert.equal(api.get(query).data, cover.hero);
+    assert.equal(game.portada_previa, undefined);
+    assert.equal(post('player', 'coverAccess', { gameId: id }).ok, false);
+    assert.equal(post('player', 'updateGame', { ...gameInput, id, cover: null }).ok, false);
+
+    assert.equal(post('dm', 'setGameStatus', { gameId: id, status: 'PAUSED' }).ok, true);
+    assert.equal(api.get(query).ok, false);
+    assert.equal(post('dm', 'ownedGame', { gameId: id }).data.portada_previa, cover.card);
+    api.advanceCacheTime(6000);
+    assert.equal(post('dm', 'setGameStatus', { gameId: id, status: 'ACTIVE' }).ok, true);
+    assert.equal(api.get(query).data, cover.hero);
+
+    const replacement = signedCover(id, actors.dm.token, 'UklGRgABAQA=');
+    assert.equal(post('dm', 'updateGame', {
+      ...gameInput, id, coverVersion: game.portada_version, cover: { ...replacement, hero: 'altered' }
+    }).ok, false);
+    assert.equal(api.get(query).data, cover.hero);
+    api.advanceCacheTime(6000);
+    assert.equal(post('dm', 'updateGame', { ...gameInput, id, coverVersion: game.portada_version, cover: replacement }).ok, true);
+    assert.equal(api.get(query).ok, false);
+    const replaced = api.get({ action: 'game', gameId: id }).data;
+    assert.notEqual(replaced.portada_version, game.portada_version);
+    api.advanceCacheTime(6000);
+    assert.equal(post('dm', 'updateGame', { ...gameInput, id, coverVersion: game.portada_version, cover: null }).ok, false);
+    assert.equal(api.get({ ...query, version: replaced.portada_version }).data, replacement.hero);
+    api.advanceCacheTime(6000);
+    assert.equal(post('dm', 'updateGame', { ...gameInput, id, coverVersion: replaced.portada_version, cover: null }).ok, true);
+    assert.equal(api.get({ ...query, version: replaced.portada_version }).ok, false);
+    const stored = api.sheets.get('PARTIDAS')[1];
+    assert.deepEqual(Array.from(stored.slice(-5)), ['', '', '', '', '']);
+  });
+
   it('creates a pending request once and notifies the DM', async () => {
     const gameId=createGame(),id=request('player',gameId);
     api.advanceCacheTime(30_000);

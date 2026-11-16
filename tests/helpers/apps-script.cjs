@@ -9,11 +9,11 @@ const GAME_HEADERS = ['partida_id','creada_el','creador_uid','creador_email','ti
 const COMMENT_HEADERS = ['comentario_id','fecha','partida_id','usuario_uid','nombre_publico','comentario','estado','respuesta_admin','fecha_moderacion'];
 
 // Only the Google infrastructure is adapted. Business functions run from Code.gs.
-function createAppsScript({ root = path.resolve(__dirname, '../..'), seed = true } = {}) {
+function createAppsScript({ root = path.resolve(__dirname, '../..'), seed = true, coverKey = '' } = {}) {
   if (process.env.FIRESTORE_EMULATOR_HOST !== '127.0.0.1:8080' || process.env.FIREBASE_AUTH_EMULATOR_HOST !== '127.0.0.1:9099') {
     throw new Error('Tests require loopback Auth and Firestore emulators. Production is never an allowed fallback.');
   }
-  const sheets = new Map([['PARTIDAS', [GAME_HEADERS]], ['COMENTARIOS', [COMMENT_HEADERS]], ['SOLICITUDES', [[]]]]);
+  const sheets = new Map([['PARTIDAS', [[...GAME_HEADERS]]], ['COMENTARIOS', [COMMENT_HEADERS]], ['SOLICITUDES', [[]]]]);
   const cache = new Map();
   let clockOffset = 0;
   let failCommit = false;
@@ -34,6 +34,7 @@ function createAppsScript({ root = path.resolve(__dirname, '../..'), seed = true
     return {
       getDataRange: () => ({ getValues: () => grid.map(row => [...row]) }),
       getLastColumn: () => grid[0].length,
+      getMaxColumns: () => 100,
       getLastRow: () => grid.length,
       getRange: (r, c, h, w) => range(grid, r, c, h, w),
       deleteRow: r => grid.splice(r - 1, 1)
@@ -66,12 +67,14 @@ function createAppsScript({ root = path.resolve(__dirname, '../..'), seed = true
     SpreadsheetApp: { openById: () => ({ getSheetByName: sheet }), flush() {} },
     LockService: { getScriptLock: () => ({ waitLock() { if (locked) throw new Error('Concurrent test lock'); locked = true; }, releaseLock() { locked = false; } }) },
     ScriptApp: { getOAuthToken: () => 'owner' },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: () => coverKey || null }) },
     ContentService: { MimeType: { JSON: 'application/json' }, createTextOutput: text => ({ text, setMimeType() { return this; } }) },
     Utilities: {
       DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' },
       computeDigest: (algorithm, value) => crypto.createHash(algorithm).update(value).digest(),
       base64EncodeWebSafe: value => Buffer.from(value).toString('base64url'),
       getUuid: () => crypto.randomUUID(),
+      computeHmacSha256Signature: (value, key) => crypto.createHmac('sha256', key).update(value).digest(),
       formatDate: date => date.toISOString().replace(/\D/g, '').slice(0, 14)
     },
     CacheService: { getScriptCache: () => ({
@@ -84,6 +87,7 @@ function createAppsScript({ root = path.resolve(__dirname, '../..'), seed = true
   if (!source.includes("firebaseProjectId: 'rol-mendoza'")) throw new Error('Review the fixture project substitution before running tests.');
   vm.runInContext(source.replace("firebaseProjectId: 'rol-mendoza'", `firebaseProjectId: '${PROJECT_ID}'`), context, { filename: 'Code.gs' });
   const parse = result => JSON.parse(result.text);
+  if (coverKey) context.configurarPortadasCumbre20();
   if (seed) {
     context.createGame_({ title: 'Mesa pública de prueba', system: 'Fate', location: 'A coordinar', mode: 'Presencial', city: 'Guaymallén', schedule: 'Sábado 18:00', frequency: 'One-shot', totalSeats: 4, currentPlayers: 0, level: 'Principiantes bienvenidos', tone: 'Aventura', summary: 'Una aventura ficticia y aislada para verificar los flujos de Cumbre20.', safety: 'Acuerdos previos de mesa' }, { firebase_uid: 'fixture-dm', email: 'fixture@example.test', nombre_publico: 'DM de prueba' }, { city: 'Guaymallén' });
     const grid = sheets.get('PARTIDAS');

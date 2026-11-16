@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { map, Observable, of, timeout, shareReplay, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { isIsolatedTestApi } from './isolated-test-api';
-import { Game } from '../models/game.model';
+import { Game, PreparedGameCover } from '../models/game.model';
 import {
   ApiMutationResult,
   PublicComment,
@@ -75,12 +75,12 @@ export class GoogleAppsScriptService {
     return this.get<PublicComment[]>(API_ACTION.comments, { gameId });
   }
 
-  createGame(game: Game, idToken: string): Observable<ApiMutationResult> {
-    return this.post<ApiMutationResult>(API_ACTION.createGame, game, idToken);
+  createGame(game: Game, idToken: string, cover?: PreparedGameCover | null): Observable<ApiMutationResult> {
+    return this.post<ApiMutationResult>(API_ACTION.createGame, { ...game, cover }, idToken);
   }
 
-  updateGame(game: Game, idToken: string): Observable<ApiMutationResult> {
-    return this.post<ApiMutationResult>(API_ACTION.updateGame, game, idToken);
+  updateGame(game: Game, idToken: string, cover?: PreparedGameCover | null): Observable<ApiMutationResult> {
+    return this.post<ApiMutationResult>(API_ACTION.updateGame, { ...game, cover }, idToken);
   }
 
   setGameStatus(gameId: string, status: Game['status'], idToken: string): Observable<ApiMutationResult> {
