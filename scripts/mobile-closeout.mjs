@@ -22,6 +22,30 @@ const csp=original.replace("connect-src 'self'","connect-src 'self' http://127.0
 const children=[];let variant='before',laboratory=false,browser,proxy;
 const inputControls=[],records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[],targets=new WeakMap();
 const start=(file,extra={})=>{const p=spawn(process.execPath,[file],{env:{...process.env,CUMBRE20_TEST_MODE:'1',CUMBRE20_TEST_CSP:csp,...extra},stdio:'inherit'});children.push(p);return p;};
+// Both visual builds keep the stylesheet URL. Freeze the Google response per
+// run so remote cache variants cannot change outlines between two captures.
+const fontResponses = new Map();
+const fontUserAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36';
+async function captureContext(options) {
+ const context = await browser.newContext(options);
+ await context.route(/^https:\/\/fonts\.(?:googleapis|gstatic)\.com\//, async route => {
+  const url = route.request().url();
+  if (!fontResponses.has(url)) fontResponses.set(url, fetch(url, {
+   headers: {'User-Agent':fontUserAgent}, signal: AbortSignal.timeout(15000)
+  }).then(async response => {
+   if (!response.ok) throw Error('Google Fonts HTTP '+response.status);
+   return {contentType:response.headers.get('content-type')||'application/octet-stream',
+    body:Buffer.from(await response.arrayBuffer())};
+  }));
+  try {
+   await route.fulfill({...await fontResponses.get(url),headers:{'Access-Control-Allow-Origin':'*'}});
+  } catch (error) {
+   console.error('Google Fonts visual fixture:', error.message);
+   await route.abort();
+  }
+ });
+ return context;
+}
 async function ready(url){for(let i=0;i<100;i++){try{if((await fetch(url)).ok)return;}catch{}await new Promise(r=>setTimeout(r,200));}throw Error('Not ready: '+url);}
 async function json(url,options={}){const r=await fetch(url,options),data=await r.json();if(!r.ok||data.error)throw Error(JSON.stringify({url,status:r.status,data}));return data;}
 const post=(url,data,headers={})=>json(url,{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify(data)});
@@ -154,7 +178,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
     // A failing comparison keeps an independent fresh-baseline control. This
     // diagnoses renderer/cache variation; it NEVER replaces the original gate.
     const selected=variant;let controlContext;
-    try{variant='before';controlContext=await page.context().browser().newContext({viewport:page.viewportSize(),deviceScaleFactor:1,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const control=await controlContext.newPage();targets.set(control,{width,height:page.viewportSize().height});await navigate(control,page.url());await settle(control);await reveal(control);await control.evaluate(y=>scrollTo(0,y),layout.y);const controlPng=await control.screenshot({fullPage:false,animations:'disabled'});await writeFile(path+'-baseline-control.png',controlPng);await writeFile(path+'-control.json',JSON.stringify({baselineRepeat:await diff(comparator,refs.get(key),controlPng),candidateVsFreshBaseline:await diff(comparator,controlPng,png)},null,2));}finally{variant=selected;await controlContext?.close();}
+    try{variant='before';controlContext=await captureContext({viewport:page.viewportSize(),deviceScaleFactor:1,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const control=await controlContext.newPage();targets.set(control,{width,height:page.viewportSize().height});await navigate(control,page.url());await settle(control);await reveal(control);await control.evaluate(y=>scrollTo(0,y),layout.y);const controlPng=await control.screenshot({fullPage:false,animations:'disabled'});await writeFile(path+'-baseline-control.png',controlPng);await writeFile(path+'-control.json',JSON.stringify({baselineRepeat:await diff(comparator,refs.get(key),controlPng),candidateVsFreshBaseline:await diff(comparator,controlPng,png)},null,2));}finally{variant=selected;await controlContext?.close();}
     console.error('Desktop Home pixel difference: '+JSON.stringify({key,comparison,layout,nativeSelect,logo}));
    }
   }
@@ -197,7 +221,7 @@ try{
  for(const [width,height]of viewports.filter(([w])=>!viewportFilter||String(w)===viewportFilter)){
   if(engine==='webkit'&&width===390){await compareContext.close();await browser.close();if(process.platform==='darwin')execFileSync('defaults',['write','NSGlobalDomain','AppleShowScrollBars','-string','WhenScrolling']);browser=await webkit.launch();compareContext=await browser.newContext();comparator=await compareContext.newPage();}
   for(const theme of ['dark','light'])for(const selected of ['before','after']){
-   variant=selected;const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const page=await context.newPage();targets.set(page,{width,height});
+   variant=selected;const context=await captureContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const page=await context.newPage();targets.set(page,{width,height});
    const observer=await observeBrowserErrors(page,{attach:async(name,attachment)=>{await writeFile(`${out}/${selected}-${width}-${theme}-${name}.json`,attachment.body);}},'errors');
    try{
     for(const [route,slug]of publicRoutes){await navigate(page,'http://127.0.0.1:4200'+route);if(route==='/'||route==='/partidas')await expect(page.locator('app-game-card')).toHaveCount(2);if(route==='/comunidades')await expect(page.locator('main')).toContainText('Espacio de rol de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
@@ -207,7 +231,7 @@ try{
     for(const [route,slug]of privateRoutes){await navigate(page,'http://127.0.0.1:4200'+route);await expect(page.locator('app-header')).toContainText('Máster');if(slug==='mis-partidas')await expect(page.locator('.my-game-entry')).toContainText('Aventura de prueba visual');if(slug==='editar-partida')await expect(page.locator('[formcontrolname=title]')).toHaveValue('Aventura de prueba visual');if(slug==='solicitudes')await expect(page.locator('.inbox-item')).toContainText('luna');if(slug==='notificaciones')await expect(page.locator('.notification-card')).toHaveCount(1);if(slug==='perfil-jugador')await expect(page.locator('h1')).toHaveText('Luna de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
     await observer.assertClean();
    }finally{await context.close();}
-   const onboarding=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});try{const p=await onboarding.newPage();targets.set(p,{width,height});await login(p,draft,'/completar-perfil');await expect(p.locator('[formcontrolname=firstName]')).toBeVisible();await capture(p,comparator,width,theme,'completar-perfil',{axe:selected==='after'&&width===390});}finally{await onboarding.close();}
+   const onboarding=await captureContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});try{const p=await onboarding.newPage();targets.set(p,{width,height});await login(p,draft,'/completar-perfil');await expect(p.locator('[formcontrolname=firstName]')).toBeVisible();await capture(p,comparator,width,theme,'completar-perfil',{axe:selected==='after'&&width===390});}finally{await onboarding.close();}
    console.log('VISUAL_PROGRESS',JSON.stringify({engine,variant,width,theme,checks:records.length,failures:failures.length}));
   }
  }

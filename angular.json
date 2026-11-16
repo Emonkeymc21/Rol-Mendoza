@@ -118,6 +118,7 @@
             },
             "ssrtest": {
               "outputPath": "dist/ssr-test",
+              "optimization": { "fonts": { "inline": false } },
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
