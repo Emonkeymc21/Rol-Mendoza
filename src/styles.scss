@@ -131,6 +131,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     align-items: start;
     grid-template-rows: auto;
 
+    > app-game-card { height: auto; }
     > app-game-card:first-child { grid-row: auto; }
   }
 }

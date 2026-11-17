@@ -15,6 +15,9 @@ try {
     align-items: start;
     grid-template-rows: auto;
   }
+  app-home .home-game-layout:has(> app-game-card:nth-child(2):last-child) > app-game-card {
+    height: auto;
+  }
   app-home .home-game-layout:has(> app-game-card:nth-child(2):last-child) > app-game-card:first-child {
     grid-row: auto;
   }
