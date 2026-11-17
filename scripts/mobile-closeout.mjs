@@ -21,14 +21,14 @@ const original=require('../vercel.json').headers.find(x=>x.source==='/(.*)').hea
 const csp=original.replace("connect-src 'self'","connect-src 'self' http://127.0.0.1:9099 http://127.0.0.1:8080").replace("frame-src 'self'","frame-src 'self' http://127.0.0.1:9099").replace('; upgrade-insecure-requests','');
 const children=[];let variant='before',laboratory=false,browser,proxy;
 const inputControls=[],records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[],targets=new WeakMap();
-const stableDesktopGutter=engine==='webkit'&&process.platform==='linux'&&Number(viewportFilter)>=1024;
+const nativeDesktopControls=engine==='webkit'&&process.platform==='linux';
 const start=(file,extra={})=>{const p=spawn(process.execPath,[file],{env:{...process.env,CUMBRE20_TEST_MODE:'1',CUMBRE20_TEST_CSP:csp,...extra},stdio:'inherit'});children.push(p);return p;};
 // Both visual builds keep the stylesheet URL. Freeze the Google response per
 // run so remote cache variants cannot change outlines between two captures.
 const fontResponses = new Map();
 const fontUserAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36';
-async function captureContext(options) {
- const context = await browser.newContext(options);
+async function captureContext(options,captureBrowser=browser) {
+ const context = await captureBrowser.newContext(options);
  await context.route(/^https:\/\/fonts\.(?:googleapis|gstatic)\.com\//, async route => {
   const url = route.request().url();
   if (!fontResponses.has(url)) fontResponses.set(url, fetch(url, {
@@ -134,6 +134,15 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  if(width<768&&!horizontalInput)horizontalInput=await checkHorizontalInput(page);
  if(full){
   await reveal(page);
+  if(engine==='chromium'&&width>=1024&&baseSlug==='home'){
+   // Repaint the native select after fonts resolve. Chromium occasionally
+   // rasterizes its label one pixel higher at the same fractional position.
+   await page.locator('app-home select').evaluate(select=>{
+    const focused=document.activeElement;
+    select.focus({preventScroll:true});select.blur();
+    if(focused instanceof HTMLElement&&focused!==document.body)focused.focus({preventScroll:true});
+   });
+  }
   if(engine==='webkit')await page.waitForTimeout(1000);
   // WebKit fullPage temporarily changes the layout viewport to clientWidth,
   // crossing 768px when its 11px native scrollbar is present. Capture genuine
@@ -143,8 +152,8 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
   for(let y=0;y<max;y+=geometry.viewport)offsets.push(y);offsets.push(max);
   const geometryKey=`${width}-${theme}-${slug}`;
   if(variant==='before')geometries.set(geometryKey,geometry);
-  else if(variant==='after'&&width>=1024&&JSON.stringify(geometry)!==JSON.stringify(geometries.get(geometryKey))){
-   failures.push({key:geometryKey,type:'desktop-geometry',before:geometries.get(geometryKey),after:geometry});
+  else if(width>=1024&&JSON.stringify(geometry)!==JSON.stringify(geometries.get(geometryKey))){
+   failures.push({key:geometryKey,type:'desktop-geometry',variant,before:geometries.get(geometryKey),after:geometry});
   }
   for(let i=0;i<offsets.length;i++){
    await page.evaluate(y=>scrollTo({left:0,top:y,behavior:'instant'}),offsets[i]);await page.waitForTimeout(120);
@@ -175,7 +184,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
    const reference=refs.get(key);
    comparison=reference?await diff(comparator,reference.png,png):{pixels:null,missingBaseline:true};
    if(comparison.pixels!==0){
-    failures.push({key,type:'desktop-pixels',comparison});
+    failures.push({key,type:variant==='baseline-control'?'desktop-baseline-repeat':'desktop-pixels',comparison});
     if(reference)await writeFile(path+'-before.png',reference.png);
     await writeFile(path+'-after.png',png);
     await writeFile(path+'-state.json',JSON.stringify({before:reference?.state,after:state},null,2));
@@ -184,32 +193,7 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
    if(reference){
     const camera=({client,inner,y,scale,dpr,theme,mediaWidth})=>({client,inner,y,scale,dpr,theme,mediaWidth});
     const before=camera(reference.state.layout),after=camera(layout);
-    if(JSON.stringify(before)!==JSON.stringify(after))failures.push({key,type:'desktop-capture-state',before,after});
-   }
-   if(stableDesktopGutter&&reference&&['home','partidas'].includes(baseSlug)){
-    // Give the baseline an independent navigation under the same camera conditions.
-    // This control is evidence only, never a replacement reference for the candidate.
-    const selected=variant;let controlContext;
-    try{
-     variant='before';
-     controlContext=await captureContext({viewport:frame,deviceScaleFactor:1,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});
-     const control=await controlContext.newPage();targets.set(control,frame);
-     await navigate(control,page.url());await control.locator('app-game-card').first().waitFor();
-     await settle(control);await reveal(control);
-     const controlLayout=await control.evaluate(y=>{
-      scrollTo({left:0,top:y,behavior:'instant'});
-      return {client:document.documentElement.clientWidth,y:scrollY,scale:visualViewport.scale,dpr:devicePixelRatio};
-     },reference.state.layout.y);
-     await control.waitForTimeout(120);
-     const controlPng=await control.screenshot({fullPage:false,animations:'disabled'});
-     const baselineRepeat=await diff(comparator,reference.png,controlPng);
-     await writeFile(path+'-control.json',JSON.stringify({baselineRepeat,controlLayout},null,2));
-     if(baselineRepeat.pixels!==0){
-      failures.push({key,type:'desktop-baseline-repeat',comparison:baselineRepeat});
-      await writeFile(path+'-baseline-control.png',controlPng);
-      await writeFile(path+'-before.png',reference.png);
-     }
-    }finally{variant=selected;await controlContext?.close();}
+    if(JSON.stringify(before)!==JSON.stringify(after))failures.push({key,type:'desktop-capture-state',variant,before,after});
    }
   }
  }
@@ -225,18 +209,12 @@ try{
  await Promise.all(['http://127.0.0.1:4401/health','http://127.0.0.1:4310','http://127.0.0.1:4320'].map(ready));
  proxy=createServer(async(req,res)=>{try{
   const chunks=[];for await(const chunk of req)chunks.push(chunk);
-  const target=(req.url.startsWith('/apps-script')||req.url.startsWith('/compartir/')||req.url.startsWith('/api/game-cover'))?'http://127.0.0.1:4401':`http://127.0.0.1:${variant==='before'?4310:4320}`;
+  const target=(req.url.startsWith('/apps-script')||req.url.startsWith('/compartir/')||req.url.startsWith('/api/game-cover'))?'http://127.0.0.1:4401':`http://127.0.0.1:${variant==='after'?4320:4310}`;
   const response=await fetch(target+req.url,{method:req.method,body:chunks.length?Buffer.concat(chunks):undefined,headers:{'user-agent':req.headers['user-agent']||'','content-type':req.headers['content-type']||'','x-forwarded-host':'127.0.0.1:4200'},redirect:'manual'});
   let data=Buffer.from(await response.arrayBuffer());res.statusCode=response.status;
   // Diagnostic overlay exists only in Auth Emulator, never in production.
   // Omit it identically from both lab variants, retaining console/error gates.
-  if(response.headers.get('content-type')?.includes('text/html')){
-   if(laboratory)data=Buffer.from(data.toString().replace('</head>','<style>.firebase-emulator-warning{display:none!important}</style></head>'));
-   // Linux WebKit intermittently lost the width of the custom root scrollbar.
-   // Reserve its native gutter at initial layout in both visual builds. The bar,
-   // document and fixed physical viewport remain visible in the exact comparison.
-   if(stableDesktopGutter)data=Buffer.from(data.toString().replace('<head>','<head><style>html{overflow-y:scroll;scrollbar-gutter:stable}</style>'));
-  }
+  if(laboratory&&response.headers.get('content-type')?.includes('text/html'))data=Buffer.from(data.toString().replace('</head>','<style>.firebase-emulator-warning{display:none!important}</style></head>'));
   for(const [key,value]of response.headers)if(!['content-encoding','content-length','transfer-encoding'].includes(key))res.setHeader(key,value);
   res.setHeader('Content-Security-Policy',csp);
   if(req.headers['accept-encoding']?.includes('gzip')){res.setHeader('Content-Encoding','gzip');res.end(gzipSync(data));}else res.end(data);
@@ -256,18 +234,29 @@ try{
  const privateRoutes=[['/perfil','perfil'],['/perfil/editar','editar-perfil'],['/jugadores','jugadores'],['/jugadores/'+player.uid,'perfil-jugador'],['/partidas/nueva','publicar'],['/mis-partidas','mis-partidas'],['/mis-partidas/'+game.id+'/editar','editar-partida'],['/solicitudes','solicitudes'],['/mis-solicitudes','mis-solicitudes'],['/notificaciones','notificaciones'],['/comunidades/solicitar','solicitar-comunidad']];
  for(const [width,height]of viewports.filter(([w])=>!viewportFilter||String(w)===viewportFilter)){
   if(engine==='webkit'&&width===390){await compareContext.close();await browser.close();if(process.platform==='darwin')execFileSync('defaults',['write','NSGlobalDomain','AppleShowScrollBars','-string','WhenScrolling']);browser=await webkit.launch();compareContext=await browser.newContext();comparator=await compareContext.newPage();}
-  for(const theme of ['dark','light'])for(const selected of ['before','after']){
-   variant=selected;const context=await captureContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const page=await context.newPage();targets.set(page,{width,height});
+  const independent=width>=1024&&nativeDesktopControls;
+  const variants=independent?['before','baseline-control','after']:['before','after'];
+  for(const theme of ['dark','light'])for(const selected of variants){
+   variant=selected;
+   // A new WebKit process per build/capture pass starts with the same native
+   // window state. Do not reuse a process that just captured another build.
+   const captureBrowser=independent?await webkit.launch():browser;
+   const context=await captureContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'},captureBrowser);
+   const page=await context.newPage();targets.set(page,{width,height});
+   if(independent)await page.bringToFront();
    const observer=await observeBrowserErrors(page,{attach:async(name,attachment)=>{await writeFile(`${out}/${selected}-${width}-${theme}-${name}.json`,attachment.body);}},'errors');
    try{
-    for(const [route,slug]of publicRoutes){await navigate(page,'http://127.0.0.1:4200'+route);if(route==='/'||route==='/partidas')await expect(page.locator('app-game-card')).toHaveCount(2);if(route==='/comunidades')await expect(page.locator('main')).toContainText('Espacio de rol de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
+    const routes=selected==='baseline-control'?publicRoutes.filter(([,slug])=>slug==='home'||slug==='partidas'):publicRoutes;
+    for(const [route,slug]of routes){await navigate(page,'http://127.0.0.1:4200'+route);if(route==='/'||route==='/partidas')await expect(page.locator('app-game-card')).toHaveCount(2);if(route==='/comunidades')await expect(page.locator('main')).toContainText('Espacio de rol de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
+    if(selected==='baseline-control'){await observer.assertClean();continue;}
     await navigate(page,'http://127.0.0.1:4200/partidas/PRT-DEMO-BASE');await page.getByRole('button',{name:'Compartir partida',exact:true}).click();await expect(page.getByRole('menu',{name:'Opciones para compartir'})).toBeVisible();await capture(page,comparator,width,theme,'compartir',{full:false});await page.keyboard.press('Escape');
     if(width<1280){await navigate(page,'http://127.0.0.1:4200/');await expect(page.locator('app-game-card')).toHaveCount(2);await page.getByRole('button',{name:'Abrir menú',exact:true}).click();await expect(page.getByRole('navigation',{name:'Navegación móvil'})).toBeVisible();await capture(page,comparator,width,theme,'menu',{full:false});await page.keyboard.press('Escape');}
     await login(page,dm);
     for(const [route,slug]of privateRoutes){await navigate(page,'http://127.0.0.1:4200'+route);await expect(page.locator('app-header')).toContainText('Máster');if(slug==='mis-partidas')await expect(page.locator('.my-game-entry')).toContainText('Aventura de prueba visual');if(slug==='editar-partida')await expect(page.locator('[formcontrolname=title]')).toHaveValue('Aventura de prueba visual');if(slug==='solicitudes')await expect(page.locator('.inbox-item')).toContainText('luna');if(slug==='notificaciones')await expect(page.locator('.notification-card')).toHaveCount(1);if(slug==='perfil-jugador')await expect(page.locator('h1')).toHaveText('Luna de prueba');await capture(page,comparator,width,theme,slug,{axe:selected==='after'&&width===390});}
     await observer.assertClean();
-   }finally{await context.close();}
-   const onboarding=await captureContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});try{const p=await onboarding.newPage();targets.set(p,{width,height});await login(p,draft,'/completar-perfil');await expect(p.locator('[formcontrolname=firstName]')).toBeVisible();await capture(p,comparator,width,theme,'completar-perfil',{axe:selected==='after'&&width===390});}finally{await onboarding.close();}
+   }finally{await context.close();if(independent)await captureBrowser.close();}
+   const onboardingBrowser=independent?await webkit.launch():browser;
+   const onboarding=await captureContext({viewport:{width,height},deviceScaleFactor:1,isMobile:width<768,hasTouch:width<768,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'},onboardingBrowser);try{const p=await onboarding.newPage();targets.set(p,{width,height});await login(p,draft,'/completar-perfil');await expect(p.locator('[formcontrolname=firstName]')).toBeVisible();await capture(p,comparator,width,theme,'completar-perfil',{axe:selected==='after'&&width===390});}finally{await onboarding.close();if(independent)await onboardingBrowser.close();}
    console.log('VISUAL_PROGRESS',JSON.stringify({engine,variant,width,theme,checks:records.length,failures:failures.length}));
   }
  }
@@ -279,7 +268,7 @@ try{
  }
 } catch(error){failures.push({type:'execution',message:error.stack});throw error;}
 finally{
- await writeFile(out+'/summary.json',JSON.stringify({engine,platform:process.platform,stableDesktopGutter,viewport:viewportFilter||'all',baseline:'780ebf445a24dd8d557abcf8baeceb14c994b248',candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceHead:process.env.CUMBRE20_SOURCE_SHA,inputControls,checks:records.length,comparisons:records.filter(r=>r.comparison).length,metrics,failures},null,2));
+ await writeFile(out+'/summary.json',JSON.stringify({engine,platform:process.platform,nativeDesktopControls,viewport:viewportFilter||'all',baseline:'780ebf445a24dd8d557abcf8baeceb14c994b248',candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceHead:process.env.CUMBRE20_SOURCE_SHA,inputControls,checks:records.length,comparisons:records.filter(r=>r.comparison).length,metrics,failures},null,2));
  await browser?.close();proxy?.close();children.forEach(p=>p.kill('SIGTERM'));
 }
 expect(failures).toEqual([]);
