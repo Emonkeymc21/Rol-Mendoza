@@ -126,6 +126,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
 :root[data-theme='light'] .site-header { box-shadow:0 10px 35px rgba(72,48,42,.08); }
 
+@media (min-width: 1024px) {
+  app-home .home-game-layout:has(> app-game-card:nth-child(2):last-child) {
+    align-items: start;
+    grid-template-rows: auto;
+
+    > app-game-card { height: auto; }
+    > app-game-card:first-child { grid-row: auto; }
+  }
+}
+
 /* Fondos narrativos exclusivos de Home. Viven globalmente para no inflar el presupuesto del componente. */
 .adventures-section::before { content:'';position:absolute;z-index:-1;inset:0;background:linear-gradient(90deg,rgba(19,14,16,.97) 0%,rgba(19,14,16,.88) 43%,rgba(19,14,16,.57) 100%),linear-gradient(180deg,rgba(19,14,16,.45),rgba(19,14,16,.92));pointer-events:none; }
 .adventures-backdrop,.adventures-backdrop img,.journey-backdrop,.journey-backdrop img { position:absolute;z-index:-2;inset:0;width:100%;height:100%; }
