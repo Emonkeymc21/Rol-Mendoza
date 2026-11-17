@@ -21,6 +21,7 @@ const original=require('../vercel.json').headers.find(x=>x.source==='/(.*)').hea
 const csp=original.replace("connect-src 'self'","connect-src 'self' http://127.0.0.1:9099 http://127.0.0.1:8080").replace("frame-src 'self'","frame-src 'self' http://127.0.0.1:9099").replace('; upgrade-insecure-requests','');
 const children=[];let variant='before',laboratory=false,browser,proxy;
 const inputControls=[],records=[],failures=[],refs=new Map(),geometries=new Map(),metrics=[],targets=new WeakMap();
+const stableDesktopGutter=engine==='webkit'&&process.platform==='linux'&&Number(viewportFilter)>=1024;
 const start=(file,extra={})=>{const p=spawn(process.execPath,[file],{env:{...process.env,CUMBRE20_TEST_MODE:'1',CUMBRE20_TEST_CSP:csp,...extra},stdio:'inherit'});children.push(p);return p;};
 // Both visual builds keep the stylesheet URL. Freeze the Google response per
 // run so remote cache variants cannot change outlines between two captures.
@@ -142,18 +143,18 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
   for(let y=0;y<max;y+=geometry.viewport)offsets.push(y);offsets.push(max);
   const geometryKey=`${width}-${theme}-${slug}`;
   if(variant==='before')geometries.set(geometryKey,geometry);
-  else if(width>=1024&&JSON.stringify(geometry)!==JSON.stringify(geometries.get(geometryKey))){
+  else if(variant==='after'&&width>=1024&&JSON.stringify(geometry)!==JSON.stringify(geometries.get(geometryKey))){
    failures.push({key:geometryKey,type:'desktop-geometry',before:geometries.get(geometryKey),after:geometry});
   }
   for(let i=0;i<offsets.length;i++){
-   await page.evaluate(y=>scrollTo(0,y),offsets[i]);await page.waitForTimeout(120);
+   await page.evaluate(y=>scrollTo({left:0,top:y,behavior:'instant'}),offsets[i]);await page.waitForTimeout(120);
    await capture(page,comparator,width,theme,slug+'--view-'+i,{full:false,axe:axe&&i===0,prepared:true,segment:i,horizontalInput});
   }
   await page.evaluate(()=>scrollTo(0,0));return;
  }
  if(engine==='webkit'&&!prepared)await page.waitForTimeout(1000);
  const frame=page.viewportSize();
- const layout=await page.evaluate(width=>{const y=scrollY;scrollTo({left:10000,top:y,behavior:'instant'});const x=scrollX;scrollTo({left:0,top:y,behavior:'instant'});const offscreen=[...document.querySelectorAll('main a,main button,main input,main select,main textarea,app-header a,app-header button,app-footer a,app-footer button')].filter(el=>{const r=el.getBoundingClientRect(),c=getComputedStyle(el);return c.display!=='none'&&c.visibility!=='hidden'&&r.width>0&&r.height>0&&(r.left< -2||r.right>document.documentElement.clientWidth+2);}).map(el=>({tag:el.tagName,className:String(el.className).slice(0,80)}));return {body:document.body.scrollWidth,client:document.documentElement.clientWidth,inner:innerWidth,horizontal:x,offscreen,rootOverflowX:getComputedStyle(document.documentElement).overflowX,expected:width,y:scrollY,mediaWidth:matchMedia(`(width: ${width}px)`).matches,cssGutter:innerWidth-document.documentElement.clientWidth,mobileMedia:matchMedia('(max-width: 767px)').matches};},width);
+ const layout=await page.evaluate(width=>{const y=scrollY;scrollTo({left:10000,top:y,behavior:'instant'});const x=scrollX;scrollTo({left:0,top:y,behavior:'instant'});const offscreen=[...document.querySelectorAll('main a,main button,main input,main select,main textarea,app-header a,app-header button,app-footer a,app-footer button')].filter(el=>{const r=el.getBoundingClientRect(),c=getComputedStyle(el);return c.display!=='none'&&c.visibility!=='hidden'&&r.width>0&&r.height>0&&(r.left< -2||r.right>document.documentElement.clientWidth+2);}).map(el=>({tag:el.tagName,className:String(el.className).slice(0,80)}));return {body:document.body.scrollWidth,client:document.documentElement.clientWidth,inner:innerWidth,horizontal:x,offscreen,rootOverflowX:getComputedStyle(document.documentElement).overflowX,expected:width,y:scrollY,scale:visualViewport.scale,dpr:devicePixelRatio,theme:document.documentElement.dataset.theme,mediaWidth:matchMedia(`(width: ${width}px)`).matches,cssGutter:innerWidth-document.documentElement.clientWidth,mobileMedia:matchMedia('(max-width: 767px)').matches};},width);
  const key=`${width}-${theme}-${slug}`,path=`${out}/${variant}-${key}`;
  let png=await page.screenshot({fullPage:false,animations:'disabled'}),stable=false;
  for(let frame=0;frame<4;frame++){
@@ -167,19 +168,48 @@ async function capture(page,comparator,width,theme,slug,{full=true,axe=false,pre
  const images=baseSlug==='home'?await page.locator('img').evaluateAll(list=>list.map(img=>({src:img.currentSrc,naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight,complete:img.complete,width:img.getBoundingClientRect().width,height:img.getBoundingClientRect().height}))):undefined;
  const artwork=baseSlug==='home'?await page.locator('.card-art').evaluateAll(list=>list.map(el=>{const c=getComputedStyle(el),r=el.getBoundingClientRect();return {backgroundImage:c.backgroundImage,backgroundSize:c.backgroundSize,backgroundPosition:c.backgroundPosition,hover:el.closest('.game-card').matches(':hover'),width:r.width,height:r.height};})):undefined;
  let comparison;
- if(width>=1024&&variant==='before')refs.set(key,png);
- if(width>=1024&&variant==='after'){
-  const reference=refs.get(key);
-  comparison=reference?await diff(comparator,reference,png):{pixels:null,missingBaseline:true};
-  if(comparison.pixels!==0){
-   failures.push({key,type:'desktop-pixels',comparison});if(reference)await writeFile(path+'-before.png',reference);await writeFile(path+'-after.png',png);
-   await writeFile(path+'-state.json',JSON.stringify({layout,nativeSelect,logo,fonts,images,artwork},null,2));
-   if(baseSlug==='home'&&reference){
-    // A failing comparison keeps an independent fresh-baseline control. This
-    // diagnoses renderer/cache variation; it NEVER replaces the original gate.
+ const state={layout,nativeSelect,logo,fonts,images,artwork};
+ if(width>=1024){
+  if(variant==='before')refs.set(key,{png,state});
+  else{
+   const reference=refs.get(key);
+   comparison=reference?await diff(comparator,reference.png,png):{pixels:null,missingBaseline:true};
+   if(comparison.pixels!==0){
+    failures.push({key,type:'desktop-pixels',comparison});
+    if(reference)await writeFile(path+'-before.png',reference.png);
+    await writeFile(path+'-after.png',png);
+    await writeFile(path+'-state.json',JSON.stringify({before:reference?.state,after:state},null,2));
+    if(baseSlug==='home'||baseSlug==='partidas')console.error('Desktop pixel difference: '+JSON.stringify({key,comparison,before:reference?.state.layout,after:layout}));
+   }
+   if(reference){
+    const camera=({client,inner,y,scale,dpr,theme,mediaWidth})=>({client,inner,y,scale,dpr,theme,mediaWidth});
+    const before=camera(reference.state.layout),after=camera(layout);
+    if(JSON.stringify(before)!==JSON.stringify(after))failures.push({key,type:'desktop-capture-state',before,after});
+   }
+   if(stableDesktopGutter&&reference&&['home','partidas'].includes(baseSlug)){
+    // Give the baseline an independent navigation under the same camera conditions.
+    // This control is evidence only, never a replacement reference for the candidate.
     const selected=variant;let controlContext;
-    try{variant='before';controlContext=await captureContext({viewport:page.viewportSize(),deviceScaleFactor:1,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});const control=await controlContext.newPage();targets.set(control,{width,height:page.viewportSize().height});await navigate(control,page.url());await settle(control);await reveal(control);await control.evaluate(y=>scrollTo(0,y),layout.y);const controlPng=await control.screenshot({fullPage:false,animations:'disabled'});await writeFile(path+'-baseline-control.png',controlPng);await writeFile(path+'-control.json',JSON.stringify({baselineRepeat:await diff(comparator,refs.get(key),controlPng),candidateVsFreshBaseline:await diff(comparator,controlPng,png)},null,2));}finally{variant=selected;await controlContext?.close();}
-    console.error('Desktop Home pixel difference: '+JSON.stringify({key,comparison,layout,nativeSelect,logo}));
+    try{
+     variant='before';
+     controlContext=await captureContext({viewport:frame,deviceScaleFactor:1,colorScheme:theme,reducedMotion:'reduce',timezoneId:'America/Argentina/Buenos_Aires',locale:'es-AR'});
+     const control=await controlContext.newPage();targets.set(control,frame);
+     await navigate(control,page.url());await control.locator('app-game-card').first().waitFor();
+     await settle(control);await reveal(control);
+     const controlLayout=await control.evaluate(y=>{
+      scrollTo({left:0,top:y,behavior:'instant'});
+      return {client:document.documentElement.clientWidth,y:scrollY,scale:visualViewport.scale,dpr:devicePixelRatio};
+     },reference.state.layout.y);
+     await control.waitForTimeout(120);
+     const controlPng=await control.screenshot({fullPage:false,animations:'disabled'});
+     const baselineRepeat=await diff(comparator,reference.png,controlPng);
+     await writeFile(path+'-control.json',JSON.stringify({baselineRepeat,controlLayout},null,2));
+     if(baselineRepeat.pixels!==0){
+      failures.push({key,type:'desktop-baseline-repeat',comparison:baselineRepeat});
+      await writeFile(path+'-baseline-control.png',controlPng);
+      await writeFile(path+'-before.png',reference.png);
+     }
+    }finally{variant=selected;await controlContext?.close();}
    }
   }
  }
@@ -200,7 +230,13 @@ try{
   let data=Buffer.from(await response.arrayBuffer());res.statusCode=response.status;
   // Diagnostic overlay exists only in Auth Emulator, never in production.
   // Omit it identically from both lab variants, retaining console/error gates.
-  if(laboratory&&response.headers.get('content-type')?.includes('text/html'))data=Buffer.from(data.toString().replace('</head>','<style>.firebase-emulator-warning{display:none!important}</style></head>'));
+  if(response.headers.get('content-type')?.includes('text/html')){
+   if(laboratory)data=Buffer.from(data.toString().replace('</head>','<style>.firebase-emulator-warning{display:none!important}</style></head>'));
+   // Linux WebKit intermittently lost the width of the custom root scrollbar.
+   // Reserve its native gutter at initial layout in both visual builds. The bar,
+   // document and fixed physical viewport remain visible in the exact comparison.
+   if(stableDesktopGutter)data=Buffer.from(data.toString().replace('<head>','<head><style>html{overflow-y:scroll;scrollbar-gutter:stable}</style>'));
+  }
   for(const [key,value]of response.headers)if(!['content-encoding','content-length','transfer-encoding'].includes(key))res.setHeader(key,value);
   res.setHeader('Content-Security-Policy',csp);
   if(req.headers['accept-encoding']?.includes('gzip')){res.setHeader('Content-Encoding','gzip');res.end(gzipSync(data));}else res.end(data);
@@ -243,7 +279,7 @@ try{
  }
 } catch(error){failures.push({type:'execution',message:error.stack});throw error;}
 finally{
- await writeFile(out+'/summary.json',JSON.stringify({engine,platform:process.platform,viewport:viewportFilter||'all',baseline:'780ebf445a24dd8d557abcf8baeceb14c994b248',candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceHead:process.env.CUMBRE20_SOURCE_SHA,inputControls,checks:records.length,comparisons:records.filter(r=>r.comparison).length,metrics,failures},null,2));
+ await writeFile(out+'/summary.json',JSON.stringify({engine,platform:process.platform,stableDesktopGutter,viewport:viewportFilter||'all',baseline:'780ebf445a24dd8d557abcf8baeceb14c994b248',candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sourceHead:process.env.CUMBRE20_SOURCE_SHA,inputControls,checks:records.length,comparisons:records.filter(r=>r.comparison).length,metrics,failures},null,2));
  await browser?.close();proxy?.close();children.forEach(p=>p.kill('SIGTERM'));
 }
 expect(failures).toEqual([]);
